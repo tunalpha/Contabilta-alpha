@@ -214,6 +214,7 @@ function App() {
         setShowForm(false);
         fetchTransactions();
         fetchBalance();
+        alert('✅ Transazione creata con successo!');
       } else {
         const errorData = await response.json();
         alert(`Errore: ${errorData.detail}`);
@@ -224,15 +225,77 @@ function App() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleEdit = (transaction) => {
+    if (!isAdmin) {
+      alert('Solo l\'amministratore può modificare transazioni');
+      return;
+    }
+
+    setEditingTransaction(transaction);
+    setEditFormData({
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      type: transaction.type,
+      category: transaction.category
+    });
+    setShowEditForm(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!editFormData.amount || !editFormData.description) {
+      alert('Per favore compila tutti i campi');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/transactions/${editingTransaction.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          amount: parseFloat(editFormData.amount),
+          description: editFormData.description,
+          type: editFormData.type,
+          category: editFormData.category,
+          date: editingTransaction.date // Mantieni la data originale
+        }),
+      });
+
+      if (response.ok) {
+        setShowEditForm(false);
+        setEditingTransaction(null);
+        setEditFormData({
+          amount: '',
+          description: '',
+          type: 'dare',
+          category: 'Cash'
+        });
+        fetchTransactions();
+        fetchBalance();
+        alert('✅ Transazione modificata con successo!');
+      } else {
+        const errorData = await response.json();
+        alert(`Errore: ${errorData.detail}`);
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      alert('Errore nel modificare la transazione');
+    }
+  };
+
+  const handleDelete = async (transaction) => {
     if (!isAdmin) {
       alert('Solo l\'amministratore può eliminare transazioni');
       return;
     }
 
-    if (window.confirm('Sei sicuro di voler eliminare questa transazione?')) {
+    if (window.confirm(`Sei sicuro di voler eliminare questa transazione?\n\n"${transaction.description}" - ${formatCurrency(transaction.amount)}`)) {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/transactions/${id}`, {
+        const response = await fetch(`${BACKEND_URL}/api/transactions/${transaction.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${adminToken}`
@@ -242,6 +305,7 @@ function App() {
         if (response.ok) {
           fetchTransactions();
           fetchBalance();
+          alert('✅ Transazione eliminata con successo!');
         } else {
           const errorData = await response.json();
           alert(`Errore: ${errorData.detail}`);
