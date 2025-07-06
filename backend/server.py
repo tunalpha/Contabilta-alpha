@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,8 +6,9 @@ from datetime import datetime
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 import uuid
+import re
 
-app = FastAPI()
+app = FastAPI(title="Contabilità Alpha/Marzia")
 
 # CORS configuration
 app.add_middleware(
@@ -21,15 +22,15 @@ app.add_middleware(
 # MongoDB connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-db = client.expense_tracker
+db = client.contabilita_alpha_marzia
 
 # Pydantic models
 class Transaction(BaseModel):
     id: Optional[str] = None
     amount: float
     description: str
-    type: str  # 'income' or 'expense'
-    category: str
+    type: str  # 'avere' (credito/entrata) or 'dare' (debito/uscita)
+    category: str  # 'Cash', 'Bonifico', 'PayPal', 'Altro'
     date: datetime
 
 class TransactionResponse(BaseModel):
@@ -53,15 +54,46 @@ def transaction_helper(transaction) -> dict:
 
 @app.get("/")
 async def root():
-    return {"message": "Expense Tracker API"}
+    return {"message": "Contabilità Alpha/Marzia API"}
 
 @app.get("/api/transactions", response_model=List[TransactionResponse])
-async def get_transactions():
-    """Get all transactions"""
+async def get_transactions(
+    search: Optional[str] = Query(None, description="Cerca nelle descrizioni"),
+    category: Optional[str] = Query(None, description="Filtra per categoria"),
+    type: Optional[str] = Query(None, description="Filtra per tipo (dare/avere)"),
+    date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
+):
+    """Get all transactions with optional filtering"""
     try:
+        # Build query filter
+        query_filter = {}
+        
+        # Search in description
+        if search:
+            query_filter["description"] = {"$regex": search, "$options": "i"}
+        
+        # Filter by category
+        if category:
+            query_filter["category"] = category
+        
+        # Filter by type
+        if type:
+            query_filter["type"] = type
+        
+        # Filter by date range
+        if date_from or date_to:
+            date_filter = {}
+            if date_from:
+                date_filter["$gte"] = datetime.fromisoformat(date_from)
+            if date_to:
+                date_filter["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
+            query_filter["date"] = date_filter
+        
         transactions = []
-        async for transaction in db.transactions.find():
+        async for transaction in db.transactions.find(query_filter).sort("date", -1):
             transactions.append(transaction_helper(transaction))
+        
         return transactions
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -95,24 +127,49 @@ async def delete_transaction(transaction_id: str):
 
 @app.get("/api/balance")
 async def get_balance():
-    """Get current balance (total income - total expenses)"""
+    """Get current balance (total avere - total dare)"""
     try:
-        total_income = 0
-        total_expenses = 0
+        total_avere = 0  # Crediti/Entrate
+        total_dare = 0   # Debiti/Uscite
         
         async for transaction in db.transactions.find():
-            if transaction["type"] == "income":
-                total_income += transaction["amount"]
+            if transaction["type"] == "avere":
+                total_avere += transaction["amount"]
             else:
-                total_expenses += transaction["amount"]
+                total_dare += transaction["amount"]
         
-        balance = total_income - total_expenses
+        balance = total_avere - total_dare
         
         return {
             "balance": balance,
-            "total_income": total_income,
-            "total_expenses": total_expenses
+            "total_avere": total_avere,
+            "total_dare": total_dare
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/statistics")
+async def get_statistics():
+    """Get statistics by category and type"""
+    try:
+        stats = {
+            "by_category": {},
+            "by_type": {"avere": 0, "dare": 0},
+            "monthly_summary": []
+        }
+        
+        async for transaction in db.transactions.find():
+            # Stats by category
+            category = transaction["category"]
+            if category not in stats["by_category"]:
+                stats["by_category"][category] = {"avere": 0, "dare": 0}
+            
+            stats["by_category"][category][transaction["type"]] += transaction["amount"]
+            
+            # Stats by type
+            stats["by_type"][transaction["type"]] += transaction["amount"]
+        
+        return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
