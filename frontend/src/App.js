@@ -14,6 +14,7 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [formData, setFormData] = useState({
@@ -30,6 +31,12 @@ function App() {
     dateTo: ''
   });
   const [loginPassword, setLoginPassword] = useState('');
+  const [securityQuestions, setSecurityQuestions] = useState([]);
+  const [securityAnswers, setSecurityAnswers] = useState({
+    answer1: '',
+    answer2: '',
+    answer3: ''
+  });
 
   const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
 
