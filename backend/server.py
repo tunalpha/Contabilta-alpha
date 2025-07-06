@@ -7,6 +7,9 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 import uuid
 import hashlib
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = FastAPI(title="Contabilità Alpha/Marzia")
 
@@ -28,14 +31,13 @@ db = client.contabilita_alpha_marzia
 ADMIN_PASSWORD = "alpha2024!"  # Password principale
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
-# Security questions and answers for password recovery
-SECURITY_QUESTIONS = {
-    "question1": "Qual è il nome della tua prima azienda?",
-    "answer1": "alpha",  # Risposta: alpha (case insensitive)
-    "question2": "In che anno è nata Marzia?", 
-    "answer2": "1990",   # Risposta: 1990
-    "question3": "Qual è la tua città natale?",
-    "answer3": "roma"    # Risposta: roma (case insensitive)
+# Email configuration
+EMAIL_CONFIG = {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "giaquintagroup@gmail.com",
+    "sender_password": "xtec ycwx dgje nqwn",
+    "recovery_email": "ildattero.it@gmail.com"
 }
 
 # Pydantic models
@@ -63,14 +65,8 @@ class LoginResponse(BaseModel):
     token: Optional[str] = None
     message: str
 
-class SecurityAnswers(BaseModel):
-    answer1: str
-    answer2: str
-    answer3: str
-
 class PasswordRecoveryResponse(BaseModel):
     success: bool
-    password: Optional[str] = None
     message: str
 
 # Authentication dependency
@@ -82,6 +78,102 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=403, detail="Token non valido")
     
     return True
+
+# Email sending function
+async def send_password_email():
+    """Send password recovery email"""
+    try:
+        # Create message
+        message = MIMEMultipart("alternative")
+        message["Subject"] = "🔑 Recupero Password - Contabilità Alpha/Marzia"
+        message["From"] = EMAIL_CONFIG["sender_email"]
+        message["To"] = EMAIL_CONFIG["recovery_email"]
+
+        # Create HTML content
+        html = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; color: white; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px;">🧮 Contabilità Alpha/Marzia</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">Recupero Password Amministratore</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
+              <h2 style="color: #333; margin-top: 0;">🔑 Password Recuperata</h2>
+              <p style="color: #666; font-size: 16px; line-height: 1.5;">
+                Hai richiesto il recupero della password per l'accesso amministratore della Contabilità Alpha/Marzia.
+              </p>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; margin: 20px 0;">
+                <h3 style="color: #007bff; margin-top: 0;">Password Amministratore:</h3>
+                <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #333; background: #f1f3f4; padding: 10px; border-radius: 4px; margin: 0;">
+                  {ADMIN_PASSWORD}
+                </p>
+              </div>
+              
+              <p style="color: #666; font-size: 14px; line-height: 1.5;">
+                <strong>Istruzioni:</strong><br>
+                1. Copia la password sopra<br>
+                2. Vai alla pagina di login<br>
+                3. Incolla la password nel campo login<br>
+                4. Accedi alle funzioni amministratore
+              </p>
+              
+              <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <p style="color: #856404; margin: 0; font-size: 14px;">
+                  <strong>⚠️ Nota di Sicurezza:</strong> Questa email contiene informazioni sensibili. 
+                  Non condividere questa password con altri.
+                </p>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; color: #888; font-size: 12px;">
+              <p>Email automatica da Contabilità Alpha/Marzia</p>
+              <p>Data: {datetime.now().strftime('%d/%m/%Y alle %H:%M')}</p>
+            </div>
+          </body>
+        </html>
+        """
+
+        # Create plain text version
+        text = f"""
+        🧮 Contabilità Alpha/Marzia - Recupero Password
+
+        Hai richiesto il recupero della password per l'accesso amministratore.
+
+        Password Amministratore: {ADMIN_PASSWORD}
+
+        Istruzioni:
+        1. Copia la password sopra
+        2. Vai alla pagina di login  
+        3. Incolla la password nel campo login
+        4. Accedi alle funzioni amministratore
+
+        ⚠️ Nota di Sicurezza: Non condividere questa password con altri.
+
+        Email automatica inviata il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}
+        """
+
+        # Attach parts
+        part1 = MIMEText(text, "plain")
+        part2 = MIMEText(html, "html")
+        message.attach(part1)
+        message.attach(part2)
+
+        # Send email
+        await aiosmtplib.send(
+            message,
+            hostname=EMAIL_CONFIG["smtp_server"],
+            port=EMAIL_CONFIG["smtp_port"],
+            start_tls=True,
+            username=EMAIL_CONFIG["sender_email"],
+            password=EMAIL_CONFIG["sender_password"],
+        )
+        
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
 
 # Helper function to convert MongoDB document to response
 def transaction_helper(transaction) -> dict:
@@ -113,35 +205,21 @@ async def admin_login(login_data: LoginRequest):
             message="Password errata"
         )
 
-@app.get("/api/security-questions")
-async def get_security_questions():
-    """Get security questions for password recovery"""
-    return {
-        "questions": [
-            {"id": "question1", "text": SECURITY_QUESTIONS["question1"]},
-            {"id": "question2", "text": SECURITY_QUESTIONS["question2"]},
-            {"id": "question3", "text": SECURITY_QUESTIONS["question3"]}
-        ]
-    }
-
 @app.post("/api/recover-password", response_model=PasswordRecoveryResponse)
-async def recover_password(answers: SecurityAnswers):
-    """Recover password using security questions"""
+async def recover_password():
+    """Send password recovery email"""
     try:
-        # Check all answers (case insensitive for text answers)
-        if (answers.answer1.lower().strip() == SECURITY_QUESTIONS["answer1"].lower() and
-            answers.answer2.strip() == SECURITY_QUESTIONS["answer2"] and
-            answers.answer3.lower().strip() == SECURITY_QUESTIONS["answer3"].lower()):
-            
+        email_sent = await send_password_email()
+        
+        if email_sent:
             return PasswordRecoveryResponse(
                 success=True,
-                password=ADMIN_PASSWORD,
-                message="Password recuperata con successo!"
+                message=f"Password inviata via email a {EMAIL_CONFIG['recovery_email']}"
             )
         else:
             return PasswordRecoveryResponse(
                 success=False,
-                message="Una o più risposte non sono corrette. Riprova."
+                message="Errore nell'invio dell'email. Riprova più tardi."
             )
     except Exception as e:
         return PasswordRecoveryResponse(
