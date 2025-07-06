@@ -11,13 +11,21 @@ function App() {
     total_avere: 0,
     total_dare: 0
   });
-  const [showForm, setShowForm] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [formData, setFormData] = useState({
+    amount: '',
+    description: '',
+    type: 'dare',
+    category: 'Cash'
+  });
+  const [editFormData, setEditFormData] = useState({
     amount: '',
     description: '',
     type: 'dare',
