@@ -203,14 +203,14 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-4">
-            <div className="mx-auto h-24 w-24 rounded-full bg-blue-600 shadow-xl border-4 border-white flex items-center justify-center">
-              <div className="text-white font-bold text-2xl">
-                A/M
+            <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-xl border-4 border-white flex items-center justify-center">
+              <div className="text-white font-bold text-3xl italic">
+                A
               </div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            📊 Contabilità Alpha/Marzia
+            Contabilità Alpha/Marzia
           </h1>
           <p className="text-gray-600">Sistema di gestione contabile professionale</p>
         </div>
