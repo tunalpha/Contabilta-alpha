@@ -203,24 +203,14 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-4">
-            <div className="mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 shadow-lg border-4 border-blue-200 flex items-center justify-center">
-              <svg 
-                className="h-12 w-12 text-white" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" 
-                />
-              </svg>
+            <div className="mx-auto h-24 w-24 rounded-full bg-blue-600 shadow-xl border-4 border-white flex items-center justify-center">
+              <div className="text-white font-bold text-2xl">
+                A/M
+              </div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Contabilità Alpha/Marzia
+            📊 Contabilità Alpha/Marzia
           </h1>
           <p className="text-gray-600">Sistema di gestione contabile professionale</p>
         </div>
