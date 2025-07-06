@@ -286,6 +286,33 @@ async def create_transaction(transaction: Transaction, admin_verified: bool = De
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/transactions/{transaction_id}", response_model=TransactionResponse)
+async def update_transaction(transaction_id: str, transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
+    """Update a transaction (ADMIN ONLY)"""
+    try:
+        transaction_dict = transaction.dict()
+        # Don't update the ID and preserve the original date if not provided
+        transaction_dict.pop('id', None)
+        
+        result = await db.transactions.update_one(
+            {"id": transaction_id}, 
+            {"$set": transaction_dict}
+        )
+        
+        if result.modified_count == 1:
+            # Fetch the updated transaction
+            updated_transaction = await db.transactions.find_one({"id": transaction_id})
+            if updated_transaction:
+                return TransactionResponse(**transaction_helper(updated_transaction))
+            else:
+                raise HTTPException(status_code=404, detail="Transaction not found after update")
+        else:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/api/transactions/{transaction_id}")
 async def delete_transaction(transaction_id: str, admin_verified: bool = Depends(verify_admin_token)):
     """Delete a transaction (ADMIN ONLY)"""
