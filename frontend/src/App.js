@@ -31,12 +31,6 @@ function App() {
     dateTo: ''
   });
   const [loginPassword, setLoginPassword] = useState('');
-  const [securityQuestions, setSecurityQuestions] = useState([]);
-  const [securityAnswers, setSecurityAnswers] = useState({
-    answer1: '',
-    answer2: '',
-    answer3: ''
-  });
 
   const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
 
