@@ -378,41 +378,26 @@ function App() {
         {/* Password Recovery Modal */}
         {showPasswordRecovery && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">🔑 Recupera Password</h2>
-              <p className="text-gray-600 mb-4">
-                Rispondi alle domande di sicurezza per recuperare la password
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">📧 Recupera Password</h2>
+              <p className="text-gray-600 mb-6">
+                Clicca il pulsante per ricevere la password via email all'indirizzo:
               </p>
-              
-              {securityQuestions.map((question, index) => (
-                <div key={question.id} className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {question.text}
-                  </label>
-                  <input
-                    type="text"
-                    value={securityAnswers[`answer${index + 1}`]}
-                    onChange={(e) => setSecurityAnswers({
-                      ...securityAnswers,
-                      [`answer${index + 1}`]: e.target.value
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="Inserisci la risposta..."
-                  />
-                </div>
-              ))}
-              
-              <div className="flex gap-4 mt-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                <p className="text-blue-800 font-medium text-center">
+                  📧 ildattero.it@gmail.com
+                </p>
+              </div>
+              <div className="flex gap-4">
                 <button
                   onClick={handlePasswordRecovery}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  Recupera Password
+                  📧 Invia Password via Email
                 </button>
                 <button
                   onClick={() => {
                     setShowPasswordRecovery(false);
-                    setSecurityAnswers({ answer1: '', answer2: '', answer3: '' });
                     setShowLogin(true);
                   }}
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
