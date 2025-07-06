@@ -81,20 +81,16 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(securityAnswers),
+        }
       });
 
       const data = await response.json();
       
       if (data.success) {
-        alert(`Password recuperata: ${data.password}`);
+        alert(`✅ ${data.message}\n\nControlla la tua email ildattero.it@gmail.com per la password.`);
         setShowPasswordRecovery(false);
-        setSecurityAnswers({ answer1: '', answer2: '', answer3: '' });
-        // Auto-fill the password in login form
-        setLoginPassword(data.password);
       } else {
-        alert(data.message);
+        alert(`❌ ${data.message}`);
       }
     } catch (error) {
       console.error('Error during password recovery:', error);
@@ -102,20 +98,9 @@ function App() {
     }
   };
 
-  const fetchSecurityQuestions = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/security-questions`);
-      const data = await response.json();
-      setSecurityQuestions(data.questions);
-    } catch (error) {
-      console.error('Error fetching security questions:', error);
-    }
-  };
-
   const openPasswordRecovery = () => {
     setShowLogin(false);
     setShowPasswordRecovery(true);
-    fetchSecurityQuestions();
   };
 
   const handleLogout = () => {
