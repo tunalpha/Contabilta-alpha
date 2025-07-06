@@ -102,10 +102,10 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Mi serve un app dove posso mettere entrate e uscite" (Need an app to track income and expenses)
+user_problem_statement: "Contabilità Alpha/Marzia - app per gestire entrate e uscite con terminologia dare/avere, ricerca cronologia e categorie Cash/Bonifico/PayPal/Altro"
 
 backend:
-  - task: "Transaction CRUD API"
+  - task: "Transaction CRUD API with filtering"
     implemented: true
     working: "NA"
     file: "/app/backend/server.py"
@@ -115,9 +115,9 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Implemented FastAPI backend with MongoDB for transactions CRUD. Includes endpoints for create, read, delete transactions and balance calculation."
+        comment: "Updated backend with new terminology (dare/avere), new categories (Cash, Bonifico, PayPal, Altro), and advanced filtering by search, category, type, and date range."
   
-  - task: "Balance calculation API"
+  - task: "Balance calculation API (dare/avere)"
     implemented: true
     working: "NA"
     file: "/app/backend/server.py"
@@ -127,10 +127,22 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Implemented /api/balance endpoint that calculates total income, total expenses, and net balance."
+        comment: "Updated balance calculation to use dare/avere terminology. Total_avere (credits) - total_dare (debits) = balance."
+
+  - task: "Advanced search and filtering"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added query parameters for search, category filter, type filter, and date range filtering."
 
 frontend:
-  - task: "Transaction management UI"
+  - task: "Professional accounting UI"
     implemented: true
     working: "NA"
     file: "/app/frontend/src/App.js"
@@ -140,22 +152,23 @@ frontend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Created React frontend with form to add transactions (income/expense), view all transactions, and display balance. Italian language interface with categories."
+        comment: "Completely redesigned UI with professional accounting terminology (dare/avere), advanced search/filter functionality, new categories with icons, and improved UX."
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
+  version: "2.0"
   test_sequence: 0
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Transaction CRUD API"
-    - "Balance calculation API"
+    - "Transaction CRUD API with filtering"
+    - "Balance calculation API (dare/avere)"
+    - "Advanced search and filtering"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implemented complete expense tracker app with Italian interface. Backend has transaction CRUD and balance calculation. Frontend has form for adding transactions and viewing all transactions with balance display. Need to test backend API endpoints first."
+    message: "Major update to 'Contabilità Alpha/Marzia' - Changed terminology to dare/avere, added advanced filtering (search, category, type, date), new payment categories (Cash, Bonifico, PayPal, Altro), and professional accounting interface. Need to test new filtering endpoints and balance calculation."
