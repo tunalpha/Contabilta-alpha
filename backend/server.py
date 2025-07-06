@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 import uuid
-import re
+import hashlib
 
 app = FastAPI(title="Contabilità Alpha/Marzia")
 
@@ -23,6 +23,10 @@ app.add_middleware(
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
 db = client.contabilita_alpha_marzia
+
+# Admin password (in production, use environment variable)
+ADMIN_PASSWORD = "alpha2024!"  # Cambia questa password!
+ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
 # Pydantic models
 class Transaction(BaseModel):
@@ -41,6 +45,24 @@ class TransactionResponse(BaseModel):
     category: str
     date: datetime
 
+class LoginRequest(BaseModel):
+    password: str
+
+class LoginResponse(BaseModel):
+    success: bool
+    token: Optional[str] = None
+    message: str
+
+# Authentication dependency
+async def verify_admin_token(authorization: Optional[str] = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Token di autorizzazione richiesto")
+    
+    if authorization != f"Bearer {ADMIN_TOKEN}":
+        raise HTTPException(status_code=403, detail="Token non valido")
+    
+    return True
+
 # Helper function to convert MongoDB document to response
 def transaction_helper(transaction) -> dict:
     return {
@@ -56,6 +78,21 @@ def transaction_helper(transaction) -> dict:
 async def root():
     return {"message": "Contabilità Alpha/Marzia API"}
 
+@app.post("/api/login", response_model=LoginResponse)
+async def admin_login(login_data: LoginRequest):
+    """Login amministratore"""
+    if login_data.password == ADMIN_PASSWORD:
+        return LoginResponse(
+            success=True,
+            token=ADMIN_TOKEN,
+            message="Login amministratore riuscito"
+        )
+    else:
+        return LoginResponse(
+            success=False,
+            message="Password errata"
+        )
+
 @app.get("/api/transactions", response_model=List[TransactionResponse])
 async def get_transactions(
     search: Optional[str] = Query(None, description="Cerca nelle descrizioni"),
@@ -64,7 +101,7 @@ async def get_transactions(
     date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
 ):
-    """Get all transactions with optional filtering"""
+    """Get all transactions (PUBLIC - No authentication required)"""
     try:
         # Build query filter
         query_filter = {}
@@ -99,8 +136,8 @@ async def get_transactions(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/transactions", response_model=TransactionResponse)
-async def create_transaction(transaction: Transaction):
-    """Create a new transaction"""
+async def create_transaction(transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
+    """Create a new transaction (ADMIN ONLY)"""
     try:
         transaction_dict = transaction.dict()
         transaction_dict["id"] = str(uuid.uuid4())
@@ -110,24 +147,28 @@ async def create_transaction(transaction: Transaction):
             return TransactionResponse(**transaction_dict)
         else:
             raise HTTPException(status_code=500, detail="Failed to create transaction")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/transactions/{transaction_id}")
-async def delete_transaction(transaction_id: str):
-    """Delete a transaction"""
+async def delete_transaction(transaction_id: str, admin_verified: bool = Depends(verify_admin_token)):
+    """Delete a transaction (ADMIN ONLY)"""
     try:
         result = await db.transactions.delete_one({"id": transaction_id})
         if result.deleted_count == 1:
             return {"message": "Transaction deleted successfully"}
         else:
             raise HTTPException(status_code=404, detail="Transaction not found")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/balance")
 async def get_balance():
-    """Get current balance (total avere - total dare)"""
+    """Get current balance (PUBLIC - No authentication required)"""
     try:
         total_avere = 0  # Crediti/Entrate
         total_dare = 0   # Debiti/Uscite
@@ -150,7 +191,7 @@ async def get_balance():
 
 @app.get("/api/statistics")
 async def get_statistics():
-    """Get statistics by category and type"""
+    """Get statistics by category and type (PUBLIC - No authentication required)"""
     try:
         stats = {
             "by_category": {},

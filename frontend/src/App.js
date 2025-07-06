@@ -13,6 +13,9 @@ function App() {
   });
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -26,17 +29,58 @@ function App() {
     dateFrom: '',
     dateTo: ''
   });
+  const [loginPassword, setLoginPassword] = useState('');
 
   const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
 
   useEffect(() => {
+    // Check if user is already logged in
+    if (adminToken) {
+      setIsAdmin(true);
+    }
     fetchTransactions();
     fetchBalance();
-  }, []);
+  }, [adminToken]);
 
   useEffect(() => {
     applyFilters();
   }, [transactions, filters]);
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: loginPassword }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setAdminToken(data.token);
+        localStorage.setItem('adminToken', data.token);
+        setIsAdmin(true);
+        setShowLogin(false);
+        setLoginPassword('');
+        alert('Login amministratore riuscito!');
+      } else {
+        alert('Password errata. Solo l\'amministratore può inserire dati.');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('Errore durante il login');
+    }
+  };
+
+  const handleLogout = () => {
+    setAdminToken('');
+    localStorage.removeItem('adminToken');
+    setIsAdmin(false);
+    setShowForm(false);
+    alert('Logout effettuato. Ora sei in modalità solo lettura.');
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -97,6 +141,11 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!isAdmin) {
+      alert('Solo l\'amministratore può inserire transazioni');
+      return;
+    }
+
     if (!formData.amount || !formData.description) {
       alert('Per favore compila tutti i campi');
       return;
@@ -107,6 +156,7 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
         },
         body: JSON.stringify({
           amount: parseFloat(formData.amount),
@@ -128,7 +178,8 @@ function App() {
         fetchTransactions();
         fetchBalance();
       } else {
-        alert('Errore nel salvare la transazione');
+        const errorData = await response.json();
+        alert(`Errore: ${errorData.detail}`);
       }
     } catch (error) {
       console.error('Error creating transaction:', error);
@@ -137,17 +188,26 @@ function App() {
   };
 
   const handleDelete = async (id) => {
+    if (!isAdmin) {
+      alert('Solo l\'amministratore può eliminare transazioni');
+      return;
+    }
+
     if (window.confirm('Sei sicuro di voler eliminare questa transazione?')) {
       try {
         const response = await fetch(`${BACKEND_URL}/api/transactions/${id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
         });
 
         if (response.ok) {
           fetchTransactions();
           fetchBalance();
         } else {
-          alert('Errore nell\'eliminare la transazione');
+          const errorData = await response.json();
+          alert(`Errore: ${errorData.detail}`);
         }
       } catch (error) {
         console.error('Error deleting transaction:', error);
@@ -213,7 +273,70 @@ function App() {
             Contabilità Alpha/Marzia
           </h1>
           <p className="text-gray-600">Sistema di gestione contabile professionale</p>
+          
+          {/* Admin Status */}
+          <div className="mt-4">
+            {isAdmin ? (
+              <div className="flex items-center justify-center gap-2">
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                  🔐 Modalità Amministratore
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                  👁️ Modalità Solo Lettura
+                </span>
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                >
+                  Login Admin
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Login Modal */}
+        {showLogin && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Login Amministratore</h2>
+              <p className="text-gray-600 mb-4">
+                Inserisci la password per accedere alle funzioni di modifica
+              </p>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                placeholder="Password amministratore"
+                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              />
+              <div className="flex gap-4">
+                <button
+                  onClick={handleLogin}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {setShowLogin(false); setLoginPassword('');}}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Annulla
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Balance Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -242,10 +365,12 @@ function App() {
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mb-8">
           <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+            onClick={() => isAdmin ? setShowForm(!showForm) : alert('Solo l\'amministratore può inserire transazioni')}
+            className={`${isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg`}
+            disabled={!isAdmin}
           >
             {showForm ? 'Chiudi Form' : '+ Nuova Transazione'}
+            {!isAdmin && ' (Solo Admin)'}
           </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -255,8 +380,8 @@ function App() {
           </button>
         </div>
 
-        {/* Transaction Form */}
-        {showForm && (
+        {/* Transaction Form - Only for Admin */}
+        {showForm && isAdmin && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Nuova Transazione</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -443,7 +568,9 @@ function App() {
               <div className="text-gray-500 text-sm mt-2">
                 {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
                   ? 'Prova a modificare i filtri di ricerca'
-                  : 'Inizia aggiungendo la tua prima transazione!'
+                  : isAdmin 
+                    ? 'Inizia aggiungendo la tua prima transazione!'
+                    : 'L\'amministratore non ha ancora inserito transazioni'
                 }
               </div>
             </div>
@@ -483,13 +610,15 @@ function App() {
                       }`}>
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
-                      <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
-                        title="Elimina transazione"
-                      >
-                        🗑️
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDelete(transaction.id)}
+                          className="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
+                          title="Elimina transazione (Solo Admin)"
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
