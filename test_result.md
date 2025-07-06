@@ -101,3 +101,61 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Mi serve un app dove posso mettere entrate e uscite" (Need an app to track income and expenses)
+
+backend:
+  - task: "Transaction CRUD API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented FastAPI backend with MongoDB for transactions CRUD. Includes endpoints for create, read, delete transactions and balance calculation."
+  
+  - task: "Balance calculation API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented /api/balance endpoint that calculates total income, total expenses, and net balance."
+
+frontend:
+  - task: "Transaction management UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created React frontend with form to add transactions (income/expense), view all transactions, and display balance. Italian language interface with categories."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Transaction CRUD API"
+    - "Balance calculation API"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented complete expense tracker app with Italian interface. Backend has transaction CRUD and balance calculation. Frontend has form for adding transactions and viewing all transactions with balance display. Need to test backend API endpoints first."
