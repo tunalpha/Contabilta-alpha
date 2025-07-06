@@ -203,10 +203,10 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-4">
-            <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-xl border-4 border-white flex items-center justify-center">
-              <div className="text-white font-bold text-3xl italic">
-                A
-              </div>
+            <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-xl border-4 border-white flex items-center justify-center">
+              <svg className="h-12 w-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6V7h12v12zm-7-8h2v2h-2v-2zm0 4h2v2h-2v-2zm4-4h2v2h-2v-2zm0 4h2v2h-2v-2zm-8-4h2v2H7v-2zm0 4h2v2H7v-2z"/>
+              </svg>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
