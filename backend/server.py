@@ -25,8 +25,18 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client.contabilita_alpha_marzia
 
 # Admin password (in production, use environment variable)
-ADMIN_PASSWORD = "alpha2024!"  # Cambia questa password!
+ADMIN_PASSWORD = "alpha2024!"  # Password principale
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
+
+# Security questions and answers for password recovery
+SECURITY_QUESTIONS = {
+    "question1": "Qual è il nome della tua prima azienda?",
+    "answer1": "alpha",  # Risposta: alpha (case insensitive)
+    "question2": "In che anno è nata Marzia?", 
+    "answer2": "1990",   # Risposta: 1990
+    "question3": "Qual è la tua città natale?",
+    "answer3": "roma"    # Risposta: roma (case insensitive)
+}
 
 # Pydantic models
 class Transaction(BaseModel):
@@ -51,6 +61,16 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     success: bool
     token: Optional[str] = None
+    message: str
+
+class SecurityAnswers(BaseModel):
+    answer1: str
+    answer2: str
+    answer3: str
+
+class PasswordRecoveryResponse(BaseModel):
+    success: bool
+    password: Optional[str] = None
     message: str
 
 # Authentication dependency
@@ -91,6 +111,42 @@ async def admin_login(login_data: LoginRequest):
         return LoginResponse(
             success=False,
             message="Password errata"
+        )
+
+@app.get("/api/security-questions")
+async def get_security_questions():
+    """Get security questions for password recovery"""
+    return {
+        "questions": [
+            {"id": "question1", "text": SECURITY_QUESTIONS["question1"]},
+            {"id": "question2", "text": SECURITY_QUESTIONS["question2"]},
+            {"id": "question3", "text": SECURITY_QUESTIONS["question3"]}
+        ]
+    }
+
+@app.post("/api/recover-password", response_model=PasswordRecoveryResponse)
+async def recover_password(answers: SecurityAnswers):
+    """Recover password using security questions"""
+    try:
+        # Check all answers (case insensitive for text answers)
+        if (answers.answer1.lower().strip() == SECURITY_QUESTIONS["answer1"].lower() and
+            answers.answer2.strip() == SECURITY_QUESTIONS["answer2"] and
+            answers.answer3.lower().strip() == SECURITY_QUESTIONS["answer3"].lower()):
+            
+            return PasswordRecoveryResponse(
+                success=True,
+                password=ADMIN_PASSWORD,
+                message="Password recuperata con successo!"
+            )
+        else:
+            return PasswordRecoveryResponse(
+                success=False,
+                message="Una o più risposte non sono corrette. Riprova."
+            )
+    except Exception as e:
+        return PasswordRecoveryResponse(
+            success=False,
+            message="Errore durante il recupero password"
         )
 
 @app.get("/api/transactions", response_model=List[TransactionResponse])
