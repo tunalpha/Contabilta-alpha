@@ -202,8 +202,15 @@ function App() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="mb-4">
+            <img 
+              src="https://images.unsplash.com/photo-1633544325196-bcf8bf81ead0" 
+              alt="Contabilità Alpha/Marzia Logo" 
+              className="mx-auto h-20 w-20 rounded-full shadow-lg border-4 border-blue-200"
+            />
+          </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            📊 Contabilità Alpha/Marzia
+            Contabilità Alpha/Marzia
           </h1>
           <p className="text-gray-600">Sistema di gestione contabile professionale</p>
         </div>
