@@ -81,6 +81,49 @@ function App() {
     }
   };
 
+  const handlePasswordRecovery = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/recover-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(securityAnswers),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(`Password recuperata: ${data.password}`);
+        setShowPasswordRecovery(false);
+        setSecurityAnswers({ answer1: '', answer2: '', answer3: '' });
+        // Auto-fill the password in login form
+        setLoginPassword(data.password);
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error during password recovery:', error);
+      alert('Errore durante il recupero password');
+    }
+  };
+
+  const fetchSecurityQuestions = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/security-questions`);
+      const data = await response.json();
+      setSecurityQuestions(data.questions);
+    } catch (error) {
+      console.error('Error fetching security questions:', error);
+    }
+  };
+
+  const openPasswordRecovery = () => {
+    setShowLogin(false);
+    setShowPasswordRecovery(true);
+    fetchSecurityQuestions();
+  };
+
   const handleLogout = () => {
     setAdminToken('');
     localStorage.removeItem('adminToken');
