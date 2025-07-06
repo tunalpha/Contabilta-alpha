@@ -202,6 +202,28 @@ function App() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="mb-4">
+            <div className="mx-auto h-24 w-24 flex items-center justify-center">
+              <svg className="h-24 w-24" viewBox="0 0 100 100" fill="none">
+                <path 
+                  d="M50 10 L85 75 L15 75 Z" 
+                  fill="url(#purpleGradient)" 
+                  rx="8" 
+                  ry="8"
+                />
+                <path 
+                  d="M40 65 L50 35 L60 65 L55 65 L52 55 L48 55 L45 65 Z" 
+                  fill="white"
+                />
+                <defs>
+                  <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#8B5CF6', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#A855F7', stopOpacity: 1}} />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             Contabilità Alpha/Marzia
           </h1>
