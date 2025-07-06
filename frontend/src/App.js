@@ -370,7 +370,7 @@ function App() {
                 placeholder="Password amministratore"
                 onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
               />
-              <div className="flex gap-4">
+              <div className="flex gap-4 mb-4">
                 <button
                   onClick={handleLogin}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
@@ -382,6 +382,63 @@ function App() {
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
                   Annulla
+                </button>
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={openPasswordRecovery}
+                  className="text-blue-600 hover:text-blue-800 text-sm underline"
+                >
+                  🔑 Hai dimenticato la password?
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password Recovery Modal */}
+        {showPasswordRecovery && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">🔑 Recupera Password</h2>
+              <p className="text-gray-600 mb-4">
+                Rispondi alle domande di sicurezza per recuperare la password
+              </p>
+              
+              {securityQuestions.map((question, index) => (
+                <div key={question.id} className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {question.text}
+                  </label>
+                  <input
+                    type="text"
+                    value={securityAnswers[`answer${index + 1}`]}
+                    onChange={(e) => setSecurityAnswers({
+                      ...securityAnswers,
+                      [`answer${index + 1}`]: e.target.value
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Inserisci la risposta..."
+                  />
+                </div>
+              ))}
+              
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handlePasswordRecovery}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Recupera Password
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPasswordRecovery(false);
+                    setSecurityAnswers({ answer1: '', answer2: '', answer3: '' });
+                    setShowLogin(true);
+                  }}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Indietro
                 </button>
               </div>
             </div>
