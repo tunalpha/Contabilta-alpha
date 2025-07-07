@@ -341,7 +341,7 @@ function App() {
     setFilteredTransactions(filtered);
   };
 
-  const MAX_CLIENTS = 5; // Limite massimo clienti
+  const MAX_CLIENTS = 30; // Limite massimo clienti (Piano Gratuito)
 
   const handleClientSubmit = async (e) => {
     e.preventDefault();
