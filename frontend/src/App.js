@@ -1208,20 +1208,28 @@ function App() {
           <div className="mb-4">
             <div className="mx-auto h-24 w-24 flex items-center justify-center">
               <svg className="h-24 w-24" viewBox="0 0 100 100" fill="none">
+                {/* Triangolo principale con gradiente viola */}
                 <path 
-                  d="M50 15 L80 75 L20 75 Z" 
-                  fill="url(#purpleGradient)" 
-                  rx="8" 
-                  ry="8"
-                  style={{borderRadius: "12px"}}
+                  d="M50 10 C52 10 54 11 55.5 13 L85 65 C87.5 69 87.5 74 85 78 C83.5 80 81 82 78 82 L22 82 C19 82 16.5 80 15 78 C12.5 74 12.5 69 15 65 L44.5 13 C46 11 48 10 50 10 Z" 
+                  fill="url(#brandGradient)"
                 />
+                
+                {/* Spazio negativo che forma la "A" */}
                 <path 
-                  d="M42 65 L50 40 L58 65 L54 65 L52 57 L48 57 L46 65 Z" 
+                  d="M50 25 L38 65 L43 65 L46 55 L54 55 L57 65 L62 65 L50 25 Z M48.5 47 L51.5 47 L50 42 L48.5 47 Z" 
                   fill="white"
                 />
+                
+                {/* Parte interna della A (il triangolino) */}
+                <path 
+                  d="M50 35 L58 55 L50 55 L42 55 L50 35" 
+                  fill="url(#brandGradient)"
+                />
+                
                 <defs>
-                  <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor: '#A855F7', stopOpacity: 1}} />
+                  <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#C084FC', stopOpacity: 1}} />
+                    <stop offset="50%" style={{stopColor: '#A855F7', stopOpacity: 1}} />
                     <stop offset="100%" style={{stopColor: '#7C3AED', stopOpacity: 1}} />
                   </linearGradient>
                 </defs>
