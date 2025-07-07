@@ -662,6 +662,15 @@ function App() {
     dateFrom: '',
     dateTo: ''
   });
+  const [newTransaction, setNewTransaction] = useState({
+    description: '',
+    amount: '',
+    type: 'avere',
+    category: 'Cash',
+    date: new Date().toISOString().split('T')[0],
+    currency: 'EUR'  // New field
+  });
+  const [exchangeRates, setExchangeRates] = useState({ EUR: 1.0, USD: 0.92, GBP: 1.17 });
   const [language, setLanguage] = useState('it'); // 'it' or 'en'
 
   // Translations
