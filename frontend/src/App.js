@@ -1456,10 +1456,10 @@ function App() {
                           </span>
                           <div>
                             <div className="font-medium text-sm">
-                              {transaction.description}
+                              {translateText(transaction.description)}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {transaction.category} • {formatDate(transaction.date)}
+                              {translateText(transaction.category)} • {formatDate(transaction.date)}
                             </div>
                           </div>
                         </div>
