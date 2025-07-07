@@ -244,8 +244,8 @@ function App() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     
-    if (!editFormData.amount || !editFormData.description) {
-      alert('Per favore compila tutti i campi');
+    if (!editFormData.amount) {
+      alert('Per favore inserisci l\'importo');
       return;
     }
 
@@ -258,7 +258,7 @@ function App() {
         },
         body: JSON.stringify({
           amount: parseFloat(editFormData.amount),
-          description: editFormData.description,
+          description: editFormData.description || 'Transazione senza descrizione',
           type: editFormData.type,
           category: editFormData.category,
           date: editingTransaction.date // Mantieni la data originale
