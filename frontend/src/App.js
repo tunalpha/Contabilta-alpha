@@ -1457,15 +1457,15 @@ function App() {
         {showPDFModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📄 Scarica Estratto Conto PDF</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pdfTitle')}</h2>
               <p className="text-gray-600 mb-4">
-                Seleziona il periodo per l'estratto conto (lascia vuoto per tutte le transazioni)
+                {t('pdfSubtitle')}
               </p>
               
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data inizio
+                    {t('dateFrom')}
                   </label>
                   <input
                     type="date"
@@ -1476,7 +1476,7 @@ function App() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data fine
+                    {t('dateTo')}
                   </label>
                   <input
                     type="date"
@@ -1492,7 +1492,7 @@ function App() {
                   onClick={handlePDFDownloadConfirm}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  📄 Scarica PDF
+                  {t('downloadPDF')}
                 </button>
                 <button
                   onClick={() => {
@@ -1501,7 +1501,7 @@ function App() {
                   }}
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  Annulla
+                  {t('cancel')}
                 </button>
               </div>
             </div>
