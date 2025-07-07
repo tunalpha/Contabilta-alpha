@@ -1049,15 +1049,15 @@ function App() {
                   onClick={() => setShowClientForm(!showClientForm)}
                   className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
                 >
-                  {showClientForm ? 'Chiudi Form' : '+ Nuovo Cliente'}
+                  {showClientForm ? t('cancel') : `+ ${t('newClient')}`}
                 </button>
                 <button
                   onClick={() => setShowForm(!showForm)}
                   className={`${selectedClient ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg`}
                   disabled={!selectedClient}
                 >
-                  {showForm ? 'Chiudi Form' : '+ Nuova Transazione'}
-                  {!selectedClient && ' (Seleziona Cliente)'}
+                  {showForm ? t('cancel') : `+ ${t('newTransaction')}`}
+                  {!selectedClient && ` (${t('view')} ${t('clientName')})`}
                 </button>
               </div>
 
