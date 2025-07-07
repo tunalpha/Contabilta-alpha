@@ -50,6 +50,8 @@ function App() {
   });
   const [loginPassword, setLoginPassword] = useState('');
 
+  const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
+
   // Helper function to get current week dates (Monday to Sunday)
   const getCurrentWeekDates = (date = new Date()) => {
     const today = new Date(date);
