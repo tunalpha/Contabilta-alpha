@@ -222,6 +222,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "PDF generation for clients"
     - "Transaction CRUD API with filtering"
     - "Balance calculation API (dare/avere)"
     - "Advanced search and filtering"
