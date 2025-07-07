@@ -523,7 +523,98 @@ function App() {
           </button>
         </div>
 
+        {/* Edit Transaction Form - Only for Admin */}
+        {showEditForm && isAdmin && editingTransaction && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-2 border-orange-200">
+            <h2 className="text-2xl font-bold text-orange-800 mb-4">✏️ Modifica Transazione</h2>
+            <div className="bg-orange-50 p-3 rounded-lg mb-4">
+              <p className="text-orange-700 text-sm">
+                <strong>Transazione originale:</strong> {editingTransaction.description} - {formatCurrency(editingTransaction.amount)}
+              </p>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo Operazione
+                  </label>
+                  <select
+                    value={editFormData.type}
+                    onChange={(e) => setEditFormData({...editFormData, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="dare">Dare (Uscita/Debito)</option>
+                    <option value="avere">Avere (Entrata/Credito)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importo (€)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.amount}
+                    onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrizione (opzionale)
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Descrizione della transazione (opzionale)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Metodo di Pagamento
+                </label>
+                <select
+                  value={editFormData.category}
+                  onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {getCategoryIcon(category)} {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  ✏️ Salva Modifiche
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditForm(false);
+                    setEditingTransaction(null);
+                    setEditFormData({ amount: '', description: '', type: 'dare', category: 'Cash' });
+                  }}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Annulla
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
+        {/* Transaction Form - Only for Admin */}
+        {showForm && isAdmin && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Nuova Transazione</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
