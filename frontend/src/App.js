@@ -1768,10 +1768,10 @@ function App() {
                         </span>
                         <div>
                           <div className="font-semibold text-gray-800">
-                            {transaction.description}
+                            {translateText(transaction.description)}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {transaction.category} • {transaction.type === 'avere' ? 'Avere' : 'Dare'} • {formatDate(transaction.date)}
+                            {translateText(transaction.category)} • {translateText(transaction.type === 'avere' ? 'Avere' : 'Dare')} • {formatDate(transaction.date)}
                           </div>
                         </div>
                       </div>
