@@ -440,22 +440,6 @@ function App() {
     }
   };
 
-      if (response.ok) {
-        const newClient = await response.json();
-        setClientFormData({ name: '' });
-        setShowClientForm(false);
-        fetchClients();
-        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`);
-      } else {
-        const errorData = await response.json();
-        alert(`Errore: ${errorData.detail}`);
-      }
-    } catch (error) {
-      console.error('Error creating client:', error);
-      alert('Errore nel creare il cliente');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
