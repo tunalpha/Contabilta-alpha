@@ -20,6 +20,8 @@ from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 import io
+import aiohttp
+import asyncio
 
 app = FastAPI(title="Contabilità Alpha - Multi Cliente")
 
