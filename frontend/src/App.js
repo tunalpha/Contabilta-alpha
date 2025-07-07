@@ -1450,7 +1450,7 @@ function App() {
                       <div>📊 Transazioni: {client.total_transactions}</div>
                       <div>📅 Creato: {formatDate(client.created_date)}</div>
                     </div>
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-wrap gap-1">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1477,6 +1477,16 @@ function App() {
                         className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
                       >
                         📄 PDF
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResetClientLink(client);
+                        }}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                        title="Reset link di accesso"
+                      >
+                        🔄 Reset
                       </button>
                     </div>
                   </div>
