@@ -85,7 +85,7 @@ async def send_password_email():
     try:
         # Create message
         message = MIMEMultipart("alternative")
-        message["Subject"] = "🔑 Recupero Password - Contabilità Alpha/Marzia"
+        message["Subject"] = "🔑 Recupero Password - Contabilità Alpha"
         message["From"] = EMAIL_CONFIG["sender_email"]
         message["To"] = EMAIL_CONFIG["recovery_email"]
 
