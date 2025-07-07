@@ -647,7 +647,11 @@ async def get_statistics(client_slug: Optional[str] = Query(None, description="C
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/clients/{client_slug}/pdf")
-async def generate_client_pdf(client_slug: str):
+async def generate_client_pdf(
+    client_slug: str,
+    date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
+):
     """Generate PDF report for a specific client (PUBLIC)"""
     try:
         # Get client data
@@ -655,12 +659,24 @@ async def generate_client_pdf(client_slug: str):
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Get all transactions for this client
+        # Build query filter for transactions
+        query_filter = {"client_id": client["id"]}
+        
+        # Add date filtering if provided
+        if date_from or date_to:
+            date_filter = {}
+            if date_from:
+                date_filter["$gte"] = datetime.fromisoformat(date_from)
+            if date_to:
+                date_filter["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
+            query_filter["date"] = date_filter
+        
+        # Get transactions for this client (with optional date filtering)
         transactions = []
-        async for transaction in db.transactions.find({"client_id": client["id"]}).sort("date", -1):
+        async for transaction in db.transactions.find(query_filter).sort("date", -1):
             transactions.append(transaction_helper(transaction))
         
-        # Calculate balance
+        # Calculate balance for filtered transactions
         total_avere = 0
         total_dare = 0
         for transaction in transactions:
@@ -701,10 +717,20 @@ async def generate_client_pdf(client_slug: str):
         story.append(Paragraph("Estratto Conto", subtitle_style))
         story.append(Spacer(1, 20))
         
-        # Client info
+        # Client info and period
         client_info = f"<b>Cliente:</b> {client['name']}<br/>"
         client_info += f"<b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y alle %H:%M')}<br/>"
-        client_info += f"<b>Periodo:</b> Tutte le transazioni"
+        
+        if date_from or date_to:
+            period_text = "Periodo: "
+            if date_from:
+                period_text += f"dal {datetime.fromisoformat(date_from).strftime('%d/%m/%Y')} "
+            if date_to:
+                period_text += f"al {datetime.fromisoformat(date_to).strftime('%d/%m/%Y')}"
+            client_info += f"<b>{period_text}</b>"
+        else:
+            client_info += f"<b>Periodo:</b> Tutte le transazioni"
+            
         story.append(Paragraph(client_info, styles['Normal']))
         story.append(Spacer(1, 20))
         
@@ -742,36 +768,47 @@ async def generate_client_pdf(client_slug: str):
             transaction_data = [['Data', 'Descrizione', 'Tipo', 'Categoria', 'Importo']]
             
             for transaction in transactions:
-                date_str = datetime.fromisoformat(transaction['date'].replace('Z', '+00:00')).strftime('%d/%m/%Y')
+                # Handle both datetime objects and strings
+                if isinstance(transaction['date'], str):
+                    date_obj = datetime.fromisoformat(transaction['date'].replace('Z', '+00:00'))
+                else:
+                    date_obj = transaction['date']
+                
+                date_str = date_obj.strftime('%d/%m/%Y %H:%M')
                 amount_str = f"€ {transaction['amount']:,.2f}"
                 if transaction['type'] == 'avere':
                     amount_str = f"+{amount_str}"
                 else:
                     amount_str = f"-{amount_str}"
                 
+                # Truncate description if too long
+                description = transaction['description']
+                if len(description) > 40:
+                    description = description[:37] + '...'
+                
                 transaction_data.append([
                     date_str,
-                    transaction['description'][:30] + '...' if len(transaction['description']) > 30 else transaction['description'],
+                    description,
                     'Avere' if transaction['type'] == 'avere' else 'Dare',
                     transaction['category'],
                     amount_str
                 ])
             
-            transaction_table = Table(transaction_data, colWidths=[1*inch, 2.5*inch, 0.8*inch, 1*inch, 1.2*inch])
+            transaction_table = Table(transaction_data, colWidths=[1.2*inch, 2.3*inch, 0.8*inch, 1*inch, 1.2*inch])
             transaction_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.navy),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('FONTSIZE', (0, 1), (-1, -1), 7),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             
-            # Color code the amounts
+            # Color code the amounts and rows
             for i, transaction in enumerate(transactions, 1):
                 if transaction['type'] == 'avere':
                     transaction_table.setStyle(TableStyle([
@@ -786,11 +823,17 @@ async def generate_client_pdf(client_slug: str):
             
             story.append(transaction_table)
         else:
-            story.append(Paragraph("Nessuna transazione trovata per questo cliente.", styles['Normal']))
+            no_transactions_msg = "Nessuna transazione trovata"
+            if date_from or date_to:
+                no_transactions_msg += " per il periodo selezionato"
+            no_transactions_msg += "."
+            story.append(Paragraph(no_transactions_msg, styles['Normal']))
         
         # Footer
         story.append(Spacer(1, 30))
         footer_text = f"Totale transazioni: {len(transactions)}"
+        if date_from or date_to:
+            footer_text += f" (filtrate per periodo)"
         story.append(Paragraph(footer_text, styles['Normal']))
         
         # Build PDF
@@ -798,7 +841,15 @@ async def generate_client_pdf(client_slug: str):
         
         # Return PDF as response
         buffer.seek(0)
-        filename = f"estratto_conto_{client['slug']}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        date_suffix = ""
+        if date_from and date_to:
+            date_suffix = f"_{date_from}_{date_to}"
+        elif date_from:
+            date_suffix = f"_dal_{date_from}"
+        elif date_to:
+            date_suffix = f"_al_{date_to}"
+        
+        filename = f"estratto_conto_{client['slug']}{date_suffix}_{datetime.now().strftime('%Y%m%d')}.pdf"
         
         return StreamingResponse(
             io.BytesIO(buffer.read()),
