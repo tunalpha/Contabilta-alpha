@@ -64,6 +64,8 @@ function App() {
       fetchClientData(slug);
     } else {
       setCurrentView('admin');
+      // Always try to fetch clients for public view
+      fetchClientsPublic();
       if (adminToken) {
         setIsAdmin(true);
         fetchClients();
