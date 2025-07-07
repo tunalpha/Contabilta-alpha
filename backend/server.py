@@ -223,7 +223,7 @@ async def send_password_email():
 
 @app.get("/")
 async def root():
-    return {"message": "Contabilità Alpha API"}
+    return {"message": "Contabilità Alpha Multi-Cliente API"}
 
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
@@ -262,18 +262,128 @@ async def recover_password():
             message="Errore durante il recupero password"
         )
 
+# CLIENT MANAGEMENT ENDPOINTS
+
+@app.get("/api/clients", response_model=List[ClientResponse])
+async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
+    """Get all clients with statistics (ADMIN ONLY)"""
+    try:
+        clients = []
+        async for client in db.clients.find().sort("created_date", -1):
+            client_data = client_helper(client)
+            
+            # Get transaction count and balance for this client
+            transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
+            
+            total_avere = 0
+            total_dare = 0
+            async for transaction in db.transactions.find({"client_id": client["id"]}):
+                if transaction["type"] == "avere":
+                    total_avere += transaction["amount"]
+                else:
+                    total_dare += transaction["amount"]
+            
+            client_response = ClientResponse(
+                **client_data,
+                total_transactions=transaction_count,
+                balance=total_avere - total_dare
+            )
+            clients.append(client_response)
+        
+        return clients
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/clients", response_model=ClientResponse)
+async def create_client(client: Client, admin_verified: bool = Depends(verify_admin_token)):
+    """Create a new client (ADMIN ONLY)"""
+    try:
+        # Generate slug from name
+        slug = create_slug(client.name)
+        
+        # Check if slug already exists
+        existing_client = await db.clients.find_one({"slug": slug})
+        if existing_client:
+            # Add number to make it unique
+            counter = 1
+            while existing_client:
+                new_slug = f"{slug}-{counter}"
+                existing_client = await db.clients.find_one({"slug": new_slug})
+                counter += 1
+            slug = new_slug
+        
+        client_dict = {
+            "id": str(uuid.uuid4()),
+            "name": client.name,
+            "slug": slug,
+            "created_date": datetime.now(),
+            "active": True
+        }
+        
+        result = await db.clients.insert_one(client_dict)
+        if result.inserted_id:
+            return ClientResponse(**client_dict, total_transactions=0, balance=0.0)
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create client")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/clients/{client_slug}")
+async def get_client_by_slug(client_slug: str):
+    """Get client by slug (PUBLIC - for client pages)"""
+    try:
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        return client_helper(client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/clients/{client_id}")
+async def delete_client(client_id: str, admin_verified: bool = Depends(verify_admin_token)):
+    """Delete a client and all their transactions (ADMIN ONLY)"""
+    try:
+        # Delete all transactions for this client
+        await db.transactions.delete_many({"client_id": client_id})
+        
+        # Delete the client
+        result = await db.clients.delete_one({"id": client_id})
+        if result.deleted_count == 1:
+            return {"message": "Client and all transactions deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Client not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# TRANSACTION ENDPOINTS (Modified for multi-client)
+
 @app.get("/api/transactions", response_model=List[TransactionResponse])
 async def get_transactions(
+    client_slug: Optional[str] = Query(None, description="Client slug filter"),
     search: Optional[str] = Query(None, description="Cerca nelle descrizioni"),
     category: Optional[str] = Query(None, description="Filtra per categoria"),
     type: Optional[str] = Query(None, description="Filtra per tipo (dare/avere)"),
     date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
 ):
-    """Get all transactions (PUBLIC - No authentication required)"""
+    """Get transactions (PUBLIC for specific client, ADMIN for all)"""
     try:
         # Build query filter
         query_filter = {}
+        
+        # If client_slug is provided, filter by client
+        if client_slug:
+            client = await db.clients.find_one({"slug": client_slug, "active": True})
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            query_filter["client_id"] = client["id"]
         
         # Search in description
         if search:
@@ -301,6 +411,8 @@ async def get_transactions(
             transactions.append(transaction_helper(transaction))
         
         return transactions
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -308,6 +420,11 @@ async def get_transactions(
 async def create_transaction(transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
     """Create a new transaction (ADMIN ONLY)"""
     try:
+        # Verify client exists
+        client = await db.clients.find_one({"id": transaction.client_id, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
         transaction_dict = transaction.dict()
         transaction_dict["id"] = str(uuid.uuid4())
         
@@ -363,13 +480,22 @@ async def delete_transaction(transaction_id: str, admin_verified: bool = Depends
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/balance")
-async def get_balance():
-    """Get current balance (PUBLIC - No authentication required)"""
+async def get_balance(client_slug: Optional[str] = Query(None, description="Client slug filter")):
+    """Get balance (PUBLIC for specific client, ADMIN for all)"""
     try:
+        query_filter = {}
+        
+        # If client_slug is provided, filter by client
+        if client_slug:
+            client = await db.clients.find_one({"slug": client_slug, "active": True})
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            query_filter["client_id"] = client["id"]
+        
         total_avere = 0  # Crediti/Entrate
         total_dare = 0   # Debiti/Uscite
         
-        async for transaction in db.transactions.find():
+        async for transaction in db.transactions.find(query_filter):
             if transaction["type"] == "avere":
                 total_avere += transaction["amount"]
             else:
@@ -382,20 +508,31 @@ async def get_balance():
             "total_avere": total_avere,
             "total_dare": total_dare
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/statistics")
-async def get_statistics():
-    """Get statistics by category and type (PUBLIC - No authentication required)"""
+async def get_statistics(client_slug: Optional[str] = Query(None, description="Client slug filter")):
+    """Get statistics (PUBLIC for specific client, ADMIN for all)"""
     try:
+        query_filter = {}
+        
+        # If client_slug is provided, filter by client
+        if client_slug:
+            client = await db.clients.find_one({"slug": client_slug, "active": True})
+            if not client:
+                raise HTTPException(status_code=404, detail="Client not found")
+            query_filter["client_id"] = client["id"]
+        
         stats = {
             "by_category": {},
             "by_type": {"avere": 0, "dare": 0},
             "monthly_summary": []
         }
         
-        async for transaction in db.transactions.find():
+        async for transaction in db.transactions.find(query_filter):
             # Stats by category
             category = transaction["category"]
             if category not in stats["by_category"]:
@@ -407,6 +544,8 @@ async def get_statistics():
             stats["by_type"][transaction["type"]] += transaction["amount"]
         
         return stats
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
