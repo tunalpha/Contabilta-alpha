@@ -1782,16 +1782,16 @@ function App() {
                   onClick={handlePDFDownloadConfirm}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  📄 Scarica PDF
+                  {t('downloadPDF')}
                 </button>
                 <button
                   onClick={() => {
                     setShowPDFModal(false);
-                    setPdfDateFilters({ dateFrom: '', dateTo: '' });
+                    setPdfDateFilters({ dateFrom: '', dateTo: '', targetClientSlug: '' });
                   }}
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  Annulla
+                  {t('cancel')}
                 </button>
               </div>
             </div>
