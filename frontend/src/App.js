@@ -440,24 +440,6 @@ function App() {
     }
   };
 
-    // Check client limit
-    if (clients.length >= MAX_CLIENTS) {
-      alert(`❌ Limite raggiunto!\n\nPuoi avere massimo ${MAX_CLIENTS} clienti.\nElimina un cliente esistente per aggiungerne uno nuovo.`);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/clients`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({
-          name: clientFormData.name
-        }),
-      });
-
       if (response.ok) {
         const newClient = await response.json();
         setClientFormData({ name: '' });
