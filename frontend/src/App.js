@@ -1311,12 +1311,6 @@ function App() {
             {showFilters ? 'Nascondi Filtri' : '🔍 Cronologia e Filtri'}
           </button>
           <button
-            onClick={() => downloadClientPDF(selectedClient.slug)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
-          >
-            📄 Scarica PDF
-          </button>
-          <button
             onClick={downloadPDF}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
           >
