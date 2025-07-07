@@ -940,25 +940,25 @@ function App() {
               {isAdmin ? (
                 <div className="flex items-center justify-center gap-2">
                   <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                    🔐 Modalità Amministratore
+                    {t('adminMode')}
                   </span>
                   <button
                     onClick={handleLogout}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
                   >
-                    Logout
+                    {t('logout')}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
                   <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                    👁️ Modalità Solo Lettura
+                    {t('readOnlyMode')}
                   </span>
                   <button
                     onClick={() => setShowLogin(true)}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
                   >
-                    Login Admin
+                    {t('loginAdmin')}
                   </button>
                 </div>
               )}
