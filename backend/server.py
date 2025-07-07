@@ -10,8 +10,9 @@ import hashlib
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import re
 
-app = FastAPI(title="Contabilità Alpha")
+app = FastAPI(title="Contabilità Alpha - Multi Cliente")
 
 # CORS configuration
 app.add_middleware(
@@ -25,7 +26,7 @@ app.add_middleware(
 # MongoDB connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-db = client.contabilita_alpha_marzia
+db = client.contabilita_alpha_multi
 
 # Admin password (in production, use environment variable)
 ADMIN_PASSWORD = "alpha2024!"  # Password principale
@@ -41,8 +42,25 @@ EMAIL_CONFIG = {
 }
 
 # Pydantic models
+class Client(BaseModel):
+    id: Optional[str] = None
+    name: str
+    slug: str  # URL-friendly name (e.g., "mario-rossi")
+    created_date: datetime
+    active: bool = True
+
+class ClientResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    created_date: datetime
+    active: bool
+    total_transactions: int = 0
+    balance: float = 0.0
+
 class Transaction(BaseModel):
     id: Optional[str] = None
+    client_id: str  # Reference to client
     amount: float
     description: Optional[str] = "Transazione senza descrizione"
     type: str  # 'avere' (credito/entrata) or 'dare' (debito/uscita)
@@ -51,6 +69,7 @@ class Transaction(BaseModel):
 
 class TransactionResponse(BaseModel):
     id: str
+    client_id: str
     amount: float
     description: str
     type: str
@@ -78,6 +97,33 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=403, detail="Token non valido")
     
     return True
+
+# Helper functions
+def create_slug(name: str) -> str:
+    """Create URL-friendly slug from client name"""
+    slug = re.sub(r'[^a-zA-Z0-9\s]', '', name.lower())
+    slug = re.sub(r'\s+', '-', slug.strip())
+    return slug
+
+def client_helper(client) -> dict:
+    return {
+        "id": client["id"],
+        "name": client["name"],
+        "slug": client["slug"],
+        "created_date": client["created_date"],
+        "active": client["active"]
+    }
+
+def transaction_helper(transaction) -> dict:
+    return {
+        "id": transaction["id"],
+        "client_id": transaction["client_id"],
+        "amount": transaction["amount"],
+        "description": transaction["description"],
+        "type": transaction["type"],
+        "category": transaction["category"],
+        "date": transaction["date"]
+    }
 
 # Email sending function
 async def send_password_email():
@@ -174,17 +220,6 @@ async def send_password_email():
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
-
-# Helper function to convert MongoDB document to response
-def transaction_helper(transaction) -> dict:
-    return {
-        "id": transaction["id"],
-        "amount": transaction["amount"],
-        "description": transaction["description"],
-        "type": transaction["type"],
-        "category": transaction["category"],
-        "date": transaction["date"]
-    }
 
 @app.get("/")
 async def root():
