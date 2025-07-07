@@ -1206,9 +1206,25 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-4">
-            <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-xl border-4 border-white flex items-center justify-center">
-              <svg className="h-14 w-14 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7 2h10c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zm0 2v3h10V4H7zm0 5v2h2V9H7zm4 0v2h2V9h-2zm4 0v2h2V9h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
+            <div className="mx-auto h-24 w-24 flex items-center justify-center">
+              <svg className="h-24 w-24" viewBox="0 0 100 100" fill="none">
+                <path 
+                  d="M50 15 L80 75 L20 75 Z" 
+                  fill="url(#purpleGradient)" 
+                  rx="8" 
+                  ry="8"
+                  style={{borderRadius: "12px"}}
+                />
+                <path 
+                  d="M42 65 L50 40 L58 65 L54 65 L52 57 L48 57 L46 65 Z" 
+                  fill="white"
+                />
+                <defs>
+                  <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#A855F7', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#7C3AED', stopOpacity: 1}} />
+                  </linearGradient>
+                </defs>
               </svg>
             </div>
           </div>
