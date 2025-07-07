@@ -348,7 +348,55 @@ function App() {
 
   const MAX_CLIENTS = 30; // Limite massimo clienti (Piano Gratuito)
 
-  const handleClientSubmit = async (e) => {
+  const handleEditClient = (client) => {
+    if (!isAdmin) {
+      alert('Solo l\'amministratore può modificare clienti');
+      return;
+    }
+
+    setEditingClient(client);
+    setEditClientFormData({
+      name: client.name
+    });
+    setShowEditClientForm(true);
+  };
+
+  const handleEditClientSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!editClientFormData.name) {
+      alert('Per favore inserisci il nome del cliente');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${editingClient.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          name: editClientFormData.name
+        }),
+      });
+
+      if (response.ok) {
+        const updatedClient = await response.json();
+        setEditClientFormData({ name: '' });
+        setShowEditClientForm(false);
+        setEditingClient(null);
+        fetchClients();
+        alert(`✅ Cliente rinominato in "${updatedClient.name}" con successo!\n\nNuovo link: ${window.location.origin}/cliente/${updatedClient.slug}`);
+      } else {
+        const errorData = await response.json();
+        alert(`Errore: ${errorData.detail}`);
+      }
+    } catch (error) {
+      console.error('Error updating client:', error);
+      alert('Errore nel modificare il cliente');
+    }
+  };
     e.preventDefault();
     
     if (!clientFormData.name) {
