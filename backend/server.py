@@ -42,6 +42,9 @@ EMAIL_CONFIG = {
 }
 
 # Pydantic models
+class ClientCreateRequest(BaseModel):
+    name: str
+
 class Client(BaseModel):
     id: Optional[str] = None
     name: str
