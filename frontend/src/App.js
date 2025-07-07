@@ -348,6 +348,48 @@ function App() {
 
   const MAX_CLIENTS = 30; // Limite massimo clienti (Piano Gratuito)
 
+  const handleClientSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!clientFormData.name) {
+      alert('Per favore inserisci il nome del cliente');
+      return;
+    }
+
+    // Check client limit
+    if (clients.length >= MAX_CLIENTS) {
+      alert(`❌ Limite raggiunto!\n\nPuoi avere massimo ${MAX_CLIENTS} clienti.\nElimina un cliente esistente per aggiungerne uno nuovo.`);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          name: clientFormData.name
+        }),
+      });
+
+      if (response.ok) {
+        const newClient = await response.json();
+        setClientFormData({ name: '' });
+        setShowClientForm(false);
+        fetchClients();
+        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`);
+      } else {
+        const errorData = await response.json();
+        alert(`Errore: ${errorData.detail}`);
+      }
+    } catch (error) {
+      console.error('Error creating client:', error);
+      alert('Errore nel creare il cliente');
+    }
+  };
+
   const handleEditClient = (client) => {
     if (!isAdmin) {
       alert('Solo l\'amministratore può modificare clienti');
@@ -397,12 +439,6 @@ function App() {
       alert('Errore nel modificare il cliente');
     }
   };
-    e.preventDefault();
-    
-    if (!clientFormData.name) {
-      alert('Per favore inserisci il nome del cliente');
-      return;
-    }
 
     // Check client limit
     if (clients.length >= MAX_CLIENTS) {
