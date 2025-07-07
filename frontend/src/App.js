@@ -789,10 +789,12 @@ function App() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4">
-              <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-xl border-4 border-white flex items-center justify-center">
-                <svg className="h-14 w-14 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 2h10c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zm0 2v3h10V4H7zm0 5v2h2V9H7zm4 0v2h2V9h-2zm4 0v2h2V9h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
-                </svg>
+              <div className="mx-auto h-24 w-24 flex items-center justify-center">
+                <img 
+                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InB1cnBsZUdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzk4NTVGRiIvPgo8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzgzMzNFQSIvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNEOTQ2RUYiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cGF0aCBkPSJNMjAgODBMMzUgMjBINjVMODAgODBINjBMNTUgNjBINDVMNDAgODBIMjBaIE00MyA0MEg1N0w2MCA1MEg0MFpNNTAgMTBMMTAgOTBIOTBMNTAgMTBaIiBmaWxsPSJ1cmwoI3B1cnBsZUdyYWRpZW50KSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPgo=" 
+                  alt="Alpha Logo" 
+                  className="h-24 w-24"
+                />
               </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
