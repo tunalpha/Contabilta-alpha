@@ -80,14 +80,14 @@ function App() {
   }, [currentView, isAdmin]);
 
   useEffect(() => {
-    if (currentView === 'client' && currentClientSlug) {
-      fetchTransactions(currentClientSlug);
-      fetchBalance(currentClientSlug);
-    } else if (currentView === 'admin' && selectedClient) {
+    if (currentView === 'admin' && selectedClient) {
       fetchTransactions();
       fetchBalance();
+    } else if (currentView === 'client' && currentClientSlug) {
+      fetchTransactions(currentClientSlug);
+      fetchBalance(currentClientSlug);
     }
-  }, [currentView, currentClientSlug, selectedClient]);
+  }, [currentView, currentClientSlug, selectedClient, adminToken]);
 
   useEffect(() => {
     applyFilters();
