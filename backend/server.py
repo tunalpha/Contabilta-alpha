@@ -297,6 +297,36 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/clients/public", response_model=List[ClientResponse])
+async def get_clients_public():
+    """Get all clients with basic info (PUBLIC - No authentication required)"""
+    try:
+        clients = []
+        async for client in db.clients.find().sort("created_date", -1):
+            client_data = client_helper(client)
+            
+            # Get transaction count and balance for this client
+            transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
+            
+            total_avere = 0
+            total_dare = 0
+            async for transaction in db.transactions.find({"client_id": client["id"]}):
+                if transaction["type"] == "avere":
+                    total_avere += transaction["amount"]
+                else:
+                    total_dare += transaction["amount"]
+            
+            client_response = ClientResponse(
+                **client_data,
+                total_transactions=transaction_count,
+                balance=total_avere - total_dare
+            )
+            clients.append(client_response)
+        
+        return clients
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/clients", response_model=ClientResponse)
 async def create_client(client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
     """Create a new client (ADMIN ONLY)"""
