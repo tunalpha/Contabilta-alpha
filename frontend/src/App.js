@@ -730,7 +730,8 @@ function App() {
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
       totalTransactions: "Totale transazioni",
-      clientManagement: "👥 Gestione Clienti"
+      clientManagement: "👥 Gestione Clienti",
+      resetLink: "🔄 Reset Link"
     },
     en: {
       // Header
