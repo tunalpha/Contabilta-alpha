@@ -202,6 +202,18 @@ frontend:
         agent: "testing"
         comment: "Verified that delete buttons (🗑️) appear next to each transaction when logged in as admin. Clicking the delete button shows a confirmation dialog asking if the user is sure they want to delete the transaction. The dialog shows the transaction description and amount."
 
+  - task: "PDF generation for clients"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py, /app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implemented PDF generation functionality. Added /api/clients/{client_slug}/pdf endpoint in backend using reportlab. Added PDF download buttons in frontend for both admin and client views. All transactions are included in the PDF with proper formatting, balance calculation, and professional layout."
+
 metadata:
   created_by: "main_agent"
   version: "2.0"
