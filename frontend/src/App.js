@@ -50,7 +50,74 @@ function App() {
   });
   const [loginPassword, setLoginPassword] = useState('');
 
-  const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
+  // Helper function to get current week dates (Monday to Sunday)
+  const getCurrentWeekDates = (date = new Date()) => {
+    const today = new Date(date);
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    
+    // Calculate Monday of current week
+    const monday = new Date(today);
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days
+    monday.setDate(today.getDate() + daysToMonday);
+    
+    // Calculate Sunday of current week
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    return {
+      monday: monday.toLocaleDateString('it-IT'),
+      sunday: sunday.toLocaleDateString('it-IT'),
+      mondayISO: monday.toISOString()
+    };
+  };
+
+  // Helper function to get next week dates
+  const getNextWeekDates = (lastDate) => {
+    const lastWeek = new Date(lastDate);
+    const nextMonday = new Date(lastWeek);
+    nextMonday.setDate(lastWeek.getDate() + 7); // Add 7 days to get next Monday
+    
+    const nextSunday = new Date(nextMonday);
+    nextSunday.setDate(nextMonday.getDate() + 6);
+    
+    return {
+      monday: nextMonday.toLocaleDateString('it-IT'),
+      sunday: nextSunday.toLocaleDateString('it-IT'),
+      mondayISO: nextMonday.toISOString()
+    };
+  };
+
+  // Special function for Bill's weekly card income
+  const handleBillWeeklyTransaction = () => {
+    if (selectedClient?.name === 'Bill' && formData.type === 'avere') {
+      // Get the last transaction date for Bill to calculate next week
+      const billTransactions = transactions.filter(t => t.client_id === selectedClient.id);
+      
+      let weekDates;
+      if (billTransactions.length > 0) {
+        // Get the most recent transaction date and calculate next week
+        const lastTransaction = billTransactions[0]; // Already sorted by date desc
+        const lastDate = new Date(lastTransaction.date);
+        weekDates = getNextWeekDates(lastDate);
+      } else {
+        // If no transactions, use current week
+        weekDates = getCurrentWeekDates();
+      }
+      
+      setFormData({
+        ...formData,
+        description: `Incasso carte settimanale dal ${weekDates.monday} al ${weekDates.sunday}`,
+        category: 'Cash'
+      });
+    }
+  };
+
+  // Effect to auto-fill Bill's weekly transaction when type changes to 'avere'
+  useEffect(() => {
+    if (selectedClient?.name === 'Bill' && formData.type === 'avere' && !formData.description) {
+      handleBillWeeklyTransaction();
+    }
+  }, [formData.type, selectedClient]);
 
   useEffect(() => {
     // Check URL for client slug
