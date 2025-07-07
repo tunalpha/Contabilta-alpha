@@ -1326,7 +1326,7 @@ function App() {
                         }}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
                       >
-                        🔗 Copia Link
+                        {t('copyLink').replace('🔗 ', '')}
                       </button>
                       <button
                         onClick={(e) => {
@@ -1335,7 +1335,7 @@ function App() {
                         }}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
                       >
-                        👁️ Visualizza
+                        {t('view').replace('👁️ ', '')}
                       </button>
                       <button
                         onClick={(e) => {
