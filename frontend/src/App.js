@@ -722,7 +722,8 @@ function App() {
       transactionHistory: "Registro Transazioni",
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
-      totalTransactions: "Totale transazioni"
+      totalTransactions: "Totale transazioni",
+      clientManagement: "👥 Gestione Clienti"
     },
     en: {
       // Header
