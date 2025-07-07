@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "name": "contabilita-alpha",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
+      "src": "backend/server.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/build/index.html"
+    }
+  ],
+  "env": {
+    "MONGODB_URL": "@mongodb_url"
+  },
+  "functions": {
+    "backend/server.py": {
+      "maxDuration": 10
+    }
+  }
+}
