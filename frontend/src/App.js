@@ -709,16 +709,37 @@ function App() {
 
   const downloadPDF = async (dateFrom = '', dateTo = '') => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`);
+      let url = `${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`;
+      const params = new URLSearchParams();
+      
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url);
       if (response.ok) {
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
+        const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `estratto_conto_${currentClientSlug}_${new Date().toISOString().split('T')[0]}.pdf`;
+        a.href = downloadUrl;
+        
+        let filename = `estratto_conto_${currentClientSlug}`;
+        if (dateFrom && dateTo) {
+          filename += `_${dateFrom}_${dateTo}`;
+        } else if (dateFrom) {
+          filename += `_dal_${dateFrom}`;
+        } else if (dateTo) {
+          filename += `_al_${dateTo}`;
+        }
+        filename += `_${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(downloadUrl);
         document.body.removeChild(a);
         alert('✅ PDF scaricato con successo!');
       } else {
@@ -728,6 +749,16 @@ function App() {
       console.error('Error downloading PDF:', error);
       alert('❌ Errore nel download del PDF. Riprova più tardi.');
     }
+  };
+
+  const handlePDFDownload = () => {
+    setShowPDFModal(true);
+  };
+
+  const handlePDFDownloadConfirm = () => {
+    downloadPDF(pdfDateFilters.dateFrom, pdfDateFilters.dateTo);
+    setShowPDFModal(false);
+    setPdfDateFilters({ dateFrom: '', dateTo: '' });
   };
 
   const copyClientLink = (client) => {
