@@ -215,7 +215,10 @@ frontend:
         comment: "Implemented PDF generation functionality. Added /api/clients/{client_slug}/pdf endpoint in backend using reportlab. Added PDF download buttons in frontend for both admin and client views. All transactions are included in the PDF with proper formatting, balance calculation, and professional layout."
       - working: true
         agent: "testing"
-        comment: "Verified PDF generation functionality is working correctly. The endpoint /api/clients/{client_slug}/pdf successfully generates PDFs with proper date filtering. Tested with both date_from and date_to parameters, with only date_from, with only date_to, and without any date parameters. All tests passed. The PDF includes proper period information in the header, the filename includes date range when applicable, and the PDF structure is professional and readable. Data integrity is maintained with correct balance calculations for filtered periods."
+        comment: "Successfully tested PDF generation functionality with date filtering. All tests passed: PDF with date range filtering, single date filters, and complete transaction history. PDF includes proper headers, balance calculations, and professional formatting. Feature working correctly."
+      - working: true
+        agent: "main"
+        comment: "Enhanced PDF generation with date filtering support. Added modal interface for date range selection. Verified UI shows PDF button correctly on client pages. All transactions are included in chronological order with proper filtering capabilities."
 
 metadata:
   created_by: "main_agent"
