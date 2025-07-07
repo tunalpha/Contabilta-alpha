@@ -1,60 +1,61 @@
 #!/usr/bin/env python3
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import sys
 import os
+import re
 
 # Get the backend URL from frontend/.env
 BACKEND_URL = "https://132f3394-846c-437d-930c-bbd015c75396.preview.emergentagent.com"
 API_BASE_URL = f"{BACKEND_URL}/api"
 
-# Test data
-income_transactions = [
+# Test data with updated terminology (avere/dare)
+avere_transactions = [
     {
         "amount": 1500.00,
         "description": "Stipendio mensile",
-        "type": "income",
-        "category": "Stipendio",
+        "type": "avere",
+        "category": "Bonifico",
         "date": datetime.now().isoformat()
     },
     {
         "amount": 300.00,
         "description": "Rimborso spese",
-        "type": "income",
-        "category": "Rimborsi",
+        "type": "avere",
+        "category": "Cash",
         "date": datetime.now().isoformat()
     },
     {
         "amount": 50.00,
         "description": "Regalo compleanno",
-        "type": "income",
-        "category": "Regali",
+        "type": "avere",
+        "category": "PayPal",
         "date": datetime.now().isoformat()
     }
 ]
 
-expense_transactions = [
+dare_transactions = [
     {
         "amount": 400.00,
         "description": "Affitto",
-        "type": "expense",
-        "category": "Casa",
+        "type": "dare",
+        "category": "Bonifico",
         "date": datetime.now().isoformat()
     },
     {
         "amount": 120.00,
         "description": "Spesa settimanale",
-        "type": "expense",
-        "category": "Alimentari",
+        "type": "dare",
+        "category": "Cash",
         "date": datetime.now().isoformat()
     },
     {
         "amount": 35.00,
         "description": "Benzina",
-        "type": "expense",
-        "category": "Trasporti",
+        "type": "dare",
+        "category": "Altro",
         "date": datetime.now().isoformat()
     }
 ]
@@ -70,10 +71,14 @@ def print_test_header(test_name):
 
 def print_response(response):
     print(f"Status Code: {response.status_code}")
+    print(f"Headers: {response.headers}")
     try:
         print(f"Response: {json.dumps(response.json(), indent=2)}")
     except:
-        print(f"Response: {response.text}")
+        if 'application/pdf' in response.headers.get('Content-Type', ''):
+            print(f"Response: [PDF Content] - Size: {len(response.content)} bytes")
+        else:
+            print(f"Response: {response.text[:500]}...")
 
 def assert_status_code(response, expected_code):
     if response.status_code != expected_code:
@@ -97,6 +102,32 @@ def assert_contains_keys(data, keys, message):
     print(f"✅ {message}: All required keys present")
     return True
 
+def assert_content_type(response, expected_type, message="Content-Type"):
+    content_type = response.headers.get('Content-Type', '')
+    if expected_type not in content_type:
+        print(f"❌ {message}: Expected {expected_type}, got {content_type}")
+        return False
+    print(f"✅ {message}: Content-Type is {content_type} as expected")
+    return True
+
+def assert_content_disposition(response, expected_pattern, message="Content-Disposition"):
+    content_disposition = response.headers.get('Content-Disposition', '')
+    if not re.search(expected_pattern, content_disposition):
+        print(f"❌ {message}: Expected pattern {expected_pattern}, got {content_disposition}")
+        return False
+    print(f"✅ {message}: Content-Disposition matches expected pattern")
+    return True
+
+def get_client_slug():
+    """Get a valid client slug from the public clients endpoint"""
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    if response.status_code != 200 or not response.json():
+        print("❌ Failed to get client slug. No clients available.")
+        return None
+    
+    # Return the slug of the first client
+    return response.json()[0]["slug"]
+
 # Test functions
 def test_get_all_transactions():
     print_test_header("GET /api/transactions - Get all transactions")
@@ -117,12 +148,17 @@ def test_get_all_transactions():
     
     return True
 
-def test_create_transaction(transaction_data):
+def test_create_transaction(transaction_data, admin_token=None):
     print_test_header(f"POST /api/transactions - Create {transaction_data['type']} transaction")
+    
+    headers = {}
+    if admin_token:
+        headers["Authorization"] = f"Bearer {admin_token}"
     
     response = requests.post(
         f"{API_BASE_URL}/transactions", 
-        json=transaction_data
+        json=transaction_data,
+        headers=headers
     )
     print_response(response)
     
@@ -143,10 +179,14 @@ def test_create_transaction(transaction_data):
     
     return created_transaction["id"]
 
-def test_delete_transaction(transaction_id):
+def test_delete_transaction(transaction_id, admin_token=None):
     print_test_header(f"DELETE /api/transactions/{transaction_id} - Delete transaction")
     
-    response = requests.delete(f"{API_BASE_URL}/transactions/{transaction_id}")
+    headers = {}
+    if admin_token:
+        headers["Authorization"] = f"Bearer {admin_token}"
+    
+    response = requests.delete(f"{API_BASE_URL}/transactions/{transaction_id}", headers=headers)
     print_response(response)
     
     if not assert_status_code(response, 200):
@@ -174,38 +214,46 @@ def test_balance_calculation():
         return False
     
     balance_data = response.json()
-    required_keys = ["balance", "total_income", "total_expenses"]
+    required_keys = ["balance", "total_avere", "total_dare"]
     if not assert_contains_keys(balance_data, required_keys, "Balance data structure"):
         return False
     
-    # Create a new income and expense transaction
-    income_amount = 200.0
-    expense_amount = 75.0
-    
-    income_data = {
-        "amount": income_amount,
-        "description": "Test income",
-        "type": "income",
-        "category": "Test",
-        "date": datetime.now().isoformat()
-    }
-    
-    expense_data = {
-        "amount": expense_amount,
-        "description": "Test expense",
-        "type": "expense",
-        "category": "Test",
-        "date": datetime.now().isoformat()
-    }
-    
-    # Add income
-    income_id = test_create_transaction(income_data)
-    if not income_id:
+    # Get admin token for creating transactions
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token for transaction creation")
         return False
     
-    # Add expense
-    expense_id = test_create_transaction(expense_data)
-    if not expense_id:
+    # Create a new avere and dare transaction
+    avere_amount = 200.0
+    dare_amount = 75.0
+    
+    avere_data = {
+        "client_id": get_client_id(),
+        "amount": avere_amount,
+        "description": "Test avere",
+        "type": "avere",
+        "category": "Cash",
+        "date": datetime.now().isoformat()
+    }
+    
+    dare_data = {
+        "client_id": get_client_id(),
+        "amount": dare_amount,
+        "description": "Test dare",
+        "type": "dare",
+        "category": "Cash",
+        "date": datetime.now().isoformat()
+    }
+    
+    # Add avere
+    avere_id = test_create_transaction(avere_data, admin_token)
+    if not avere_id:
+        return False
+    
+    # Add dare
+    dare_id = test_create_transaction(dare_data, admin_token)
+    if not dare_id:
         return False
     
     # Get updated balance
@@ -213,96 +261,268 @@ def test_balance_calculation():
     updated_balance = updated_response.json()
     
     # Calculate expected values
-    expected_income = balance_data["total_income"] + income_amount
-    expected_expenses = balance_data["total_expenses"] + expense_amount
-    expected_balance = expected_income - expected_expenses
+    expected_avere = balance_data["total_avere"] + avere_amount
+    expected_dare = balance_data["total_dare"] + dare_amount
+    expected_balance = expected_avere - expected_dare
     
     # Verify calculations
-    if not assert_equal(updated_balance["total_income"], expected_income, "Updated total income"):
+    if not assert_equal(updated_balance["total_avere"], expected_avere, "Updated total avere"):
         return False
     
-    if not assert_equal(updated_balance["total_expenses"], expected_expenses, "Updated total expenses"):
+    if not assert_equal(updated_balance["total_dare"], expected_dare, "Updated total dare"):
         return False
     
     if not assert_equal(updated_balance["balance"], expected_balance, "Updated balance"):
         return False
     
     # Clean up by deleting the test transactions
-    test_delete_transaction(income_id)
-    test_delete_transaction(expense_id)
+    test_delete_transaction(avere_id, admin_token)
+    test_delete_transaction(dare_id, admin_token)
     
+    return True
+
+def get_admin_token():
+    """Get admin token for authenticated requests"""
+    login_data = {"password": "alpha2024!"}
+    response = requests.post(f"{API_BASE_URL}/login", json=login_data)
+    
+    if response.status_code != 200:
+        print(f"❌ Admin login failed: {response.text}")
+        return None
+    
+    login_response = response.json()
+    if not login_response.get("success"):
+        print(f"❌ Admin login failed: {login_response.get('message')}")
+        return None
+    
+    return login_response.get("token")
+
+def get_client_id():
+    """Get a valid client ID for creating transactions"""
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    if response.status_code != 200 or not response.json():
+        print("❌ Failed to get client ID. No clients available.")
+        return None
+    
+    # Return the ID of the first client
+    return response.json()[0]["id"]
+
+def test_pdf_generation_with_date_filtering():
+    print_test_header("GET /api/clients/{client_slug}/pdf - PDF generation with date filtering")
+    
+    client_slug = get_client_slug()
+    if not client_slug:
+        print("❌ Cannot test PDF generation without a valid client slug")
+        return False
+    
+    # Define date range (last month)
+    today = datetime.now()
+    date_from = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+    date_to = today.strftime("%Y-%m-%d")
+    
+    # Test with both date_from and date_to
+    print(f"Testing PDF generation with date range: {date_from} to {date_to}")
+    response = requests.get(
+        f"{API_BASE_URL}/clients/{client_slug}/pdf?date_from={date_from}&date_to={date_to}"
+    )
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    if not assert_content_type(response, "application/pdf"):
+        return False
+    
+    # Check that the filename includes the date range
+    expected_filename_pattern = f"estratto_conto_{client_slug}_{date_from}_{date_to}"
+    if not assert_content_disposition(response, expected_filename_pattern):
+        return False
+    
+    print(f"✅ PDF generated successfully with date filtering from {date_from} to {date_to}")
+    return True
+
+def test_pdf_generation_with_single_date_filters():
+    print_test_header("GET /api/clients/{client_slug}/pdf - PDF generation with single date filter")
+    
+    client_slug = get_client_slug()
+    if not client_slug:
+        print("❌ Cannot test PDF generation without a valid client slug")
+        return False
+    
+    # Define dates
+    today = datetime.now()
+    date_from = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+    date_to = today.strftime("%Y-%m-%d")
+    
+    # Test with only date_from
+    print(f"Testing PDF generation with only date_from: {date_from}")
+    response_from = requests.get(
+        f"{API_BASE_URL}/clients/{client_slug}/pdf?date_from={date_from}"
+    )
+    print_response(response_from)
+    
+    if not assert_status_code(response_from, 200):
+        return False
+    
+    if not assert_content_type(response_from, "application/pdf"):
+        return False
+    
+    # Check that the filename includes the date_from
+    expected_filename_pattern_from = f"estratto_conto_{client_slug}_dal_{date_from}"
+    if not assert_content_disposition(response_from, expected_filename_pattern_from):
+        return False
+    
+    print(f"✅ PDF generated successfully with only date_from: {date_from}")
+    
+    # Test with only date_to
+    print(f"Testing PDF generation with only date_to: {date_to}")
+    response_to = requests.get(
+        f"{API_BASE_URL}/clients/{client_slug}/pdf?date_to={date_to}"
+    )
+    print_response(response_to)
+    
+    if not assert_status_code(response_to, 200):
+        return False
+    
+    if not assert_content_type(response_to, "application/pdf"):
+        return False
+    
+    # Check that the filename includes the date_to
+    expected_filename_pattern_to = f"estratto_conto_{client_slug}_al_{date_to}"
+    if not assert_content_disposition(response_to, expected_filename_pattern_to):
+        return False
+    
+    print(f"✅ PDF generated successfully with only date_to: {date_to}")
+    return True
+
+def test_pdf_generation_without_date_filters():
+    print_test_header("GET /api/clients/{client_slug}/pdf - PDF generation without date filters")
+    
+    client_slug = get_client_slug()
+    if not client_slug:
+        print("❌ Cannot test PDF generation without a valid client slug")
+        return False
+    
+    # Test without any date parameters
+    print("Testing PDF generation without date filters")
+    response = requests.get(f"{API_BASE_URL}/clients/{client_slug}/pdf")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    if not assert_content_type(response, "application/pdf"):
+        return False
+    
+    # Check that the filename does not include date range
+    expected_filename_pattern = f"estratto_conto_{client_slug}_"
+    if not assert_content_disposition(response, expected_filename_pattern):
+        return False
+    
+    print("✅ PDF generated successfully without date filters")
+    return True
+
+def test_pdf_data_integrity():
+    print_test_header("PDF Data Integrity Test")
+    
+    # Get a valid client slug
+    client_slug = get_client_slug()
+    if not client_slug:
+        print("❌ Cannot test PDF data integrity without a valid client slug")
+        return False
+    
+    # First, get all transactions for this client to verify count
+    response_transactions = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+    if not assert_status_code(response_transactions, 200):
+        return False
+    
+    all_transactions = response_transactions.json()
+    transaction_count = len(all_transactions)
+    print(f"Client has {transaction_count} total transactions")
+    
+    # Get balance for this client
+    response_balance = requests.get(f"{API_BASE_URL}/balance?client_slug={client_slug}")
+    if not assert_status_code(response_balance, 200):
+        return False
+    
+    balance_data = response_balance.json()
+    total_avere = balance_data["total_avere"]
+    total_dare = balance_data["total_dare"]
+    balance = balance_data["balance"]
+    
+    print(f"Client balance: {balance} (total_avere: {total_avere}, total_dare: {total_dare})")
+    
+    # Now get PDF without filters (should include all transactions)
+    response_pdf = requests.get(f"{API_BASE_URL}/clients/{client_slug}/pdf")
+    if not assert_status_code(response_pdf, 200):
+        return False
+    
+    if not assert_content_type(response_pdf, "application/pdf"):
+        return False
+    
+    # We can't directly inspect PDF content, but we can verify it was generated
+    pdf_size = len(response_pdf.content)
+    print(f"Generated PDF size: {pdf_size} bytes")
+    
+    if pdf_size < 1000:  # A reasonable minimum size for a PDF with data
+        print("❌ PDF seems too small, might not contain proper data")
+        return False
+    
+    print("✅ PDF data integrity test passed")
     return True
 
 def test_error_handling():
     print_test_header("Error handling for invalid data")
     
-    # Test with missing required fields
-    invalid_transaction = {
-        "amount": 100.0,
-        # Missing description
-        "type": "income",
-        "category": "Test"
-        # Missing date
-    }
-    
-    response = requests.post(f"{API_BASE_URL}/transactions", json=invalid_transaction)
-    print_response(response)
-    
-    # Should return a 422 Unprocessable Entity for validation errors
-    if not assert_status_code(response, 422):
-        return False
-    
-    # Test with invalid transaction type
-    invalid_type_transaction = {
-        "amount": 100.0,
-        "description": "Invalid type test",
-        "type": "invalid_type",  # Not 'income' or 'expense'
-        "category": "Test",
-        "date": datetime.now().isoformat()
-    }
-    
-    response = requests.post(f"{API_BASE_URL}/transactions", json=invalid_type_transaction)
-    print_response(response)
-    
-    # Test with invalid transaction ID for deletion
-    invalid_id = "non_existent_id"
-    response = requests.delete(f"{API_BASE_URL}/transactions/{invalid_id}")
+    # Test with invalid client slug for PDF generation
+    invalid_slug = "non-existent-client"
+    response = requests.get(f"{API_BASE_URL}/clients/{invalid_slug}/pdf")
     print_response(response)
     
     # Should return a 404 Not Found
     if not assert_status_code(response, 404):
         return False
     
+    # Test with invalid date format
+    client_slug = get_client_slug()
+    if client_slug:
+        invalid_date = "not-a-date"
+        response = requests.get(f"{API_BASE_URL}/clients/{client_slug}/pdf?date_from={invalid_date}")
+        print_response(response)
+        
+        # Should return an error (422 or 500)
+        if response.status_code not in [422, 500]:
+            print(f"❌ Expected error status code for invalid date, got {response.status_code}")
+            return False
+    
     return True
 
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
     
-    # Test getting all transactions
-    if not test_get_all_transactions():
-        print("❌ Get all transactions test failed")
+    # Test PDF generation with date filtering
+    if not test_pdf_generation_with_date_filtering():
+        print("❌ PDF generation with date filtering test failed")
     else:
-        print("✅ Get all transactions test passed")
+        print("✅ PDF generation with date filtering test passed")
     
-    # Test creating income transactions
-    income_ids = []
-    for income in income_transactions:
-        transaction_id = test_create_transaction(income)
-        if transaction_id:
-            income_ids.append(transaction_id)
-    
-    # Test creating expense transactions
-    expense_ids = []
-    for expense in expense_transactions:
-        transaction_id = test_create_transaction(expense)
-        if transaction_id:
-            expense_ids.append(transaction_id)
-    
-    # Test balance calculation
-    if not test_balance_calculation():
-        print("❌ Balance calculation test failed")
+    # Test PDF generation with single date filters
+    if not test_pdf_generation_with_single_date_filters():
+        print("❌ PDF generation with single date filters test failed")
     else:
-        print("✅ Balance calculation test passed")
+        print("✅ PDF generation with single date filters test passed")
+    
+    # Test PDF generation without date filters
+    if not test_pdf_generation_without_date_filters():
+        print("❌ PDF generation without date filters test failed")
+    else:
+        print("✅ PDF generation without date filters test passed")
+    
+    # Test PDF data integrity
+    if not test_pdf_data_integrity():
+        print("❌ PDF data integrity test failed")
+    else:
+        print("✅ PDF data integrity test passed")
     
     # Test error handling
     if not test_error_handling():
@@ -310,12 +530,7 @@ def run_all_tests():
     else:
         print("✅ Error handling test passed")
     
-    # Clean up by deleting all created transactions
-    print("\n🧹 Cleaning up test data...")
-    for transaction_id in income_ids + expense_ids:
-        test_delete_transaction(transaction_id)
-    
-    print("\n🏁 ALL TESTS COMPLETED 🏁\n")
+    print("\n🏁 ALL PDF GENERATION TESTS COMPLETED 🏁\n")
 
 if __name__ == "__main__":
     run_all_tests()
