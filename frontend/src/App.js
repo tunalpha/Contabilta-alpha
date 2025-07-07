@@ -4,6 +4,10 @@ import './App.css';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 function App() {
+  const [currentView, setCurrentView] = useState('admin'); // 'admin' or 'client'
+  const [currentClientSlug, setCurrentClientSlug] = useState('');
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [balance, setBalance] = useState({
@@ -16,6 +20,7 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showClientForm, setShowClientForm] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -23,13 +28,18 @@ function App() {
     amount: '',
     description: '',
     type: 'dare',
-    category: 'Cash'
+    category: 'Cash',
+    client_id: ''
   });
   const [editFormData, setEditFormData] = useState({
     amount: '',
     description: '',
     type: 'dare',
-    category: 'Cash'
+    category: 'Cash',
+    client_id: ''
+  });
+  const [clientFormData, setClientFormData] = useState({
+    name: ''
   });
   const [filters, setFilters] = useState({
     search: '',
@@ -43,17 +53,106 @@ function App() {
   const categories = ['Cash', 'Bonifico', 'PayPal', 'Altro'];
 
   useEffect(() => {
-    // Check if user is already logged in
-    if (adminToken) {
-      setIsAdmin(true);
+    // Check URL for client slug
+    const path = window.location.pathname;
+    const clientMatch = path.match(/\/cliente\/(.+)/);
+    
+    if (clientMatch) {
+      const slug = clientMatch[1];
+      setCurrentClientSlug(slug);
+      setCurrentView('client');
+      fetchClientData(slug);
+    } else {
+      setCurrentView('admin');
+      if (adminToken) {
+        setIsAdmin(true);
+        fetchClients();
+      }
     }
-    fetchTransactions();
-    fetchBalance();
   }, [adminToken]);
+
+  useEffect(() => {
+    if (currentView === 'admin' && isAdmin) {
+      fetchClients();
+    }
+  }, [currentView, isAdmin]);
+
+  useEffect(() => {
+    if (currentView === 'client' && currentClientSlug) {
+      fetchTransactions(currentClientSlug);
+      fetchBalance(currentClientSlug);
+    } else if (currentView === 'admin' && selectedClient) {
+      fetchTransactions();
+      fetchBalance();
+    }
+  }, [currentView, currentClientSlug, selectedClient]);
 
   useEffect(() => {
     applyFilters();
   }, [transactions, filters]);
+
+  const fetchClientData = async (slug) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${slug}`);
+      if (response.ok) {
+        const clientData = await response.json();
+        setSelectedClient(clientData);
+        fetchTransactions(slug);
+        fetchBalance(slug);
+      } else {
+        setCurrentView('admin');
+      }
+    } catch (error) {
+      console.error('Error fetching client:', error);
+      setCurrentView('admin');
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const fetchTransactions = async (clientSlug = null) => {
+    try {
+      let url = `${BACKEND_URL}/api/transactions`;
+      if (clientSlug) {
+        url += `?client_slug=${clientSlug}`;
+      }
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const fetchBalance = async (clientSlug = null) => {
+    try {
+      let url = `${BACKEND_URL}/api/balance`;
+      if (clientSlug) {
+        url += `?client_slug=${clientSlug}`;
+      }
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setBalance(data);
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -74,6 +173,7 @@ function App() {
         setShowLogin(false);
         setLoginPassword('');
         alert('Login amministratore riuscito!');
+        fetchClients();
       } else {
         alert('Password errata. Solo l\'amministratore può inserire dati.');
       }
@@ -116,50 +216,27 @@ function App() {
     localStorage.removeItem('adminToken');
     setIsAdmin(false);
     setShowForm(false);
+    setCurrentView('admin');
     alert('Logout effettuato. Ora sei in modalità solo lettura.');
-  };
-
-  const fetchTransactions = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/transactions`);
-      const data = await response.json();
-      setTransactions(data);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    }
-  };
-
-  const fetchBalance = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/balance`);
-      const data = await response.json();
-      setBalance(data);
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-    }
   };
 
   const applyFilters = () => {
     let filtered = [...transactions];
 
-    // Search filter
     if (filters.search) {
       filtered = filtered.filter(t => 
         t.description.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
-    // Category filter
     if (filters.category) {
       filtered = filtered.filter(t => t.category === filters.category);
     }
 
-    // Type filter
     if (filters.type) {
       filtered = filtered.filter(t => t.type === filters.type);
     }
 
-    // Date filters
     if (filters.dateFrom) {
       filtered = filtered.filter(t => 
         new Date(t.date) >= new Date(filters.dateFrom)
@@ -175,6 +252,42 @@ function App() {
     setFilteredTransactions(filtered);
   };
 
+  const handleClientSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!clientFormData.name) {
+      alert('Per favore inserisci il nome del cliente');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          name: clientFormData.name
+        }),
+      });
+
+      if (response.ok) {
+        const newClient = await response.json();
+        setClientFormData({ name: '' });
+        setShowClientForm(false);
+        fetchClients();
+        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}`);
+      } else {
+        const errorData = await response.json();
+        alert(`Errore: ${errorData.detail}`);
+      }
+    } catch (error) {
+      console.error('Error creating client:', error);
+      alert('Errore nel creare il cliente');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -188,6 +301,11 @@ function App() {
       return;
     }
 
+    if (!formData.client_id) {
+      alert('Per favore seleziona un cliente');
+      return;
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/transactions`, {
         method: 'POST',
@@ -196,6 +314,7 @@ function App() {
           'Authorization': `Bearer ${adminToken}`
         },
         body: JSON.stringify({
+          client_id: formData.client_id,
           amount: parseFloat(formData.amount),
           description: formData.description || 'Transazione senza descrizione',
           type: formData.type,
@@ -209,7 +328,8 @@ function App() {
           amount: '',
           description: '',
           type: 'dare',
-          category: 'Cash'
+          category: 'Cash',
+          client_id: ''
         });
         setShowForm(false);
         fetchTransactions();
@@ -236,7 +356,8 @@ function App() {
       amount: transaction.amount.toString(),
       description: transaction.description,
       type: transaction.type,
-      category: transaction.category
+      category: transaction.category,
+      client_id: transaction.client_id
     });
     setShowEditForm(true);
   };
@@ -257,11 +378,12 @@ function App() {
           'Authorization': `Bearer ${adminToken}`
         },
         body: JSON.stringify({
+          client_id: editFormData.client_id,
           amount: parseFloat(editFormData.amount),
           description: editFormData.description || 'Transazione senza descrizione',
           type: editFormData.type,
           category: editFormData.category,
-          date: editingTransaction.date // Mantieni la data originale
+          date: editingTransaction.date
         }),
       });
 
@@ -272,7 +394,8 @@ function App() {
           amount: '',
           description: '',
           type: 'dare',
-          category: 'Cash'
+          category: 'Cash',
+          client_id: ''
         });
         fetchTransactions();
         fetchBalance();
@@ -313,6 +436,30 @@ function App() {
       } catch (error) {
         console.error('Error deleting transaction:', error);
         alert('Errore nell\'eliminare la transazione');
+      }
+    }
+  };
+
+  const handleDeleteClient = async (client) => {
+    if (window.confirm(`Sei sicuro di voler eliminare il cliente "${client.name}" e tutte le sue transazioni?\n\nQuesta azione è irreversibile!`)) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/clients/${client.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
+        });
+
+        if (response.ok) {
+          fetchClients();
+          alert('✅ Cliente eliminato con successo!');
+        } else {
+          const errorData = await response.json();
+          alert(`Errore: ${errorData.detail}`);
+        }
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Errore nell\'eliminare il cliente');
       }
     }
   };
@@ -358,6 +505,457 @@ function App() {
     return icons[category] || '📋';
   };
 
+  const copyClientLink = (client) => {
+    const link = `${window.location.origin}/cliente/${client.slug}`;
+    navigator.clipboard.writeText(link);
+    alert(`🔗 Link copiato negli appunti!\n\n${link}`);
+  };
+
+  const getClientName = (clientId) => {
+    const client = clients.find(c => c.id === clientId);
+    return client ? client.name : 'Cliente sconosciuto';
+  };
+
+  // ADMIN DASHBOARD VIEW
+  if (currentView === 'admin') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="mb-4">
+              <div className="mx-auto h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-xl border-4 border-white flex items-center justify-center">
+                <svg className="h-14 w-14 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 2h10c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zm0 2v3h10V4H7zm0 5v2h2V9H7zm4 0v2h2V9h-2zm4 0v2h2V9h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
+                </svg>
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              🏢 Contabilità Alpha - Dashboard
+            </h1>
+            <p className="text-gray-600">Sistema Multi-Cliente Professionale</p>
+            
+            {/* Admin Status */}
+            <div className="mt-4">
+              {isAdmin ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    🔐 Modalità Amministratore
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                    👁️ Modalità Solo Lettura
+                  </span>
+                  <button
+                    onClick={() => setShowLogin(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                  >
+                    Login Admin
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Login Modal */}
+          {showLogin && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Login Amministratore</h2>
+                <p className="text-gray-600 mb-4">
+                  Inserisci la password per accedere alle funzioni di gestione
+                </p>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  placeholder="Password amministratore"
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                />
+                <div className="flex gap-4 mb-4">
+                  <button
+                    onClick={handleLogin}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {setShowLogin(false); setLoginPassword('');}}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Annulla
+                  </button>
+                </div>
+                <div className="text-center">
+                  <button
+                    onClick={openPasswordRecovery}
+                    className="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    🔑 Hai dimenticato la password?
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Password Recovery Modal */}
+          {showPasswordRecovery && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">📧 Recupera Password</h2>
+                <p className="text-gray-600 mb-6">
+                  Clicca il pulsante per ricevere la password via email all'indirizzo:
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                  <p className="text-blue-800 font-medium text-center">
+                    📧 ildattero.it@gmail.com
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={handlePasswordRecovery}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    📧 Invia Password via Email
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPasswordRecovery(false);
+                      setShowLogin(true);
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Indietro
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isAdmin && (
+            <>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-4 justify-center mb-8">
+                <button
+                  onClick={() => setShowClientForm(!showClientForm)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+                >
+                  {showClientForm ? 'Chiudi Form' : '+ Nuovo Cliente'}
+                </button>
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  className={`${selectedClient ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg`}
+                  disabled={!selectedClient}
+                >
+                  {showForm ? 'Chiudi Form' : '+ Nuova Transazione'}
+                  {!selectedClient && ' (Seleziona Cliente)'}
+                </button>
+              </div>
+
+              {/* Client Form */}
+              {showClientForm && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-2 border-green-200">
+                  <h2 className="text-2xl font-bold text-green-800 mb-4">👥 Nuovo Cliente</h2>
+                  <form onSubmit={handleClientSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Cliente
+                      </label>
+                      <input
+                        type="text"
+                        value={clientFormData.name}
+                        onChange={(e) => setClientFormData({...clientFormData, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Es: Mario Rossi, Azienda ABC, etc."
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        👥 Crea Cliente
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowClientForm(false)}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Transaction Form */}
+              {showForm && selectedClient && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    💰 Nuova Transazione per {selectedClient.name}
+                  </h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo Operazione
+                        </label>
+                        <select
+                          value={formData.type}
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="dare">Dare (Uscita/Debito)</option>
+                          <option value="avere">Avere (Entrata/Credito)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Importo (€)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descrizione (opzionale)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Descrizione della transazione (opzionale)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Metodo di Pagamento
+                      </label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {categories.map((category) => (
+                          <option key={category} value={category}>
+                            {getCategoryIcon(category)} {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                        onClick={() => setFormData({...formData, client_id: selectedClient.id})}
+                      >
+                        💰 Salva Transazione
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowForm(false)}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Clients List */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">👥 Gestione Clienti</h2>
+            {clients.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-lg">Nessun cliente trovato</div>
+                <div className="text-gray-500 text-sm mt-2">
+                  {isAdmin ? 'Inizia creando il tuo primo cliente!' : 'L\'amministratore non ha ancora creato clienti'}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {clients.map((client) => (
+                  <div
+                    key={client.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      selectedClient?.id === client.id 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                    onClick={() => setSelectedClient(client)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-lg text-gray-800">{client.name}</h3>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClient(client);
+                          }}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="Elimina cliente"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div>💰 Saldo: <span className={`font-bold ${client.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(client.balance)}
+                      </span></div>
+                      <div>📊 Transazioni: {client.total_transactions}</div>
+                      <div>📅 Creato: {formatDate(client.created_date)}</div>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyClientLink(client);
+                        }}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                      >
+                        🔗 Copia Link
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`/cliente/${client.slug}`, '_blank');
+                        }}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                      >
+                        👁️ Visualizza
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Selected Client Transactions */}
+          {selectedClient && (
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                📊 Transazioni - {selectedClient.name}
+              </h2>
+              
+              {/* Balance for selected client */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-600">
+                      {formatCurrency(balance.total_avere)}
+                    </div>
+                    <div className="text-sm text-gray-500">Totale Avere</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-red-600">
+                      {formatCurrency(balance.total_dare)}
+                    </div>
+                    <div className="text-sm text-gray-500">Totale Dare</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${balance.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(balance.balance)}
+                    </div>
+                    <div className="text-sm text-gray-500">Saldo Netto</div>
+                  </div>
+                </div>
+              </div>
+
+              {transactions.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-lg">Nessuna transazione per questo cliente</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.slice(0, 10).map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className={`p-3 rounded-lg border-l-4 ${
+                        transaction.type === 'avere' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-red-500 bg-red-50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">
+                            {getTypeIcon(transaction.type)}
+                          </span>
+                          <span>
+                            {getCategoryIcon(transaction.category)}
+                          </span>
+                          <div>
+                            <div className="font-medium text-sm">
+                              {transaction.description}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {transaction.category} • {formatDate(transaction.date)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`font-bold ${
+                            transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          </div>
+                          {isAdmin && (
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleEdit(transaction)}
+                                className="text-blue-500 hover:text-blue-700 p-1 text-xs"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handleDelete(transaction)}
+                                className="text-red-500 hover:text-red-700 p-1 text-xs"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {transactions.length > 10 && (
+                    <div className="text-center text-gray-500 text-sm">
+                      ... e altre {transactions.length - 10} transazioni
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // CLIENT VIEW (when accessing /cliente/slug)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
@@ -373,113 +971,11 @@ function App() {
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             Contabilità Alpha
           </h1>
-          <p className="text-gray-600">Sistema di gestione contabile professionale</p>
-          
-          {/* Admin Status */}
-          <div className="mt-4">
-            {isAdmin ? (
-              <div className="flex items-center justify-center gap-2">
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  🔐 Modalità Amministratore
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                  👁️ Modalità Solo Lettura
-                </span>
-                <button
-                  onClick={() => setShowLogin(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
-                >
-                  Login Admin
-                </button>
-              </div>
-            )}
-          </div>
+          {selectedClient && (
+            <p className="text-xl text-blue-600 font-medium">📊 {selectedClient.name}</p>
+          )}
+          <p className="text-gray-600">Visualizzazione solo lettura</p>
         </div>
-
-        {/* Login Modal */}
-        {showLogin && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Login Amministratore</h2>
-              <p className="text-gray-600 mb-4">
-                Inserisci la password per accedere alle funzioni di modifica
-              </p>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                placeholder="Password amministratore"
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-              <div className="flex gap-4 mb-4">
-                <button
-                  onClick={handleLogin}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => {setShowLogin(false); setLoginPassword('');}}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Annulla
-                </button>
-              </div>
-              <div className="text-center">
-                <button
-                  onClick={openPasswordRecovery}
-                  className="text-blue-600 hover:text-blue-800 text-sm underline"
-                >
-                  🔑 Hai dimenticato la password?
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Password Recovery Modal */}
-        {showPasswordRecovery && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📧 Recupera Password</h2>
-              <p className="text-gray-600 mb-6">
-                Clicca il pulsante per ricevere la password via email all'indirizzo:
-              </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-                <p className="text-blue-800 font-medium text-center">
-                  📧 ildattero.it@gmail.com
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={handlePasswordRecovery}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  📧 Invia Password via Email
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPasswordRecovery(false);
-                    setShowLogin(true);
-                  }}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Indietro
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Balance Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -508,189 +1004,12 @@ function App() {
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mb-8">
           <button
-            onClick={() => isAdmin ? setShowForm(!showForm) : alert('Solo l\'amministratore può inserire transazioni')}
-            className={`${isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg`}
-            disabled={!isAdmin}
-          >
-            {showForm ? 'Chiudi Form' : '+ Nuova Transazione'}
-            {!isAdmin && ' (Solo Admin)'}
-          </button>
-          <button
             onClick={() => setShowFilters(!showFilters)}
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
           >
             {showFilters ? 'Nascondi Filtri' : '🔍 Cronologia e Filtri'}
           </button>
         </div>
-
-        {/* Edit Transaction Form - Only for Admin */}
-        {showEditForm && isAdmin && editingTransaction && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-2 border-orange-200">
-            <h2 className="text-2xl font-bold text-orange-800 mb-4">✏️ Modifica Transazione</h2>
-            <div className="bg-orange-50 p-3 rounded-lg mb-4">
-              <p className="text-orange-700 text-sm">
-                <strong>Transazione originale:</strong> {editingTransaction.description} - {formatCurrency(editingTransaction.amount)}
-              </p>
-            </div>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo Operazione
-                  </label>
-                  <select
-                    value={editFormData.type}
-                    onChange={(e) => setEditFormData({...editFormData, type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="dare">Dare (Uscita/Debito)</option>
-                    <option value="avere">Avere (Entrata/Credito)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Importo (€)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={editFormData.amount}
-                    onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrizione (opzionale)
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.description}
-                  onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Descrizione della transazione (opzionale)"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Metodo di Pagamento
-                </label>
-                <select
-                  value={editFormData.category}
-                  onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {getCategoryIcon(category)} {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  ✏️ Salva Modifiche
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditForm(false);
-                    setEditingTransaction(null);
-                    setEditFormData({ amount: '', description: '', type: 'dare', category: 'Cash' });
-                  }}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Annulla
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Transaction Form - Only for Admin */}
-        {showForm && isAdmin && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Nuova Transazione</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo Operazione
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="dare">Dare (Uscita/Debito)</option>
-                    <option value="avere">Avere (Entrata/Credito)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Importo (€)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrizione (opzionale)
-                </label>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Descrizione della transazione (opzionale)"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Metodo di Pagamento
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {getCategoryIcon(category)} {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Salva Transazione
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                >
-                  Annulla
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Filters */}
         {showFilters && (
@@ -792,7 +1111,7 @@ function App() {
           {(showFilters ? filteredTransactions : transactions).length === 0 ? (
             <div className="text-center py-8">
               <div className="text-gray-400 text-lg">
-                {showFilters && filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo
+                {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
                   ? 'Nessuna transazione trovata con i filtri selezionati'
                   : 'Nessuna transazione trovata'
                 }
@@ -800,9 +1119,7 @@ function App() {
               <div className="text-gray-500 text-sm mt-2">
                 {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
                   ? 'Prova a modificare i filtri di ricerca'
-                  : isAdmin 
-                    ? 'Inizia aggiungendo la tua prima transazione!'
-                    : 'L\'amministratore non ha ancora inserito transazioni'
+                  : 'L\'amministratore non ha ancora inserito transazioni'
                 }
               </div>
             </div>
@@ -842,24 +1159,6 @@ function App() {
                       }`}>
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
-                      {isAdmin && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleEdit(transaction)}
-                            className="text-blue-500 hover:text-blue-700 p-1 rounded transition-colors duration-200"
-                            title="Modifica transazione (Solo Admin)"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleDelete(transaction)}
-                            className="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
-                            title="Elimina transazione (Solo Admin)"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
