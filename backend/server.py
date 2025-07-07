@@ -80,6 +80,9 @@ class Transaction(BaseModel):
     type: str  # 'avere' (credito/entrata) or 'dare' (debito/uscita)
     category: str  # 'Cash', 'Bonifico', 'PayPal', 'Altro'
     date: datetime
+    currency: str = "EUR"  # New field for currency
+    original_amount: Optional[float] = None  # Original amount before conversion
+    exchange_rate: Optional[float] = None  # Exchange rate used for conversion
 
 class TransactionResponse(BaseModel):
     id: str
