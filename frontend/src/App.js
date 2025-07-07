@@ -371,7 +371,7 @@ function App() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Contabilità Alpha/Marzia
+            Contabilità Alpha
           </h1>
           <p className="text-gray-600">Sistema di gestione contabile professionale</p>
           
