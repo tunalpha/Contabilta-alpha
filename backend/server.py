@@ -188,7 +188,7 @@ def transaction_helper(transaction) -> dict:
 
 @app.get("/")
 async def root():
-    return {"message": "Contabilità Alpha/Marzia API"}
+    return {"message": "Contabilità Alpha API"}
 
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
