@@ -377,6 +377,61 @@ async def get_client_by_slug(client_slug: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/clients/{client_id}", response_model=ClientResponse)
+async def update_client(client_id: str, client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
+    """Update a client (ADMIN ONLY)"""
+    try:
+        # Generate new slug from new name
+        slug = create_slug(client_request.name)
+        
+        # Check if slug already exists (excluding current client)
+        existing_client = await db.clients.find_one({"slug": slug, "id": {"$ne": client_id}})
+        if existing_client:
+            # Add number to make it unique
+            counter = 1
+            while existing_client:
+                new_slug = f"{slug}-{counter}"
+                existing_client = await db.clients.find_one({"slug": new_slug, "id": {"$ne": client_id}})
+                counter += 1
+            slug = new_slug
+        
+        # Update client
+        result = await db.clients.update_one(
+            {"id": client_id},
+            {"$set": {"name": client_request.name, "slug": slug}}
+        )
+        
+        if result.modified_count == 1:
+            # Get updated client with statistics
+            updated_client = await db.clients.find_one({"id": client_id})
+            if updated_client:
+                client_data = client_helper(updated_client)
+                
+                # Get transaction count and balance
+                transaction_count = await db.transactions.count_documents({"client_id": client_id})
+                
+                total_avere = 0
+                total_dare = 0
+                async for transaction in db.transactions.find({"client_id": client_id}):
+                    if transaction["type"] == "avere":
+                        total_avere += transaction["amount"]
+                    else:
+                        total_dare += transaction["amount"]
+                
+                return ClientResponse(
+                    **client_data,
+                    total_transactions=transaction_count,
+                    balance=total_avere - total_dare
+                )
+            else:
+                raise HTTPException(status_code=404, detail="Client not found after update")
+        else:
+            raise HTTPException(status_code=404, detail="Client not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/api/clients/{client_id}")
 async def delete_client(client_id: str, admin_verified: bool = Depends(verify_admin_token)):
     """Delete a client and all their transactions (ADMIN ONLY)"""
