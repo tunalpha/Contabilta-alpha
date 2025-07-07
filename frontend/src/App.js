@@ -1747,9 +1747,9 @@ function App() {
         {showPDFModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📄 Scarica Estratto Conto PDF</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pdfTitle')}</h2>
               <p className="text-gray-600 mb-4">
-                Seleziona il periodo per l'estratto conto (lascia vuoto per tutte le transazioni)
+                {t('pdfSubtitle')}
               </p>
               
               <div className="space-y-4 mb-6">
