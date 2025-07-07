@@ -1755,7 +1755,7 @@ function App() {
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data inizio
+                    {t('dateFrom')}
                   </label>
                   <input
                     type="date"
@@ -1766,7 +1766,7 @@ function App() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data fine
+                    {t('dateTo')}
                   </label>
                   <input
                     type="date"
