@@ -963,6 +963,32 @@ async def reset_client_link(client_id: str, token: str = Depends(verify_admin_to
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error resetting client link: {str(e)}")
 
+@app.get("/api/exchange-rates")
+async def get_exchange_rates():
+    """Get current exchange rates for supported currencies"""
+    try:
+        rates = {}
+        supported_currencies = ["USD", "GBP"]
+        
+        for currency in supported_currencies:
+            rate = await get_exchange_rate(currency, "EUR")
+            rates[currency] = rate
+        
+        rates["EUR"] = 1.0  # Base currency
+        
+        return {
+            "base_currency": "EUR",
+            "rates": rates,
+            "last_updated": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {
+            "base_currency": "EUR", 
+            "rates": {"EUR": 1.0, "USD": 0.92, "GBP": 1.17},
+            "last_updated": datetime.now().isoformat(),
+            "error": "Using fallback rates"
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
