@@ -298,11 +298,11 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/clients", response_model=ClientResponse)
-async def create_client(client: Client, admin_verified: bool = Depends(verify_admin_token)):
+async def create_client(client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
     """Create a new client (ADMIN ONLY)"""
     try:
         # Generate slug from name
-        slug = create_slug(client.name)
+        slug = create_slug(client_request.name)
         
         # Check if slug already exists
         existing_client = await db.clients.find_one({"slug": slug})
@@ -317,7 +317,7 @@ async def create_client(client: Client, admin_verified: bool = Depends(verify_ad
         
         client_dict = {
             "id": str(uuid.uuid4()),
-            "name": client.name,
+            "name": client_request.name,
             "slug": slug,
             "created_date": datetime.now(),
             "active": True
