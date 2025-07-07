@@ -566,8 +566,28 @@ async def create_transaction(transaction: Transaction, admin_verified: bool = De
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
+        # Handle currency conversion if needed
+        amount_eur = transaction.amount
+        original_amount = None
+        exchange_rate = None
+        
+        if transaction.currency != "EUR":
+            # Convert to EUR
+            converted_amount, rate = await convert_currency(
+                transaction.amount, 
+                transaction.currency, 
+                "EUR"
+            )
+            amount_eur = converted_amount
+            original_amount = transaction.amount
+            exchange_rate = rate
+        
+        # Create transaction document
         transaction_dict = transaction.dict()
         transaction_dict["id"] = str(uuid.uuid4())
+        transaction_dict["amount"] = amount_eur  # Always store in EUR
+        transaction_dict["original_amount"] = original_amount
+        transaction_dict["exchange_rate"] = exchange_rate
         
         result = await db.transactions.insert_one(transaction_dict)
         if result.inserted_id:
