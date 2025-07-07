@@ -107,39 +107,48 @@ user_problem_statement: "Contabilità Alpha/Marzia - app per gestire entrate e u
 backend:
   - task: "Transaction CRUD API with filtering"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Updated backend with new terminology (dare/avere), new categories (Cash, Bonifico, PayPal, Altro), and advanced filtering by search, category, type, and date range."
+      - working: true
+        agent: "testing"
+        comment: "Verified that the transaction API is working correctly. The API endpoints for fetching, creating, updating, and deleting transactions are functioning properly. The filtering functionality works as expected, allowing filtering by search term, category, type, and date range."
   
   - task: "Balance calculation API (dare/avere)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Updated balance calculation to use dare/avere terminology. Total_avere (credits) - total_dare (debits) = balance."
-
+      - working: true
+        agent: "testing"
+        comment: "Verified that the balance calculation API is working correctly. The API returns the correct total_avere, total_dare, and balance values. The balance is correctly calculated as total_avere - total_dare."
+  
   - task: "Advanced search and filtering"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added query parameters for search, category filter, type filter, and date range filtering."
+      - working: true
+        agent: "testing"
+        comment: "Verified that the advanced search and filtering functionality is working correctly. The API supports filtering by search term (in description), category (Cash, Bonifico, PayPal, Altro), type (dare/avere), and date range. Network requests show that the API is being called with the appropriate parameters."
 
 frontend:
   - task: "Professional accounting UI"
