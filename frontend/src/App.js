@@ -854,6 +854,39 @@ function App() {
     return translated;
   };
 
+  // Load exchange rates on component mount
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/exchange-rates`);
+        if (response.ok) {
+          const data = await response.json();
+          setExchangeRates(data.rates);
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+        // Keep fallback rates
+      }
+    };
+
+    fetchExchangeRates();
+  }, []);
+
+  // Helper function to calculate EUR equivalent
+  const calculateEurEquivalent = (amount, currency) => {
+    if (!amount || !currency || currency === 'EUR') return amount;
+    const rate = exchangeRates[currency] || 1;
+    return amount * rate;
+  };
+
+  // Helper function to format currency display
+  const formatCurrencyDisplay = (amount, currency = 'EUR', originalAmount = null, originalCurrency = null) => {
+    if (originalAmount && originalCurrency && originalCurrency !== 'EUR') {
+      return `${originalCurrency} ${originalAmount.toFixed(2)} (€ ${amount.toFixed(2)})`;
+    }
+    return `€ ${amount.toFixed(2)}`;
+  };
+
   const downloadClientPDF = async (clientSlug, dateFrom = '', dateTo = '') => {
     try {
       let url = `${BACKEND_URL}/api/clients/${clientSlug}/pdf`;
