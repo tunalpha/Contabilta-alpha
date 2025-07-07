@@ -768,6 +768,13 @@ function App() {
       dare: "Debit (Expense/Debt)",
       avere: "Credit (Income/Asset)",
       
+      // Categories  
+      cash: "Cash",
+      carte: "Cards",
+      bonifico: "Bank Transfer", 
+      paypal: "PayPal",
+      altro: "Other",
+      
       // Balance
       totalAvere: "Total Credit (Assets)",
       totalDare: "Total Debit (Expenses)",
