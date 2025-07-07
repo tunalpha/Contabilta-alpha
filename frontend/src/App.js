@@ -657,7 +657,13 @@ function App() {
     return icons[category] || '📋';
   };
 
-  const downloadClientPDF = async (clientSlug) => {
+  const [showPDFModal, setShowPDFModal] = useState(false);
+  const [pdfDateFilters, setPdfDateFilters] = useState({
+    dateFrom: '',
+    dateTo: ''
+  });
+
+  const downloadClientPDF = async (clientSlug, dateFrom = '', dateTo = '') => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/clients/${clientSlug}/pdf`);
       if (response.ok) {
