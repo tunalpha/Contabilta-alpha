@@ -968,11 +968,53 @@ function App() {
           <div className="text-center mb-8">
             <div className="mb-4">
               <div className="mx-auto h-24 w-24 flex items-center justify-center">
-                <img 
-                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InB1cnBsZUdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzk4NTVGRiIvPgo8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzgzMzNFQSIvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNEOTQ2RUYiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cGF0aCBkPSJNMjAgODBMMzUgMjBINjVMODAgODBINjBMNTUgNjBINDVMNDAgODBIMjBaIE00MyA0MEg1N0w2MCA1MEg0MFpNNTAgMTBMMTAgOTBIOTBMNTAgMTBaIiBmaWxsPSJ1cmwoI3B1cnBsZUdyYWRpZW50KSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPgo=" 
-                  alt="Alpha Logo" 
-                  className="h-24 w-24"
-                />
+                <svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="alphaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#9855FF"/>
+                      <stop offset="50%" stopColor="#8333EA"/>
+                      <stop offset="100%" stopColor="#D946EF"/>
+                    </linearGradient>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.2"/>
+                    </filter>
+                  </defs>
+                  
+                  {/* Calculator base */}
+                  <rect x="12" y="12" width="72" height="72" rx="12" ry="12" 
+                        fill="url(#alphaGradient)" filter="url(#shadow)"/>
+                  
+                  {/* Calculator screen */}
+                  <rect x="18" y="18" width="60" height="16" rx="4" ry="4" 
+                        fill="#ffffff" opacity="0.9"/>
+                  
+                  {/* Calculator buttons grid */}
+                  <circle cx="26" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="38" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="50" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="62" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="70" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
+                  
+                  <circle cx="26" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="38" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="50" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="62" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="70" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
+                  
+                  <circle cx="26" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="38" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="50" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="62" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
+                  <circle cx="70" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
+                  
+                  {/* Letter A overlay */}
+                  <path d="M48 20 L35 68 L41 68 L44 58 L52 58 L55 68 L61 68 L48 20 Z M46 50 L50 50 L48 42 Z" 
+                        fill="#ffffff" opacity="0.95" stroke="none"/>
+                  
+                  {/* Accent elements */}
+                  <circle cx="22" cy="25" r="2" fill="#ffffff" opacity="0.6"/>
+                  <circle cx="74" cy="25" r="2" fill="#ffffff" opacity="0.6"/>
+                </svg>
               </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
