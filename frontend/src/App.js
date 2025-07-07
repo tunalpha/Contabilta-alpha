@@ -1575,13 +1575,13 @@ function App() {
             onClick={() => setShowFilters(!showFilters)}
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
           >
-            {showFilters ? 'Nascondi Filtri' : '🔍 Cronologia e Filtri'}
+            {showFilters ? t('hideFilters') : t('filters')}
           </button>
           <button
             onClick={() => handlePDFDownload()}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
           >
-            📄 Scarica PDF
+            {t('downloadPDF')}
           </button>
         </div>
 
