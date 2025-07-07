@@ -646,6 +646,171 @@ async def get_statistics(client_slug: Optional[str] = Query(None, description="C
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/clients/{client_slug}/pdf")
+async def generate_client_pdf(client_slug: str):
+    """Generate PDF report for a specific client (PUBLIC)"""
+    try:
+        # Get client data
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Get all transactions for this client
+        transactions = []
+        async for transaction in db.transactions.find({"client_id": client["id"]}).sort("date", -1):
+            transactions.append(transaction_helper(transaction))
+        
+        # Calculate balance
+        total_avere = 0
+        total_dare = 0
+        for transaction in transactions:
+            if transaction["type"] == "avere":
+                total_avere += transaction["amount"]
+            else:
+                total_dare += transaction["amount"]
+        
+        balance = total_avere - total_dare
+        
+        # Create PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.navy
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        # Title
+        story.append(Paragraph("🧮 Contabilità Alpha", title_style))
+        story.append(Paragraph("Estratto Conto", subtitle_style))
+        story.append(Spacer(1, 20))
+        
+        # Client info
+        client_info = f"<b>Cliente:</b> {client['name']}<br/>"
+        client_info += f"<b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y alle %H:%M')}<br/>"
+        client_info += f"<b>Periodo:</b> Tutte le transazioni"
+        story.append(Paragraph(client_info, styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Balance summary
+        balance_data = [
+            ['Categoria', 'Importo'],
+            ['Totale Avere (Crediti)', f"€ {total_avere:,.2f}"],
+            ['Totale Dare (Debiti)', f"€ {total_dare:,.2f}"],
+            ['Saldo Netto', f"€ {balance:,.2f}"],
+        ]
+        
+        balance_table = Table(balance_data, colWidths=[3*inch, 2*inch])
+        balance_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.navy),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 3), (-1, 3), colors.lightgreen if balance >= 0 else colors.lightcoral),
+        ]))
+        
+        story.append(balance_table)
+        story.append(Spacer(1, 30))
+        
+        # Transactions header
+        story.append(Paragraph("📋 Dettaglio Transazioni", styles['Heading2']))
+        story.append(Spacer(1, 10))
+        
+        if transactions:
+            # Transaction table
+            transaction_data = [['Data', 'Descrizione', 'Tipo', 'Categoria', 'Importo']]
+            
+            for transaction in transactions:
+                date_str = datetime.fromisoformat(transaction['date'].replace('Z', '+00:00')).strftime('%d/%m/%Y')
+                amount_str = f"€ {transaction['amount']:,.2f}"
+                if transaction['type'] == 'avere':
+                    amount_str = f"+{amount_str}"
+                else:
+                    amount_str = f"-{amount_str}"
+                
+                transaction_data.append([
+                    date_str,
+                    transaction['description'][:30] + '...' if len(transaction['description']) > 30 else transaction['description'],
+                    'Avere' if transaction['type'] == 'avere' else 'Dare',
+                    transaction['category'],
+                    amount_str
+                ])
+            
+            transaction_table = Table(transaction_data, colWidths=[1*inch, 2.5*inch, 0.8*inch, 1*inch, 1.2*inch])
+            transaction_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.navy),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            
+            # Color code the amounts
+            for i, transaction in enumerate(transactions, 1):
+                if transaction['type'] == 'avere':
+                    transaction_table.setStyle(TableStyle([
+                        ('TEXTCOLOR', (4, i), (4, i), colors.green),
+                        ('BACKGROUND', (0, i), (-1, i), colors.lightgreen),
+                    ]))
+                else:
+                    transaction_table.setStyle(TableStyle([
+                        ('TEXTCOLOR', (4, i), (4, i), colors.red),
+                        ('BACKGROUND', (0, i), (-1, i), colors.mistyrose),
+                    ]))
+            
+            story.append(transaction_table)
+        else:
+            story.append(Paragraph("Nessuna transazione trovata per questo cliente.", styles['Normal']))
+        
+        # Footer
+        story.append(Spacer(1, 30))
+        footer_text = f"Totale transazioni: {len(transactions)}"
+        story.append(Paragraph(footer_text, styles['Normal']))
+        
+        # Build PDF
+        doc.build(story)
+        
+        # Return PDF as response
+        buffer.seek(0)
+        filename = f"estratto_conto_{client['slug']}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(buffer.read()),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
