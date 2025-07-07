@@ -662,6 +662,129 @@ function App() {
     dateFrom: '',
     dateTo: ''
   });
+  const [language, setLanguage] = useState('it'); // 'it' or 'en'
+
+  // Translations
+  const translations = {
+    it: {
+      // Header
+      title: "Contabilità Alpha",
+      subtitle: "Sistema Multi-Cliente Professionale",
+      adminMode: "🔐 Modalità Amministratore",
+      readOnlyMode: "👁️ Modalità Solo Lettura",
+      viewOnly: "Visualizzazione solo lettura",
+      
+      // Buttons
+      logout: "Logout",
+      loginAdmin: "Login Admin",
+      newClient: "Nuovo Cliente",
+      newTransaction: "Nuova Transazione",
+      filters: "🔍 Cronologia e Filtri",
+      hideFilters: "Nascondi Filtri",
+      downloadPDF: "📄 Scarica PDF",
+      copyLink: "🔗 Copia Link",
+      view: "👁️ Visualizza",
+      edit: "✏️ Modifica",
+      delete: "🗑️ Elimina",
+      save: "Salva",
+      cancel: "Annulla",
+      
+      // Forms
+      clientName: "Nome Cliente",
+      amount: "Importo (€)",
+      description: "Descrizione (opzionale)",
+      type: "Tipo Operazione",
+      category: "Metodo di Pagamento",
+      dateFrom: "Data inizio",
+      dateTo: "Data fine",
+      
+      // Transaction types
+      dare: "Dare (Uscita/Debito)",
+      avere: "Avere (Entrata/Credito)",
+      
+      // Balance
+      totalAvere: "Totale Avere (Crediti)",
+      totalDare: "Totale Dare (Debiti)",
+      netBalance: "Saldo Netto",
+      
+      // PDF
+      pdfTitle: "📄 Scarica Estratto Conto PDF",
+      pdfSubtitle: "Seleziona il periodo per l'estratto conto (lascia vuoto per tutte le transazioni)",
+      
+      // Messages
+      loginSuccess: "Login amministratore riuscito!",
+      wrongPassword: "Password errata. Solo l'amministratore può inserire dati.",
+      logoutMessage: "Logout effettuato. Ora sei in modalità solo lettura.",
+      pdfSuccess: "✅ PDF scaricato con successo!",
+      pdfError: "❌ Errore nel download del PDF. Riprova più tardi.",
+      
+      // Transactions
+      transactionHistory: "Registro Transazioni",
+      noTransactions: "Nessuna transazione trovata",
+      noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
+      totalTransactions: "Totale transazioni"
+    },
+    en: {
+      // Header
+      title: "Alpha Accounting",
+      subtitle: "Professional Multi-Client System",
+      adminMode: "🔐 Administrator Mode",
+      readOnlyMode: "👁️ Read-Only Mode", 
+      viewOnly: "Read-only view",
+      
+      // Buttons
+      logout: "Logout",
+      loginAdmin: "Admin Login",
+      newClient: "New Client",
+      newTransaction: "New Transaction",
+      filters: "🔍 History & Filters",
+      hideFilters: "Hide Filters",
+      downloadPDF: "📄 Download PDF",
+      copyLink: "🔗 Copy Link",
+      view: "👁️ View",
+      edit: "✏️ Edit",
+      delete: "🗑️ Delete",
+      save: "Save",
+      cancel: "Cancel",
+      
+      // Forms
+      clientName: "Client Name",
+      amount: "Amount (€)",
+      description: "Description (optional)",
+      type: "Operation Type",
+      category: "Payment Method",
+      dateFrom: "Start date",
+      dateTo: "End date",
+      
+      // Transaction types
+      dare: "Debit (Expense/Debt)",
+      avere: "Credit (Income/Asset)",
+      
+      // Balance
+      totalAvere: "Total Credit (Assets)",
+      totalDare: "Total Debit (Expenses)",
+      netBalance: "Net Balance",
+      
+      // PDF
+      pdfTitle: "📄 Download Account Statement PDF",
+      pdfSubtitle: "Select period for the statement (leave empty for all transactions)",
+      
+      // Messages
+      loginSuccess: "Administrator login successful!",
+      wrongPassword: "Wrong password. Only administrator can enter data.",
+      logoutMessage: "Logout completed. You are now in read-only mode.",
+      pdfSuccess: "✅ PDF downloaded successfully!",
+      pdfError: "❌ Error downloading PDF. Please try again later.",
+      
+      // Transactions
+      transactionHistory: "Transaction Register",
+      noTransactions: "No transactions found",
+      noTransactionsFiltered: "No transactions found with selected filters",
+      totalTransactions: "Total transactions"
+    }
+  };
+
+  const t = (key) => translations[language][key] || key;
 
   const downloadClientPDF = async (clientSlug, dateFrom = '', dateTo = '') => {
     try {
