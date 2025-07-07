@@ -702,6 +702,13 @@ function App() {
       dare: "Dare (Uscita/Debito)",
       avere: "Avere (Entrata/Credito)",
       
+      // Categories
+      cash: "Cash",
+      carte: "Carte", 
+      bonifico: "Bonifico",
+      paypal: "PayPal",
+      altro: "Altro",
+      
       // Balance
       totalAvere: "Totale Avere (Crediti)",
       totalDare: "Totale Dare (Debiti)",
