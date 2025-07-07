@@ -11,7 +11,7 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-app = FastAPI(title="Contabilità Alpha/Marzia")
+app = FastAPI(title="Contabilità Alpha")
 
 # CORS configuration
 app.add_middleware(
