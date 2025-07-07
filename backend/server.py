@@ -115,6 +115,45 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
     
     return True
 
+# Currency conversion functions
+async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> float:
+    """Get exchange rate from one currency to another using free API"""
+    if from_currency == to_currency:
+        return 1.0
+    
+    try:
+        # Using ExchangeRate-API (free tier: 1500 requests/month)
+        async with aiohttp.ClientSession() as session:
+            url = f"https://api.exchangerate-api.com/v4/latest/{from_currency}"
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data["rates"].get(to_currency, 1.0)
+                else:
+                    # Fallback rates if API fails
+                    fallback_rates = {
+                        "USD": 0.92,  # Approximate USD to EUR rate
+                        "GBP": 1.17,  # Approximate GBP to EUR rate
+                    }
+                    return fallback_rates.get(from_currency, 1.0)
+    except Exception as e:
+        print(f"Error fetching exchange rate: {e}")
+        # Fallback rates
+        fallback_rates = {
+            "USD": 0.92,
+            "GBP": 1.17,
+        }
+        return fallback_rates.get(from_currency, 1.0)
+
+async def convert_currency(amount: float, from_currency: str, to_currency: str = "EUR") -> tuple[float, float]:
+    """Convert amount from one currency to another. Returns (converted_amount, exchange_rate)"""
+    if from_currency == to_currency:
+        return amount, 1.0
+    
+    rate = await get_exchange_rate(from_currency, to_currency)
+    converted_amount = amount * rate
+    return converted_amount, rate
+
 # Helper functions
 def create_slug(name: str) -> str:
     """Create URL-friendly slug from client name"""
