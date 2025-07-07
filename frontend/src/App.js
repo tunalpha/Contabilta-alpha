@@ -143,6 +143,9 @@ function App() {
       let url = `${BACKEND_URL}/api/transactions`;
       if (clientSlug) {
         url += `?client_slug=${clientSlug}`;
+      } else if (selectedClient) {
+        // For admin view, get transactions for selected client
+        url += `?client_slug=${selectedClient.slug}`;
       }
       
       const response = await fetch(url);
@@ -158,6 +161,9 @@ function App() {
       let url = `${BACKEND_URL}/api/balance`;
       if (clientSlug) {
         url += `?client_slug=${clientSlug}`;
+      } else if (selectedClient) {
+        // For admin view, get balance for selected client
+        url += `?client_slug=${selectedClient.slug}`;
       }
       
       const response = await fetch(url);
