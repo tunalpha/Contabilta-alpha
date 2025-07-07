@@ -183,8 +183,8 @@ function App() {
       return;
     }
 
-    if (!formData.amount || !formData.description) {
-      alert('Per favore compila tutti i campi');
+    if (!formData.amount) {
+      alert('Per favore inserisci l\'importo');
       return;
     }
 
@@ -197,7 +197,7 @@ function App() {
         },
         body: JSON.stringify({
           amount: parseFloat(formData.amount),
-          description: formData.description,
+          description: formData.description || 'Transazione senza descrizione',
           type: formData.type,
           category: formData.category,
           date: new Date().toISOString()
