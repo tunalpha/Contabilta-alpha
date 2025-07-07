@@ -948,6 +948,43 @@ function App() {
     setPdfDateFilters({ dateFrom: '', dateTo: '', targetClientSlug: '' });
   };
 
+  const handleResetClientLink = async (client) => {
+    if (window.confirm(`Sei sicuro di voler resettare il link di accesso per ${client.name}?\n\nIl vecchio link diventerà inaccessibile e ne verrà generato uno nuovo.`)) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/clients/${client.id}/reset-link`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: adminToken })
+        });
+
+        if (response.ok) {
+          const updatedClient = await response.json();
+          
+          // Update the client in the local state
+          setClients(prevClients => 
+            prevClients.map(c => 
+              c.id === client.id 
+                ? { ...c, slug: updatedClient.slug }
+                : c
+            )
+          );
+          
+          // Show new link
+          const newLink = `${window.location.origin}/cliente/${updatedClient.slug}`;
+          alert(`✅ Link resettato con successo!\n\nNuovo link:\n${newLink}\n\nIl vecchio link non è più accessibile.`);
+          
+        } else {
+          throw new Error('Errore nel reset del link');
+        }
+      } catch (error) {
+        console.error('Error resetting client link:', error);
+        alert('❌ Errore nel reset del link. Riprova più tardi.');
+      }
+    }
+  };
+
   const copyClientLink = (client) => {
     const link = `${window.location.origin}/cliente/${client.slug}`;
     navigator.clipboard.writeText(link);
