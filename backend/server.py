@@ -137,7 +137,7 @@ async def send_password_email():
 
         # Create plain text version
         text = f"""
-        🧮 Contabilità Alpha/Marzia - Recupero Password
+        🧮 Contabilità Alpha - Recupero Password
 
         Hai richiesto il recupero della password per l'accesso amministratore.
 
