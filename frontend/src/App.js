@@ -822,13 +822,13 @@ function App() {
         a.click();
         window.URL.revokeObjectURL(downloadUrl);
         document.body.removeChild(a);
-        alert('✅ PDF scaricato con successo!');
+        alert(t('pdfSuccess'));
       } else {
         throw new Error('Errore nel download');
       }
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      alert('❌ Errore nel download del PDF. Riprova più tardi.');
+      alert(t('pdfError'));
     }
   };
 
