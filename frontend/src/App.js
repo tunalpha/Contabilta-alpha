@@ -657,6 +657,29 @@ function App() {
     return icons[category] || '📋';
   };
 
+  const downloadClientPDF = async (clientSlug) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${clientSlug}/pdf`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `estratto_conto_${clientSlug}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        alert('✅ PDF scaricato con successo!');
+      } else {
+        throw new Error('Errore nel download');
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('❌ Errore nel download del PDF. Riprova più tardi.');
+    }
+  };
+
   const downloadPDF = async () => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`);
