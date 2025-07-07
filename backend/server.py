@@ -862,6 +862,43 @@ async def generate_client_pdf(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
 
+@app.patch("/api/clients/{client_id}/reset-link")
+async def reset_client_link(client_id: str, token: str = Depends(verify_admin_token)):
+    """Reset client link by generating new slug (ADMIN ONLY)"""
+    try:
+        # Check if client exists
+        client = await db.clients.find_one({"id": client_id, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Generate new secure slug
+        import secrets
+        import string
+        alphabet = string.ascii_lowercase + string.digits
+        new_slug = ''.join(secrets.choice(alphabet) for _ in range(12))
+        
+        # Ensure uniqueness
+        while await db.clients.find_one({"slug": new_slug, "active": True}):
+            new_slug = ''.join(secrets.choice(alphabet) for _ in range(12))
+        
+        # Update client with new slug
+        result = await db.clients.update_one(
+            {"id": client_id},
+            {"$set": {"slug": new_slug}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to reset client link")
+        
+        # Return updated client
+        updated_client = await db.clients.find_one({"id": client_id})
+        return client_helper(updated_client)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error resetting client link: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
