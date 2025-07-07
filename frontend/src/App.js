@@ -126,6 +126,18 @@ function App() {
     }
   };
 
+  const fetchClientsPublic = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/public`);
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data);
+      }
+    } catch (error) {
+      console.error('Error fetching public clients:', error);
+    }
+  };
+
   const fetchTransactions = async (clientSlug = null) => {
     try {
       let url = `${BACKEND_URL}/api/transactions`;
