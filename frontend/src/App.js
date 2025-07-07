@@ -1133,6 +1133,15 @@ function App() {
                       >
                         👁️ Visualizza
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadClientPDF(client.slug);
+                        }}
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                      >
+                        📄 PDF
+                      </button>
                     </div>
                   </div>
                 ))}
