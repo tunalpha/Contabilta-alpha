@@ -1552,19 +1552,19 @@ function App() {
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(balance.total_avere)}
               </div>
-              <div className="text-sm text-gray-500">Totale Avere (Crediti)</div>
+              <div className="text-sm text-gray-500">{t('totalAvere')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
                 {formatCurrency(balance.total_dare)}
               </div>
-              <div className="text-sm text-gray-500">Totale Dare (Debiti)</div>
+              <div className="text-sm text-gray-500">{t('totalDare')}</div>
             </div>
             <div className="text-center">
               <div className={`text-3xl font-bold ${balance.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(balance.balance)}
               </div>
-              <div className="text-sm text-gray-500">Saldo Netto</div>
+              <div className="text-sm text-gray-500">{t('netBalance')}</div>
             </div>
           </div>
         </div>
