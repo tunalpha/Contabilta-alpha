@@ -341,11 +341,19 @@ function App() {
     setFilteredTransactions(filtered);
   };
 
+  const MAX_CLIENTS = 5; // Limite massimo clienti
+
   const handleClientSubmit = async (e) => {
     e.preventDefault();
     
     if (!clientFormData.name) {
       alert('Per favore inserisci il nome del cliente');
+      return;
+    }
+
+    // Check client limit
+    if (clients.length >= MAX_CLIENTS) {
+      alert(`❌ Limite raggiunto!\n\nPuoi avere massimo ${MAX_CLIENTS} clienti.\nElimina un cliente esistente per aggiungerne uno nuovo.`);
       return;
     }
 
@@ -366,7 +374,7 @@ function App() {
         setClientFormData({ name: '' });
         setShowClientForm(false);
         fetchClients();
-        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}`);
+        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`);
       } else {
         const errorData = await response.json();
         alert(`Errore: ${errorData.detail}`);
