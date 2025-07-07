@@ -44,7 +44,7 @@ EMAIL_CONFIG = {
 class Transaction(BaseModel):
     id: Optional[str] = None
     amount: float
-    description: str
+    description: Optional[str] = "Transazione senza descrizione"
     type: str  # 'avere' (credito/entrata) or 'dare' (debito/uscita)
     category: str  # 'Cash', 'Bonifico', 'PayPal', 'Altro'
     date: datetime
