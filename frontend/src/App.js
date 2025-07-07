@@ -804,32 +804,38 @@ function App() {
 
   // Smart translation for transaction descriptions and categories
   const translateText = (text) => {
-    if (language === 'it') return text;
-    
-    // Don't translate if already in English or empty
-    if (!text || /^[a-zA-Z\s.,\-0-9]+$/.test(text)) return text;
+    if (language === 'it' || !text) return text;
     
     let translated = text;
     
-    // Common transaction terms
+    // Common transaction terms - case insensitive
     const termTranslations = {
       'Bonifico': 'Bank Transfer',
+      'bonifico': 'Bank Transfer',
       'Incasso carte settimanale': 'Weekly card income',
-      'Riporto Capitolo': 'Chapter Report', 
+      'incasso carte settimanale': 'Weekly card income',
+      'Riporto Capitolo': 'Chapter Report',
+      'riporto capitolo': 'Chapter Report',
       'dal': 'from',
       'al': 'to',
       'Avere': 'Credit',
+      'avere': 'Credit', 
       'Dare': 'Debit',
+      'dare': 'Debit',
       'Cash': 'Cash',
+      'cash': 'Cash',
       'Carte': 'Cards',
+      'carte': 'Cards',
       'PayPal': 'PayPal',
-      'Altro': 'Other'
+      'paypal': 'PayPal',
+      'Altro': 'Other',
+      'altro': 'Other'
     };
     
-    // Replace terms
+    // Replace each term
     Object.entries(termTranslations).forEach(([italian, english]) => {
-      const regex = new RegExp(`\\b${italian}\\b`, 'g');
-      translated = translated.replace(regex, english);
+      // Use global flag and word boundaries
+      translated = translated.replace(new RegExp(italian, 'g'), english);
     });
     
     return translated;
