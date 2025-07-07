@@ -788,6 +788,39 @@ function App() {
 
   const t = (key) => translations[language][key] || key;
 
+  // Smart translation for transaction descriptions and categories
+  const translateText = (text) => {
+    if (language === 'it') return text;
+    
+    // Don't translate if already in English or empty
+    if (!text || /^[a-zA-Z\s.,\-0-9]+$/.test(text)) return text;
+    
+    let translated = text;
+    
+    // Common transaction terms
+    const termTranslations = {
+      'Bonifico': 'Bank Transfer',
+      'Incasso carte settimanale': 'Weekly card income',
+      'Riporto Capitolo': 'Chapter Report', 
+      'dal': 'from',
+      'al': 'to',
+      'Avere': 'Credit',
+      'Dare': 'Debit',
+      'Cash': 'Cash',
+      'Carte': 'Cards',
+      'PayPal': 'PayPal',
+      'Altro': 'Other'
+    };
+    
+    // Replace terms
+    Object.entries(termTranslations).forEach(([italian, english]) => {
+      const regex = new RegExp(`\\b${italian}\\b`, 'g');
+      translated = translated.replace(regex, english);
+    });
+    
+    return translated;
+  };
+
   const downloadClientPDF = async (clientSlug, dateFrom = '', dateTo = '') => {
     try {
       let url = `${BACKEND_URL}/api/clients/${clientSlug}/pdf`;
