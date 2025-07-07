@@ -21,6 +21,8 @@ function App() {
   const [showFilters, setShowFilters] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showClientForm, setShowClientForm] = useState(false);
+  const [showEditClientForm, setShowEditClientForm] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -39,6 +41,9 @@ function App() {
     client_id: ''
   });
   const [clientFormData, setClientFormData] = useState({
+    name: ''
+  });
+  const [editClientFormData, setEditClientFormData] = useState({
     name: ''
   });
   const [filters, setFilters] = useState({
