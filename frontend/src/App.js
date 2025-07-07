@@ -1677,7 +1677,7 @@ function App() {
         {/* Transactions List */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Registro Transazioni
+            {t('transactionHistory')}
             {showFilters && (
               <span className="text-sm text-gray-500 ml-2">
                 ({filteredTransactions.length} di {transactions.length})
