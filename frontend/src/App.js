@@ -940,12 +940,14 @@ function App() {
                               <button
                                 onClick={() => handleEdit(transaction)}
                                 className="text-blue-500 hover:text-blue-700 p-1 text-xs"
+                                title="Modifica transazione"
                               >
                                 ✏️
                               </button>
                               <button
                                 onClick={() => handleDelete(transaction)}
                                 className="text-red-500 hover:text-red-700 p-1 text-xs"
+                                title="Elimina transazione"
                               >
                                 🗑️
                               </button>
