@@ -781,7 +781,8 @@ function App() {
       transactionHistory: "Transaction Register",
       noTransactions: "No transactions found",
       noTransactionsFiltered: "No transactions found with selected filters",
-      totalTransactions: "Total transactions"
+      totalTransactions: "Total transactions",
+      clientManagement: "👥 Client Management"
     }
   };
 
