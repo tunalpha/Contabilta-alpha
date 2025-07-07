@@ -717,6 +717,7 @@ function App() {
       bonifico: "Bonifico",
       paypal: "PayPal",
       altro: "Altro",
+      currency: "Valuta",
       
       // Balance
       totalAvere: "Totale Avere (Crediti)",
