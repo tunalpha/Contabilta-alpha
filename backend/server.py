@@ -128,7 +128,7 @@ async def send_password_email():
             </div>
             
             <div style="text-align: center; margin-top: 30px; color: #888; font-size: 12px;">
-              <p>Email automatica da Contabilità Alpha/Marzia</p>
+              <p>Email automatica da Contabilità Alpha</p>
               <p>Data: {datetime.now().strftime('%d/%m/%Y alle %H:%M')}</p>
             </div>
           </body>
