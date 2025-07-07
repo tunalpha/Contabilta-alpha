@@ -921,9 +921,19 @@ function App() {
               </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              Contabilità Alpha
+              {t('title')}
             </h1>
-            <p className="text-gray-600">Sistema Multi-Cliente Professionale</p>
+            <p className="text-gray-600">{t('subtitle')}</p>
+            
+            {/* Language Toggle */}
+            <div className="mt-4">
+              <button
+                onClick={() => setLanguage(language === 'it' ? 'en' : 'it')}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                {language === 'it' ? '🇬🇧 English' : '🇮🇹 Italiano'}
+              </button>
+            </div>
             
             {/* Admin Status */}
             <div className="mt-4">
