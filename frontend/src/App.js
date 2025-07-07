@@ -797,7 +797,8 @@ function App() {
       noTransactions: "No transactions found",
       noTransactionsFiltered: "No transactions found with selected filters",
       totalTransactions: "Total transactions",
-      clientManagement: "👥 Client Management"
+      clientManagement: "👥 Client Management",
+      resetLink: "🔄 Reset Link"
     }
   };
 
