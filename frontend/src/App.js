@@ -751,14 +751,23 @@ function App() {
     }
   };
 
-  const handlePDFDownload = () => {
+  const handlePDFDownload = (clientSlug = null) => {
     setShowPDFModal(true);
+    // Se non specificato, usa il client corrente
+    if (!clientSlug && currentView === 'client') {
+      clientSlug = currentClientSlug;
+    } else if (!clientSlug && selectedClient) {
+      clientSlug = selectedClient.slug;
+    }
+    // Memorizza il client slug per il download
+    setPdfDateFilters(prev => ({...prev, targetClientSlug: clientSlug}));
   };
 
   const handlePDFDownloadConfirm = () => {
-    downloadPDF(pdfDateFilters.dateFrom, pdfDateFilters.dateTo);
+    const clientSlug = pdfDateFilters.targetClientSlug || currentClientSlug || selectedClient?.slug;
+    downloadClientPDF(clientSlug, pdfDateFilters.dateFrom, pdfDateFilters.dateTo);
     setShowPDFModal(false);
-    setPdfDateFilters({ dateFrom: '', dateTo: '' });
+    setPdfDateFilters({ dateFrom: '', dateTo: '', targetClientSlug: '' });
   };
 
   const copyClientLink = (client) => {
