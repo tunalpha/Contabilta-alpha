@@ -752,13 +752,22 @@ function App() {
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
                       {isAdmin && (
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
-                          title="Elimina transazione (Solo Admin)"
-                        >
-                          🗑️
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleEdit(transaction)}
+                            className="text-blue-500 hover:text-blue-700 p-1 rounded transition-colors duration-200"
+                            title="Modifica transazione (Solo Admin)"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDelete(transaction)}
+                            className="text-red-500 hover:text-red-700 p-1 rounded transition-colors duration-200"
+                            title="Elimina transazione (Solo Admin)"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
