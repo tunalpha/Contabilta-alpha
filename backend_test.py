@@ -7,7 +7,7 @@ import sys
 import os
 
 # Get the backend URL from frontend/.env
-BACKEND_URL = "https://b86f4bc0-4274-4f4c-aa78-77ff6fc707ba.preview.emergentagent.com"
+BACKEND_URL = "https://132f3394-846c-437d-930c-bbd015c75396.preview.emergentagent.com"
 API_BASE_URL = f"{BACKEND_URL}/api"
 
 # Test data
