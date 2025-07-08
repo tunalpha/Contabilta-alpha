@@ -226,24 +226,8 @@ function App() {
       
       const response = await fetch(url);
       const data = await response.json();
-      
-      // DEBUG: Log raw API response
-      console.log('🔍 RAW API RESPONSE - fetchTransactions:', data);
-      console.log('🔍 Number of transactions:', data.length);
-      
-      // Debug each transaction
-      data.forEach((transaction, index) => {
-        console.log(`🔍 Transaction ${index + 1}:`, {
-          id: transaction.id,
-          description: transaction.description,
-          currency: transaction.currency,
-          original_amount: transaction.original_amount,
-          exchange_rate: transaction.exchange_rate,
-          amount: transaction.amount
-        });
-      });
-      
       setTransactions(data);
+      setFilteredTransactions(data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
