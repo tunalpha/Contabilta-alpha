@@ -1284,7 +1284,7 @@ function App() {
                     💰 Nuova Transazione per {selectedClient.name}
                   </h2>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tipo Operazione
@@ -1300,7 +1300,7 @@ function App() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Importo (€)
+                          Importo
                         </label>
                         <input
                           type="number"
@@ -1310,6 +1310,28 @@ function App() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="0.00"
                         />
+                        {formData.currency !== 'EUR' && formData.amount && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            ≈ € {calculateEurEquivalent(parseFloat(formData.amount), formData.currency).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('currency')}
+                        </label>
+                        <select
+                          value={formData.currency}
+                          onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="EUR">🇪🇺 EUR (Euro)</option>
+                          <option value="USD">🇺🇸 USD (Dollar)</option>
+                          <option value="GBP">🇬🇧 GBP (Pound)</option>
+                        </select>
+                        <div className="text-xs text-gray-500 mt-1">
+                          1 {formData.currency} = € {exchangeRates[formData.currency]?.toFixed(4)}
+                        </div>
                       </div>
                     </div>
                     <div>
