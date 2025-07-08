@@ -1030,7 +1030,7 @@ function App() {
     },
     en: {
       // Header
-      title: "Alpha Accounting",
+      title: "Accounting",
       subtitle: "Professional Multi-Client System",
       adminMode: "🔐 Administrator Mode",
       readOnlyMode: "👁️ Read-Only Mode", 
