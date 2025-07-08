@@ -643,12 +643,12 @@ function App() {
 
   // Helper function to format currency display with original currency
   const formatCurrencyWithOriginal = (transaction) => {
-    const amount = transaction.amount;
+    const amount = transaction.amount; // Always in EUR (for calculations)
     const currency = transaction.currency || 'EUR';
     const originalAmount = transaction.original_amount;
     
     if (originalAmount && currency !== 'EUR') {
-      // Show original currency first, then EUR equivalent
+      // Show ORIGINAL currency as primary, EUR as secondary
       const currencySymbols = {
         'USD': '$',
         'GBP': '£',
@@ -656,11 +656,16 @@ function App() {
       };
       
       const symbol = currencySymbols[currency] || currency;
-      return `${symbol}${originalAmount.toFixed(2)} (€${amount.toFixed(2)})`;
+      return `${symbol}${originalAmount.toFixed(2)}`;
     } else {
       // Show only EUR for EUR transactions
       return `€${amount.toFixed(2)}`;
     }
+  };
+
+  // Helper function for balance (always show EUR)
+  const formatCurrencyEUR = (amount) => {
+    return `€${amount.toFixed(2)}`;
   };
 
   const formatCurrency = (amount) => {
