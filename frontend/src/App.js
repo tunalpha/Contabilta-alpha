@@ -471,7 +471,7 @@ function App() {
         type: formData.type,
         category: formData.category,
         currency: formData.currency,
-        date: new Date().toISOString()
+        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
       };
       
       console.log('Sending transaction data:', transactionData);
