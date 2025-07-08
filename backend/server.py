@@ -202,7 +202,7 @@ async def send_password_email():
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; color: white; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px;">🧮 Contabilità Alpha</h1>
+              <h1 style="margin: 0; font-size: 28px;">🧮 Contabilità</h1>
               <p style="margin: 10px 0 0 0; font-size: 16px;">Recupero Password Amministratore</p>
             </div>
             
