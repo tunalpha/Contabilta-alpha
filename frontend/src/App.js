@@ -1021,12 +1021,36 @@ function App() {
       pdfError: "❌ Errore nel download del PDF. Riprova più tardi.",
       
       // Transactions
-      transactionHistory: "Registro Transazioni",
+      transactionHistory: "Cronologia e Filtri",
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
       totalTransactions: "Totale transazioni",
       clientManagement: "👥 Gestione Clienti",
-      resetLink: "🔄 Reset Link"
+      resetLink: "🔄 Reset Link",
+      
+      // AI Insights
+      smartInsights: "🧠 Insights Intelligenti",
+      priority: "Prioritari",
+      highPriority: "🔴 Prioritario",
+      bestMonth: "Il tuo miglior mese",
+      spendingTrend: "Tendenza spese",
+      mainCategory: "Categoria principale",
+      monthEndForecast: "Previsione fine mese",
+      financialScore: "Punteggio finanziario",
+      excellent: "Ottimo!",
+      good: "Buono",
+      acceptable: "Accettabile",
+      needsImprovement: "Da migliorare",
+      basedOnPatterns: "(basato sui pattern)",
+      increase: "aumento",
+      decrease: "diminuzione",
+      vsPreviousMonth: "vs mese scorso",
+      ofExpenses: "delle spese",
+      
+      // Analytics
+      analytics: "📊 Analytics",
+      monthlyTrend: "📈 Trend Mensile",
+      expensesByCategory: "🍰 Spese per Categoria"
     },
     en: {
       // Header
