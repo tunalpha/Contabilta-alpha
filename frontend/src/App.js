@@ -674,8 +674,10 @@ function App() {
   const getCurrencyTooltip = (transaction) => {
     const amount = transaction.amount;
     const currency = transaction.currency || 'EUR';
-    const originalAmount = transaction.original_amount;
-    const exchangeRate = transaction.exchange_rate;
+    
+    // Try both naming conventions
+    const originalAmount = transaction.original_amount || transaction.originalAmount;
+    const exchangeRate = transaction.exchange_rate || transaction.exchangeRate;
     
     if (originalAmount && currency !== 'EUR' && exchangeRate) {
       return `Convertito in €${amount.toFixed(2)} (tasso: 1 ${currency} = €${exchangeRate.toFixed(4)})`;
