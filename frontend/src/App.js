@@ -1106,11 +1106,12 @@ function App() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4">
-              <div className="mx-auto h-24 w-24 flex items-center justify-center">
-                <svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="alphaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#9855FF"/>
+              <div className="mx-auto h-24 w-24 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg border-4 border-white">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">📊</div>
+                  <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
+                </div>
+              </div>
                       <stop offset="50%" stopColor="#8333EA"/>
                       <stop offset="100%" stopColor="#D946EF"/>
                     </linearGradient>
