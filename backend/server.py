@@ -804,7 +804,7 @@ async def generate_client_pdf(
         )
         
         # Title
-        story.append(Paragraph("🧮 Contabilità Alpha", title_style))
+        story.append(Paragraph("🧮 Contabilità", title_style))
         story.append(Paragraph("Estratto Conto", subtitle_style))
         story.append(Spacer(1, 20))
         
