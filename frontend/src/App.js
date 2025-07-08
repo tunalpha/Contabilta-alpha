@@ -512,7 +512,8 @@ function App() {
       description: transaction.description,
       type: transaction.type,
       category: transaction.category,
-      client_id: transaction.client_id
+      client_id: transaction.client_id,
+      currency: transaction.currency || 'EUR'
     });
     setShowEditForm(true);
   };
