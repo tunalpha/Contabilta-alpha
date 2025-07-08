@@ -114,6 +114,126 @@ const getCategoryPieData = (transactions) => {
   };
 };
 
+// Smart AI Insights Functions
+const generateFinancialInsights = (transactions, balance) => {
+  if (!transactions || transactions.length === 0) return [];
+  
+  const insights = [];
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  // 1. Best performing month
+  const monthlyPerformance = {};
+  transactions.forEach(t => {
+    const date = new Date(t.date);
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+    if (!monthlyPerformance[monthKey]) {
+      monthlyPerformance[monthKey] = { avere: 0, dare: 0, monthName: date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) };
+    }
+    if (t.type === 'avere') monthlyPerformance[monthKey].avere += t.amount;
+    else monthlyPerformance[monthKey].dare += t.amount;
+  });
+  
+  const bestMonth = Object.values(monthlyPerformance)
+    .map(m => ({ ...m, net: m.avere - m.dare }))
+    .sort((a, b) => b.net - a.net)[0];
+  
+  if (bestMonth) {
+    insights.push({
+      type: 'success',
+      icon: '🏆',
+      title: 'Il tuo miglior mese',
+      message: `${bestMonth.monthName}: +€${bestMonth.net.toFixed(2)}`,
+      priority: 'high'
+    });
+  }
+  
+  // 2. Spending trend analysis
+  const last30Days = transactions.filter(t => {
+    const daysAgo = (Date.now() - new Date(t.date).getTime()) / (1000 * 60 * 60 * 24);
+    return daysAgo <= 30 && t.type === 'dare';
+  });
+  
+  const prev30Days = transactions.filter(t => {
+    const daysAgo = (Date.now() - new Date(t.date).getTime()) / (1000 * 60 * 60 * 24);
+    return daysAgo > 30 && daysAgo <= 60 && t.type === 'dare';
+  });
+  
+  const currentSpending = last30Days.reduce((sum, t) => sum + t.amount, 0);
+  const previousSpending = prev30Days.reduce((sum, t) => sum + t.amount, 0);
+  
+  if (previousSpending > 0) {
+    const change = ((currentSpending - previousSpending) / previousSpending) * 100;
+    const trend = change > 0 ? 'aumento' : 'diminuzione';
+    const emoji = change > 0 ? '📈' : '📉';
+    const color = change > 0 ? 'warning' : 'success';
+    
+    insights.push({
+      type: color,
+      icon: emoji,
+      title: 'Tendenza spese',
+      message: `${trend} del ${Math.abs(change).toFixed(1)}% vs mese scorso`,
+      priority: Math.abs(change) > 20 ? 'high' : 'medium'
+    });
+  }
+  
+  // 3. Category analysis
+  const categorySpending = {};
+  transactions.filter(t => t.type === 'dare').forEach(t => {
+    categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
+  });
+  
+  const topCategory = Object.entries(categorySpending)
+    .sort(([,a], [,b]) => b - a)[0];
+  
+  if (topCategory) {
+    const percentage = (topCategory[1] / Object.values(categorySpending).reduce((a, b) => a + b, 0)) * 100;
+    insights.push({
+      type: 'info',
+      icon: '🎯',
+      title: 'Categoria principale',
+      message: `${topCategory[0]}: ${percentage.toFixed(1)}% delle spese`,
+      priority: 'medium'
+    });
+  }
+  
+  // 4. Cash flow prediction
+  const avgMonthlyIncome = transactions
+    .filter(t => t.type === 'avere')
+    .reduce((sum, t) => sum + t.amount, 0) / Math.max(1, new Set(transactions.map(t => t.date.split('-').slice(0, 2).join('-'))).size);
+  
+  const avgMonthlyExpenses = transactions
+    .filter(t => t.type === 'dare')  
+    .reduce((sum, t) => sum + t.amount, 0) / Math.max(1, new Set(transactions.map(t => t.date.split('-').slice(0, 2).join('-'))).size);
+  
+  const prediction = avgMonthlyIncome - avgMonthlyExpenses;
+  
+  insights.push({
+    type: prediction > 0 ? 'success' : 'danger',
+    icon: prediction > 0 ? '💚' : '🔴',
+    title: 'Previsione fine mese',
+    message: `${prediction > 0 ? '+' : ''}€${prediction.toFixed(2)} (basato sui pattern)`,
+    priority: prediction < 0 ? 'high' : 'low'
+  });
+  
+  // 5. Financial health score
+  const score = Math.min(10, Math.max(1, (balance.balance / (balance.total_avere || 1)) * 10 + 2));
+  const scoreEmoji = score >= 8 ? '🌟' : score >= 6 ? '👍' : score >= 4 ? '⚠️' : '🔴';
+  
+  insights.push({
+    type: score >= 7 ? 'success' : score >= 5 ? 'warning' : 'danger',
+    icon: scoreEmoji,
+    title: 'Punteggio finanziario',
+    message: `${score.toFixed(1)}/10 - ${score >= 8 ? 'Ottimo!' : score >= 6 ? 'Buono' : score >= 4 ? 'Accettabile' : 'Da migliorare'}`,
+    priority: score < 5 ? 'high' : 'low'
+  });
+  
+  return insights.sort((a, b) => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    return priorityOrder[b.priority] - priorityOrder[a.priority];
+  });
+};
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 function App() {
