@@ -461,21 +461,25 @@ function App() {
     }
 
     try {
+      const transactionData = {
+        client_id: formData.client_id,
+        amount: parseFloat(formData.amount),
+        description: formData.description || 'Transazione senza descrizione',
+        type: formData.type,
+        category: formData.category,
+        currency: formData.currency,
+        date: new Date().toISOString()
+      };
+      
+      console.log('Sending transaction data:', transactionData);
+      
       const response = await fetch(`${BACKEND_URL}/api/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        body: JSON.stringify({
-          client_id: formData.client_id,
-          amount: parseFloat(formData.amount),
-          description: formData.description || 'Transazione senza descrizione',
-          type: formData.type,
-          category: formData.category,
-          currency: formData.currency,
-          date: new Date().toISOString()
-        }),
+        body: JSON.stringify(transactionData),
       });
 
       if (response.ok) {
