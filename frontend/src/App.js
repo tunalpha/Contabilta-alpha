@@ -491,7 +491,9 @@ function App() {
           description: '',
           type: 'dare',
           category: 'Cash',
-          client_id: ''
+          client_id: '',
+          currency: 'EUR',
+          date: new Date().toISOString().split('T')[0] // Default to today's date
         });
         setShowForm(false);
         fetchTransactions();
