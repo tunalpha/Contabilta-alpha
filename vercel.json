@@ -6,7 +6,9 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "build",
+        "installCommand": "yarn install",
+        "buildCommand": "yarn build"
       }
     },
     {
@@ -26,5 +28,10 @@
       "src": "/(.*)",
       "dest": "frontend/build/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "backend/server.py": {
+      "maxDuration": 10
+    }
+  }
 }
