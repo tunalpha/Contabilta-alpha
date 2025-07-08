@@ -50,14 +50,17 @@ class AlphaLogoFlowable(Flowable):
         canvas.setFillColor(colors.HexColor('#2563EB'))  # Main blue
         canvas.circle(self.size/2, self.size/2, self.size/2 - 4, fill=1, stroke=0)
         
-        # Add emoji-like chart symbol
+        # Add chart symbol (text instead of emoji)
         canvas.setFillColor(colors.white)
-        canvas.setFont("Helvetica-Bold", 20)
-        canvas.drawCentredText(self.size/2, self.size/2 + 5, "📊")
+        canvas.setFont("Helvetica-Bold", 16)
+        # Center coordinates
+        x_center = self.size / 2
+        y_center = self.size / 2
+        canvas.drawString(x_center - 8, y_center + 2, "📊")
         
         # Add ALPHA text
         canvas.setFont("Helvetica-Bold", 8)
-        canvas.drawCentredText(self.size/2, self.size/2 - 12, "ALPHA")
+        canvas.drawString(x_center - 12, y_center - 12, "ALPHA")
         
         # Restore state
         canvas.restoreState()
