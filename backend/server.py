@@ -931,12 +931,21 @@ async def generate_client_pdf(
             no_transactions_msg += "."
             story.append(Paragraph(no_transactions_msg, styles['Normal']))
         
-        # Footer
+        # Footer with logo
         story.append(Spacer(1, 30))
-        footer_text = f"Totale transazioni: {len(transactions)}"
-        if date_from or date_to:
-            footer_text += f" (filtrate per periodo)"
-        story.append(Paragraph(footer_text, styles['Normal']))
+        
+        footer_style = ParagraphStyle(
+            'FooterStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=TA_CENTER,
+            textColor=colors.grey,
+            spaceAfter=5
+        )
+        
+        story.append(Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", footer_style))
+        story.append(Paragraph("📊 ALPHA - Contabilità Professionale", footer_style))
+        story.append(Paragraph("Sistema multi-cliente con AI insights", footer_style))
         
         # Build PDF
         doc.build(story)
