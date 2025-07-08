@@ -32,7 +32,8 @@ function App() {
     type: 'dare',
     category: 'Cash',
     client_id: '',
-    currency: 'EUR'
+    currency: 'EUR',
+    date: new Date().toISOString().split('T')[0] // Default to today's date
   });
   const [editFormData, setEditFormData] = useState({
     amount: '',
@@ -40,7 +41,8 @@ function App() {
     type: 'dare',
     category: 'Cash',
     client_id: '',
-    currency: 'EUR'
+    currency: 'EUR',
+    date: new Date().toISOString().split('T')[0] // Default to today's date
   });
   const [clientFormData, setClientFormData] = useState({
     name: ''
