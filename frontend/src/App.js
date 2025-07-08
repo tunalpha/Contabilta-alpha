@@ -1526,7 +1526,7 @@ function App() {
                         onClick={() => {
                           setShowEditForm(false);
                           setEditingTransaction(null);
-                          setEditFormData({ amount: '', description: '', type: 'dare', category: 'Cash', client_id: '', currency: 'EUR' });
+                          setEditFormData({ amount: '', description: '', type: 'dare', category: 'Cash', client_id: '', currency: 'EUR', date: new Date().toISOString().split('T')[0] });
                         }}
                         className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                       >
