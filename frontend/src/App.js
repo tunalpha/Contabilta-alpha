@@ -520,7 +520,8 @@ function App() {
       type: transaction.type,
       category: transaction.category,
       client_id: transaction.client_id,
-      currency: transaction.currency || 'EUR'
+      currency: transaction.currency || 'EUR',
+      date: transaction.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0]
     });
     setShowEditForm(true);
   };
