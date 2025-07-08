@@ -8,7 +8,7 @@ import os
 import re
 
 # Get the backend URL from frontend/.env
-BACKEND_URL = "https://132f3394-846c-437d-930c-bbd015c75396.preview.emergentagent.com"
+BACKEND_URL = "https://c55fcfe6-e60c-4f75-9cb2-53dc045c2818.preview.emergentagent.com"
 API_BASE_URL = f"{BACKEND_URL}/api"
 
 # Test data with updated terminology (avere/dare)
