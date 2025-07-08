@@ -1977,6 +1977,76 @@ function App() {
           </button>
         </div>
 
+        {/* Analytics Section */}
+        {transactions.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Analytics</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Monthly Trend Chart */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">📈 Trend Mensile</h3>
+                <div style={{ height: '300px' }}>
+                  <Line 
+                    data={getMonthlyTrendData(transactions)}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                        },
+                        title: {
+                          display: false,
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            callback: function(value) {
+                              return '€ ' + value.toFixed(0);
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Category Pie Chart */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">🍰 Spese per Categoria</h3>
+                <div style={{ height: '300px' }}>
+                  <Pie 
+                    data={getCategoryPieData(transactions)}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'right',
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = context.raw || 0;
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const percentage = ((value / total) * 100).toFixed(1);
+                              return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         {showFilters && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
