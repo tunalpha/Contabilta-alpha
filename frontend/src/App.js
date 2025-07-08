@@ -956,6 +956,7 @@ function App() {
   const [language, setLanguage] = useState('it'); // 'it' or 'en'
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [exchangeRates, setExchangeRates] = useState({ EUR: 1.0, USD: 0.92, GBP: 1.17 });
 
   // Translations
   const translations = {
