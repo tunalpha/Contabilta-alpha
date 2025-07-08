@@ -2010,9 +2010,12 @@ function App() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`text-xl font-bold ${
-                        transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <div 
+                        className={`text-xl font-bold ${
+                          transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                        }`}
+                        title={getCurrencyTooltip(transaction)}
+                      >
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
                       </div>
                     </div>
