@@ -285,7 +285,7 @@ async def send_password_email():
 
 @app.get("/")
 async def root():
-    return {"message": "Contabilità Alpha Multi-Cliente API"}
+    return {"message": "Contabilità Multi-Cliente API"}
 
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
