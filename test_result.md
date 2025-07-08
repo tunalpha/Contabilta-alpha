@@ -152,7 +152,7 @@ backend:
   
   - task: "Multi-currency functionality for USD transactions"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
@@ -161,6 +161,9 @@ backend:
       - working: "NA"
         agent: "testing"
         comment: "Tested the multi-currency functionality for USD transactions. The backend correctly processes USD transactions and converts them to EUR using the exchange rate. However, the API response doesn't include the currency, original_amount, and exchange_rate fields. This is because the TransactionResponse model (lines 87-95) doesn't include these fields, even though the transaction_helper function (lines 174-185) does include them. The model needs to be updated to include these fields."
+      - working: true
+        agent: "testing"
+        comment: "Fixed the issue with the multi-currency functionality. Updated the TransactionResponse model to include the currency, original_amount, and exchange_rate fields. Now the API correctly returns these fields in the response. Verified that the currency conversion calculation is working correctly: 40.0 USD * 0.852 = 34.08 EUR."
 
 frontend:
   - task: "Professional accounting UI"
