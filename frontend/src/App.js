@@ -25,6 +25,95 @@ ChartJS.register(
   ArcElement
 );
 
+// Helper functions for chart data
+const getMonthlyTrendData = (transactions) => {
+  const monthlyData = {};
+  const last6Months = [];
+  
+  // Get last 6 months
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = date.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' });
+    last6Months.push({ key: monthKey, label: monthLabel });
+    monthlyData[monthKey] = { avere: 0, dare: 0 };
+  }
+  
+  // Process transactions
+  transactions.forEach(transaction => {
+    const date = new Date(transaction.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (monthlyData[monthKey]) {
+      if (transaction.type === 'avere') {
+        monthlyData[monthKey].avere += transaction.amount;
+      } else {
+        monthlyData[monthKey].dare += transaction.amount;
+      }
+    }
+  });
+  
+  const labels = last6Months.map(m => m.label);
+  const avereData = last6Months.map(m => monthlyData[m.key].avere);
+  const dareData = last6Months.map(m => monthlyData[m.key].dare);
+  
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Entrate (Avere)',
+        data: avereData,
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        tension: 0.3,
+      },
+      {
+        label: 'Uscite (Dare)',
+        data: dareData,
+        borderColor: 'rgb(239, 68, 68)',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.3,
+      },
+    ],
+  };
+};
+
+const getCategoryPieData = (transactions) => {
+  const categoryData = {};
+  
+  transactions.forEach(transaction => {
+    if (transaction.type === 'dare') { // Only outgoing transactions for expenses
+      const category = transaction.category;
+      categoryData[category] = (categoryData[category] || 0) + transaction.amount;
+    }
+  });
+  
+  const labels = Object.keys(categoryData);
+  const data = Object.values(categoryData);
+  const colors = [
+    '#3B82F6', // Blue
+    '#EF4444', // Red
+    '#10B981', // Green
+    '#F59E0B', // Yellow
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#6B7280', // Gray
+  ];
+  
+  return {
+    labels,
+    datasets: [
+      {
+        data,
+        backgroundColor: colors.slice(0, labels.length),
+        borderColor: colors.slice(0, labels.length),
+        borderWidth: 2,
+      },
+    ],
+  };
+};
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 function App() {
