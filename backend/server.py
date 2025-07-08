@@ -209,7 +209,7 @@ async def send_password_email():
             <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
               <h2 style="color: #333; margin-top: 0;">🔑 Password Recuperata</h2>
               <p style="color: #666; font-size: 16px; line-height: 1.5;">
-                Hai richiesto il recupero della password per l'accesso amministratore della Contabilità Alpha.
+                Hai richiesto il recupero della password per l'accesso amministratore della Contabilità.
               </p>
               
               <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; margin: 20px 0;">
