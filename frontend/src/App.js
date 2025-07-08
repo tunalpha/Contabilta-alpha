@@ -1679,7 +1679,7 @@ function App() {
                           <div className={`font-bold ${
                             transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
                           </div>
                           {isAdmin && (
                             <div className="flex gap-1">
