@@ -641,6 +641,28 @@ function App() {
     });
   };
 
+  // Helper function to format currency display with original currency
+  const formatCurrencyWithOriginal = (transaction) => {
+    const amount = transaction.amount;
+    const currency = transaction.currency || 'EUR';
+    const originalAmount = transaction.original_amount;
+    
+    if (originalAmount && currency !== 'EUR') {
+      // Show original currency first, then EUR equivalent
+      const currencySymbols = {
+        'USD': '$',
+        'GBP': '£',
+        'EUR': '€'
+      };
+      
+      const symbol = currencySymbols[currency] || currency;
+      return `${symbol}${originalAmount.toFixed(2)} (€${amount.toFixed(2)})`;
+    } else {
+      // Show only EUR for EUR transactions
+      return `€${amount.toFixed(2)}`;
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('it-IT', {
       style: 'currency',
