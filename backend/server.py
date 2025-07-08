@@ -855,10 +855,17 @@ async def generate_client_pdf(
             textColor=colors.darkblue
         )
         
-        # Header with Logo
+        # Header with Custom Logo
         story.append(Spacer(1, 20))
-        story.append(Paragraph("📊 ALPHA", logo_style))
-        story.append(Paragraph("🧮 Contabilità", title_style))
+        
+        # Add custom logo
+        logo = AlphaLogoFlowable(size=80)
+        logo.hAlign = 'CENTER'
+        story.append(logo)
+        story.append(Spacer(1, 10))
+        
+        # Title without emoji (logo is above)
+        story.append(Paragraph("Contabilità", title_style))
         story.append(Paragraph("Estratto Conto", subtitle_style))
         story.append(Spacer(1, 20))
         
