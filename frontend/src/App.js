@@ -1112,8 +1112,7 @@ function App() {
                   <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
                 </div>
               </div>
-                      <stop offset="50%" stopColor="#8333EA"/>
-                      <stop offset="100%" stopColor="#D946EF"/>
+            </div>
                     </linearGradient>
                     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                       <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.2"/>
