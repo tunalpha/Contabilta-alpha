@@ -962,7 +962,7 @@ function App() {
   const translations = {
     it: {
       // Header
-      title: "Contabilità Alpha",
+      title: "Contabilità",
       subtitle: "Sistema Multi-Cliente Professionale",
       adminMode: "🔐 Modalità Amministratore",
       readOnlyMode: "👁️ Modalità Solo Lettura",
