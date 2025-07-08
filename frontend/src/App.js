@@ -550,7 +550,7 @@ function App() {
           type: editFormData.type,
           category: editFormData.category,
           currency: editFormData.currency,
-          date: editingTransaction.date
+          date: editFormData.date ? new Date(editFormData.date).toISOString() : editingTransaction.date
         }),
       });
 
