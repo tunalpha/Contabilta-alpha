@@ -24,6 +24,46 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 import io
 import aiohttp
+
+# Custom Flowable for Alpha Logo
+class AlphaLogoFlowable(Flowable):
+    def __init__(self, size=60):
+        self.size = size
+        Flowable.__init__(self)
+
+    def draw(self):
+        # Get canvas
+        canvas = self.canv
+        
+        # Save state
+        canvas.saveState()
+        
+        # Draw outer circle with gradient-like effect (blue)
+        canvas.setFillColor(colors.HexColor('#3B82F6'))  # Blue
+        canvas.circle(self.size/2, self.size/2, self.size/2, fill=1, stroke=0)
+        
+        # Draw inner highlight (lighter blue)
+        canvas.setFillColor(colors.HexColor('#60A5FA'))  # Lighter blue
+        canvas.circle(self.size/2, self.size/2, self.size/2 - 2, fill=1, stroke=0)
+        
+        # Draw main circle
+        canvas.setFillColor(colors.HexColor('#2563EB'))  # Main blue
+        canvas.circle(self.size/2, self.size/2, self.size/2 - 4, fill=1, stroke=0)
+        
+        # Add emoji-like chart symbol
+        canvas.setFillColor(colors.white)
+        canvas.setFont("Helvetica-Bold", 20)
+        canvas.drawCentredText(self.size/2, self.size/2 + 5, "📊")
+        
+        # Add ALPHA text
+        canvas.setFont("Helvetica-Bold", 8)
+        canvas.drawCentredText(self.size/2, self.size/2 - 12, "ALPHA")
+        
+        # Restore state
+        canvas.restoreState()
+
+    def wrap(self, availWidth, availHeight):
+        return self.size, self.size
 import asyncio
 
 app = FastAPI(title="Contabilità - Multi Cliente")
