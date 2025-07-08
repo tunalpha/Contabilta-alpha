@@ -115,7 +115,7 @@ const getCategoryPieData = (transactions) => {
 };
 
 // Smart AI Insights Functions
-const generateFinancialInsights = (transactions, balance) => {
+const generateFinancialInsights = (transactions, balance, t) => {
   if (!transactions || transactions.length === 0) return [];
   
   const insights = [];
@@ -124,14 +124,14 @@ const generateFinancialInsights = (transactions, balance) => {
   
   // 1. Best performing month
   const monthlyPerformance = {};
-  transactions.forEach(t => {
-    const date = new Date(t.date);
+  transactions.forEach(tr => {
+    const date = new Date(tr.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
     if (!monthlyPerformance[monthKey]) {
       monthlyPerformance[monthKey] = { avere: 0, dare: 0, monthName: date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) };
     }
-    if (t.type === 'avere') monthlyPerformance[monthKey].avere += t.amount;
-    else monthlyPerformance[monthKey].dare += t.amount;
+    if (tr.type === 'avere') monthlyPerformance[monthKey].avere += tr.amount;
+    else monthlyPerformance[monthKey].dare += tr.amount;
   });
   
   const bestMonth = Object.values(monthlyPerformance)
@@ -142,45 +142,45 @@ const generateFinancialInsights = (transactions, balance) => {
     insights.push({
       type: 'success',
       icon: '🏆',
-      title: 'Il tuo miglior mese',
+      title: t('bestMonth'),
       message: `${bestMonth.monthName}: +€${bestMonth.net.toFixed(2)}`,
       priority: 'high'
     });
   }
   
   // 2. Spending trend analysis
-  const last30Days = transactions.filter(t => {
-    const daysAgo = (Date.now() - new Date(t.date).getTime()) / (1000 * 60 * 60 * 24);
-    return daysAgo <= 30 && t.type === 'dare';
+  const last30Days = transactions.filter(tr => {
+    const daysAgo = (Date.now() - new Date(tr.date).getTime()) / (1000 * 60 * 60 * 24);
+    return daysAgo <= 30 && tr.type === 'dare';
   });
   
-  const prev30Days = transactions.filter(t => {
-    const daysAgo = (Date.now() - new Date(t.date).getTime()) / (1000 * 60 * 60 * 24);
-    return daysAgo > 30 && daysAgo <= 60 && t.type === 'dare';
+  const prev30Days = transactions.filter(tr => {
+    const daysAgo = (Date.now() - new Date(tr.date).getTime()) / (1000 * 60 * 60 * 24);
+    return daysAgo > 30 && daysAgo <= 60 && tr.type === 'dare';
   });
   
-  const currentSpending = last30Days.reduce((sum, t) => sum + t.amount, 0);
-  const previousSpending = prev30Days.reduce((sum, t) => sum + t.amount, 0);
+  const currentSpending = last30Days.reduce((sum, tr) => sum + tr.amount, 0);
+  const previousSpending = prev30Days.reduce((sum, tr) => sum + tr.amount, 0);
   
   if (previousSpending > 0) {
     const change = ((currentSpending - previousSpending) / previousSpending) * 100;
-    const trend = change > 0 ? 'aumento' : 'diminuzione';
+    const trend = change > 0 ? t('increase') : t('decrease');
     const emoji = change > 0 ? '📈' : '📉';
     const color = change > 0 ? 'warning' : 'success';
     
     insights.push({
       type: color,
       icon: emoji,
-      title: 'Tendenza spese',
-      message: `${trend} del ${Math.abs(change).toFixed(1)}% vs mese scorso`,
+      title: t('spendingTrend'),
+      message: `${trend} del ${Math.abs(change).toFixed(1)}% ${t('vsPreviousMonth')}`,
       priority: Math.abs(change) > 20 ? 'high' : 'medium'
     });
   }
   
   // 3. Category analysis
   const categorySpending = {};
-  transactions.filter(t => t.type === 'dare').forEach(t => {
-    categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
+  transactions.filter(tr => tr.type === 'dare').forEach(tr => {
+    categorySpending[tr.category] = (categorySpending[tr.category] || 0) + tr.amount;
   });
   
   const topCategory = Object.entries(categorySpending)
@@ -191,40 +191,41 @@ const generateFinancialInsights = (transactions, balance) => {
     insights.push({
       type: 'info',
       icon: '🎯',
-      title: 'Categoria principale',
-      message: `${topCategory[0]}: ${percentage.toFixed(1)}% delle spese`,
+      title: t('mainCategory'),
+      message: `${topCategory[0]}: ${percentage.toFixed(1)}% ${t('ofExpenses')}`,
       priority: 'medium'
     });
   }
   
   // 4. Cash flow prediction
   const avgMonthlyIncome = transactions
-    .filter(t => t.type === 'avere')
-    .reduce((sum, t) => sum + t.amount, 0) / Math.max(1, new Set(transactions.map(t => t.date.split('-').slice(0, 2).join('-'))).size);
+    .filter(tr => tr.type === 'avere')
+    .reduce((sum, tr) => sum + tr.amount, 0) / Math.max(1, new Set(transactions.map(tr => tr.date.split('-').slice(0, 2).join('-'))).size);
   
   const avgMonthlyExpenses = transactions
-    .filter(t => t.type === 'dare')  
-    .reduce((sum, t) => sum + t.amount, 0) / Math.max(1, new Set(transactions.map(t => t.date.split('-').slice(0, 2).join('-'))).size);
+    .filter(tr => tr.type === 'dare')  
+    .reduce((sum, tr) => sum + tr.amount, 0) / Math.max(1, new Set(transactions.map(tr => tr.date.split('-').slice(0, 2).join('-'))).size);
   
   const prediction = avgMonthlyIncome - avgMonthlyExpenses;
   
   insights.push({
     type: prediction > 0 ? 'success' : 'danger',
     icon: prediction > 0 ? '💚' : '🔴',
-    title: 'Previsione fine mese',
-    message: `${prediction > 0 ? '+' : ''}€${prediction.toFixed(2)} (basato sui pattern)`,
+    title: t('monthEndForecast'),
+    message: `${prediction > 0 ? '+' : ''}€${prediction.toFixed(2)} ${t('basedOnPatterns')}`,
     priority: prediction < 0 ? 'high' : 'low'
   });
   
   // 5. Financial health score
   const score = Math.min(10, Math.max(1, (balance.balance / (balance.total_avere || 1)) * 10 + 2));
+  const scoreText = score >= 8 ? t('excellent') : score >= 6 ? t('good') : score >= 4 ? t('acceptable') : t('needsImprovement');
   const scoreEmoji = score >= 8 ? '🌟' : score >= 6 ? '👍' : score >= 4 ? '⚠️' : '🔴';
   
   insights.push({
     type: score >= 7 ? 'success' : score >= 5 ? 'warning' : 'danger',
     icon: scoreEmoji,
-    title: 'Punteggio finanziario',
-    message: `${score.toFixed(1)}/10 - ${score >= 8 ? 'Ottimo!' : score >= 6 ? 'Buono' : score >= 4 ? 'Accettabile' : 'Da migliorare'}`,
+    title: t('financialScore'),
+    message: `${score.toFixed(1)}/10 - ${scoreText}`,
     priority: score < 5 ? 'high' : 'low'
   });
   
