@@ -1484,6 +1484,17 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Data Transazione
+                      </label>
+                      <input
+                        type="date"
+                        value={editFormData.date}
+                        onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Metodo di Pagamento
                       </label>
                       <select
