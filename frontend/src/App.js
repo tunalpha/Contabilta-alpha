@@ -651,6 +651,15 @@ function App() {
     const currency = transaction.currency || 'EUR';
     const originalAmount = transaction.original_amount;
     
+    // DEBUG: Log transaction data
+    console.log('DEBUG formatCurrencyWithOriginal:', {
+      transactionId: transaction.id,
+      amount: amount,
+      currency: currency,
+      originalAmount: originalAmount,
+      exchangeRate: transaction.exchange_rate
+    });
+    
     if (originalAmount && currency !== 'EUR') {
       // Show ORIGINAL currency as primary
       const currencySymbols = {
@@ -660,9 +669,11 @@ function App() {
       };
       
       const symbol = currencySymbols[currency] || currency;
+      console.log('DEBUG: Showing original currency:', `${symbol}${originalAmount.toFixed(2)}`);
       return `${symbol}${originalAmount.toFixed(2)}`;
     } else {
       // Show only EUR for EUR transactions
+      console.log('DEBUG: Showing EUR amount:', `€${amount.toFixed(2)}`);
       return `€${amount.toFixed(2)}`;
     }
   };
