@@ -969,8 +969,177 @@ def test_sovanza_usd_transaction():
     
     return True
 
+def test_sovanza_transactions_currency_fields():
+    print_test_header("GET /api/transactions?client_slug=sovanza - Verify currency fields for USD transactions")
+    
+    # Step 1: Get all transactions for the Sovanza client
+    response = requests.get(f"{API_BASE_URL}/transactions?client_slug=sovanza")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    transactions = response.json()
+    print(f"Found {len(transactions)} transactions for Sovanza client")
+    
+    # Step 2: Check for USD transactions
+    usd_transactions = [t for t in transactions if t.get("currency") == "USD"]
+    print(f"Found {len(usd_transactions)} USD transactions")
+    
+    if not usd_transactions:
+        print("⚠️ No USD transactions found for Sovanza client")
+        
+        # Create a test USD transaction to verify functionality
+        print("Creating a test $50 USD transaction for Sovanza client...")
+        
+        # Get admin token
+        admin_token = get_admin_token()
+        if not admin_token:
+            print("❌ Failed to get admin token for transaction creation")
+            return False
+        
+        # Get client ID for sovanza
+        client_id = None
+        clients_response = requests.get(f"{API_BASE_URL}/clients/public")
+        if clients_response.status_code == 200:
+            for client in clients_response.json():
+                if client["slug"] == "sovanza":
+                    client_id = client["id"]
+                    break
+        
+        if not client_id:
+            print("❌ Failed to get client ID for 'sovanza'")
+            return False
+        
+        # Create a USD transaction
+        usd_transaction = {
+            "client_id": client_id,
+            "amount": 50.0,
+            "description": "Test $50 USD Transaction",
+            "type": "dare",
+            "category": "Cash",
+            "date": datetime.now().isoformat(),
+            "currency": "USD"
+        }
+        
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        create_response = requests.post(
+            f"{API_BASE_URL}/transactions", 
+            json=usd_transaction,
+            headers=headers
+        )
+        
+        if create_response.status_code != 200:
+            print("❌ Failed to create test USD transaction")
+            return False
+        
+        created_transaction = create_response.json()
+        transaction_id = created_transaction.get("id")
+        
+        # Get transactions again to include the new one
+        response = requests.get(f"{API_BASE_URL}/transactions?client_slug=sovanza")
+        if response.status_code != 200:
+            print("❌ Failed to get transactions after creating USD transaction")
+            return False
+        
+        transactions = response.json()
+        usd_transactions = [t for t in transactions if t.get("currency") == "USD"]
+        
+        if not usd_transactions:
+            print("❌ No USD transactions found even after creating one")
+            return False
+    
+    # Step 3: Verify currency fields for each USD transaction
+    all_valid = True
+    for idx, transaction in enumerate(usd_transactions):
+        print(f"\n--- USD Transaction #{idx+1} ---")
+        print(f"ID: {transaction.get('id')}")
+        print(f"Description: {transaction.get('description')}")
+        print(f"Currency: {transaction.get('currency')}")
+        print(f"Original Amount: {transaction.get('original_amount')}")
+        print(f"Exchange Rate: {transaction.get('exchange_rate')}")
+        print(f"EUR Amount: {transaction.get('amount')}")
+        
+        # Check required fields
+        if transaction.get("currency") != "USD":
+            print(f"❌ Transaction has incorrect currency: {transaction.get('currency')}, expected: USD")
+            all_valid = False
+            continue
+        
+        if transaction.get("original_amount") is None:
+            print("❌ Transaction is missing original_amount field")
+            all_valid = False
+            continue
+        
+        if transaction.get("exchange_rate") is None:
+            print("❌ Transaction is missing exchange_rate field")
+            all_valid = False
+            continue
+        
+        # Verify conversion calculation
+        original_amount = transaction.get("original_amount")
+        exchange_rate = transaction.get("exchange_rate")
+        amount = transaction.get("amount")
+        
+        expected_amount = round(original_amount * exchange_rate, 2)
+        actual_amount = round(amount, 2)
+        
+        # Check if the conversion is correct (allowing for small floating point differences)
+        conversion_correct = abs(actual_amount - expected_amount) < 0.01
+        if not conversion_correct:
+            print(f"❌ Currency conversion calculation is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+            all_valid = False
+        else:
+            print(f"✅ Currency conversion calculation is correct: {original_amount} USD * {exchange_rate} = {actual_amount} EUR")
+    
+    # Look specifically for the "Test $50 USD Transaction"
+    test_transaction = next((t for t in transactions if t.get("description") == "Test $50 USD Transaction"), None)
+    if test_transaction:
+        print("\n--- Test $50 USD Transaction ---")
+        print(f"ID: {test_transaction.get('id')}")
+        print(f"Description: {test_transaction.get('description')}")
+        print(f"Currency: {test_transaction.get('currency')}")
+        print(f"Original Amount: {test_transaction.get('original_amount')}")
+        print(f"Exchange Rate: {test_transaction.get('exchange_rate')}")
+        print(f"EUR Amount: {test_transaction.get('amount')}")
+        
+        # Verify it has the correct fields
+        if test_transaction.get("currency") != "USD":
+            print(f"❌ Test transaction has incorrect currency: {test_transaction.get('currency')}, expected: USD")
+            all_valid = False
+        
+        if test_transaction.get("original_amount") != 50.0:
+            print(f"❌ Test transaction has incorrect original_amount: {test_transaction.get('original_amount')}, expected: 50.0")
+            all_valid = False
+        
+        # Verify conversion calculation
+        original_amount = test_transaction.get("original_amount")
+        exchange_rate = test_transaction.get("exchange_rate")
+        amount = test_transaction.get("amount")
+        
+        if original_amount is not None and exchange_rate is not None:
+            expected_amount = round(original_amount * exchange_rate, 2)
+            actual_amount = round(amount, 2)
+            
+            conversion_correct = abs(actual_amount - expected_amount) < 0.01
+            if not conversion_correct:
+                print(f"❌ Test transaction currency conversion is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+                all_valid = False
+            else:
+                print(f"✅ Test transaction currency conversion is correct: {original_amount} USD * {exchange_rate} = {actual_amount} EUR")
+    else:
+        print("\n⚠️ Could not find the 'Test $50 USD Transaction' in the response")
+    
+    return all_valid
+
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
+    
+    # Test Sovanza transactions currency fields
+    if not test_sovanza_transactions_currency_fields():
+        print("❌ Sovanza transactions currency fields test failed")
+    else:
+        print("✅ Sovanza transactions currency fields test passed")
     
     # Test Sovanza USD transaction
     if not test_sovanza_usd_transaction():
