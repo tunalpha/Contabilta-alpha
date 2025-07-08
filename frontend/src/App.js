@@ -2186,11 +2186,11 @@ function App() {
         {/* Analytics Section */}
         {transactions.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Analytics</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics')}</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Monthly Trend Chart */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">📈 Trend Mensile</h3>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('monthlyTrend')}</h3>
                 <div style={{ height: '300px' }}>
                   <Line 
                     data={getMonthlyTrendData(transactions)}
@@ -2222,7 +2222,7 @@ function App() {
               
               {/* Category Pie Chart */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">🍰 Spese per Categoria</h3>
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('expensesByCategory')}</h3>
                 <div style={{ height: '300px' }}>
                   <Pie 
                     data={getCategoryPieData(transactions)}
