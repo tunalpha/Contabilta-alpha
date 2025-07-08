@@ -606,9 +606,30 @@ async def create_transaction(transaction: Transaction, admin_verified: bool = De
 async def update_transaction(transaction_id: str, transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
     """Update a transaction (ADMIN ONLY)"""
     try:
+        # Handle currency conversion if needed
+        amount_eur = transaction.amount
+        original_amount = None
+        exchange_rate = None
+        
+        if transaction.currency != "EUR":
+            # Convert to EUR
+            converted_amount, rate = await convert_currency(
+                transaction.amount, 
+                transaction.currency, 
+                "EUR"
+            )
+            amount_eur = converted_amount
+            original_amount = transaction.amount
+            exchange_rate = rate
+        
+        # Create updated transaction document
         transaction_dict = transaction.dict()
-        # Don't update the ID and preserve the original date if not provided
-        transaction_dict.pop('id', None)
+        transaction_dict.pop('id', None)  # Don't update the ID
+        
+        # Override with converted values
+        transaction_dict["amount"] = amount_eur  # Always store in EUR
+        transaction_dict["original_amount"] = original_amount
+        transaction_dict["exchange_rate"] = exchange_rate
         
         result = await db.transactions.update_one(
             {"id": transaction_id}, 
