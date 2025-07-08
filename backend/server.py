@@ -178,7 +178,10 @@ def transaction_helper(transaction) -> dict:
         "description": transaction["description"],
         "type": transaction["type"],
         "category": transaction["category"],
-        "date": transaction["date"]
+        "date": transaction["date"],
+        "currency": transaction.get("currency", "EUR"),
+        "original_amount": transaction.get("original_amount"),
+        "exchange_rate": transaction.get("exchange_rate")
     }
 
 # Email sending function
