@@ -374,3 +374,33 @@ agent_communication:
     message: "Successfully tested the GET /api/transactions endpoint for the Sovanza client to verify currency fields. All USD transactions correctly return currency='USD', original_amount (the original USD amount), and exchange_rate fields. Verified two existing USD transactions: one for $40 USD (Payment Link) and another for $198 USD (Science alert). Both show correct currency conversion with exchange_rate=0.852. Also created and verified a test $50 USD transaction which correctly converted to 42.60 EUR. All currency fields are being returned properly in the API response."
   - agent: "testing"
     message: "Completed testing of the multi-currency display functionality for USD transactions. Verified that the formatCurrencyWithOriginal function is correctly displaying USD amounts with $ symbol in the transaction list. Console logs confirm that the function receives the correct data (currency='USD', originalAmount=40 or 198) and formats it as '$40.00' and '$198.00'. The UI correctly shows the transactions with their original USD amounts ('-$40.00' and '+$198.00') while maintaining EUR for balance calculations (134.62 € Saldo Netto). The issue reported by the user has been fixed - USD transactions are now properly displayed with their original USD amounts rather than showing as EUR amounts."
+  - agent: "main"
+    message: "CRITICAL FIX: Fixed major syntax error in App.js that was preventing the application from opening. The error was on line 1787 where there was malformed JSX - a src attribute without an img tag. Removed the invalid base64 image code and restored the CSS-based logo. Application now loads successfully. Need to test all functionality to ensure everything works correctly after the fix."
+
+frontend:
+  - task: "Critical syntax error fix"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported 'Non funziona nulla non si apre nemmeno' - application completely broken due to syntax error preventing app from loading"
+      - working: true
+        agent: "main"
+        comment: "Fixed critical JSX syntax error on line 1787. Removed malformed src attribute without img tag that contained base64 image data. Application now opens successfully. All core functionality needs retesting."
+
+test_plan:
+  current_focus:
+    - "Critical syntax error fix"
+    - "Transaction CRUD API with filtering"
+    - "Balance calculation API (dare/avere)"
+    - "Multi-currency display for USD transactions"
+    - "Transaction edit functionality"
+    - "Transaction delete functionality"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
