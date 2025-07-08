@@ -1132,8 +1132,262 @@ def test_sovanza_transactions_currency_fields():
     
     return all_valid
 
+def test_admin_login():
+    print_test_header("POST /api/login - Admin authentication")
+    
+    # Test with correct password
+    login_data = {"password": "alpha2024!"}
+    response = requests.post(f"{API_BASE_URL}/login", json=login_data)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    login_response = response.json()
+    if not assert_equal(login_response.get("success"), True, "Login success"):
+        return False
+    
+    if not login_response.get("token"):
+        print("❌ Login response does not contain a token")
+        return False
+    
+    print("✅ Admin login successful with correct password")
+    
+    # Test with incorrect password
+    wrong_login_data = {"password": "wrong_password"}
+    wrong_response = requests.post(f"{API_BASE_URL}/login", json=wrong_login_data)
+    print_response(wrong_response)
+    
+    if not assert_status_code(wrong_response, 200):
+        return False
+    
+    wrong_login_response = wrong_response.json()
+    if not assert_equal(wrong_login_response.get("success"), False, "Login failure with wrong password"):
+        return False
+    
+    print("✅ Admin login correctly fails with wrong password")
+    
+    return True
+
+def test_transaction_filtering():
+    print_test_header("GET /api/transactions - Transaction filtering")
+    
+    # Get a valid client slug
+    client_slug = get_client_slug()
+    if not client_slug:
+        print("❌ Cannot test transaction filtering without a valid client slug")
+        return False
+    
+    print(f"Testing with client_slug: {client_slug}")
+    
+    # Test filtering by client_slug
+    response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    transactions = response.json()
+    print(f"Found {len(transactions)} transactions for client {client_slug}")
+    
+    # Test filtering by type (dare/avere)
+    type_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}&type=dare")
+    print_response(type_response)
+    
+    if not assert_status_code(type_response, 200):
+        return False
+    
+    dare_transactions = type_response.json()
+    print(f"Found {len(dare_transactions)} 'dare' transactions for client {client_slug}")
+    
+    # Verify all returned transactions are of type 'dare'
+    all_dare = all(t.get("type") == "dare" for t in dare_transactions)
+    if not all_dare:
+        print("❌ Some transactions in the 'dare' filtered results are not of type 'dare'")
+        return False
+    
+    print("✅ Type filtering works correctly")
+    
+    # Test filtering by category
+    category_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}&category=Cash")
+    print_response(category_response)
+    
+    if not assert_status_code(category_response, 200):
+        return False
+    
+    cash_transactions = category_response.json()
+    print(f"Found {len(cash_transactions)} 'Cash' transactions for client {client_slug}")
+    
+    # Verify all returned transactions are of category 'Cash'
+    all_cash = all(t.get("category") == "Cash" for t in cash_transactions)
+    if not all_cash:
+        print("❌ Some transactions in the 'Cash' filtered results are not of category 'Cash'")
+        return False
+    
+    print("✅ Category filtering works correctly")
+    
+    # Test filtering by date range
+    today = datetime.now()
+    date_from = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+    date_to = today.strftime("%Y-%m-%d")
+    
+    date_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}&date_from={date_from}&date_to={date_to}")
+    print_response(date_response)
+    
+    if not assert_status_code(date_response, 200):
+        return False
+    
+    date_transactions = date_response.json()
+    print(f"Found {len(date_transactions)} transactions for client {client_slug} in the last 30 days")
+    
+    # Test search filtering
+    if len(transactions) > 0:
+        # Get a word from the first transaction description to search for
+        search_term = transactions[0]["description"].split()[0] if transactions[0]["description"] else "test"
+        search_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}&search={search_term}")
+        print_response(search_response)
+        
+        if not assert_status_code(search_response, 200):
+            return False
+        
+        search_transactions = search_response.json()
+        print(f"Found {len(search_transactions)} transactions for client {client_slug} with search term '{search_term}'")
+        
+        # Verify at least one transaction contains the search term
+        if len(search_transactions) > 0:
+            contains_term = any(search_term.lower() in t.get("description", "").lower() for t in search_transactions)
+            if not contains_term:
+                print(f"❌ None of the search results contain the term '{search_term}'")
+                return False
+            
+            print("✅ Search filtering works correctly")
+    
+    return True
+
+def test_clients_api():
+    print_test_header("GET /api/clients/public - Clients API")
+    
+    # Test public clients endpoint
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    clients = response.json()
+    print(f"Found {len(clients)} clients")
+    
+    if not clients:
+        print("❌ No clients found")
+        return False
+    
+    # Check if clients have the expected structure
+    required_keys = ["id", "name", "slug", "created_date", "total_transactions", "balance"]
+    if not assert_contains_keys(clients[0], required_keys, "Client structure"):
+        return False
+    
+    # Check if we can find the specific clients mentioned in the review request
+    bill_client = next((c for c in clients if c["slug"] == "bill"), None)
+    sovanza_client = next((c for c in clients if c["slug"] == "sovanza"), None)
+    
+    if bill_client:
+        print(f"✅ Found 'Bill' client: {bill_client['name']}, transactions: {bill_client['total_transactions']}")
+    else:
+        print("⚠️ 'Bill' client not found")
+    
+    if sovanza_client:
+        print(f"✅ Found 'Sovanza' client: {sovanza_client['name']}, transactions: {sovanza_client['total_transactions']}")
+    else:
+        print("⚠️ 'Sovanza' client not found")
+    
+    # Test admin clients endpoint (requires authentication)
+    admin_token = get_admin_token()
+    if admin_token:
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        admin_response = requests.get(f"{API_BASE_URL}/clients", headers=headers)
+        print_response(admin_response)
+        
+        if not assert_status_code(admin_response, 200):
+            return False
+        
+        admin_clients = admin_response.json()
+        print(f"Found {len(admin_clients)} clients with admin authentication")
+        
+        # Verify the admin endpoint returns the same clients as the public endpoint
+        if len(admin_clients) != len(clients):
+            print(f"⚠️ Admin endpoint returned {len(admin_clients)} clients, but public endpoint returned {len(clients)}")
+        
+        print("✅ Admin clients endpoint works correctly")
+    else:
+        print("⚠️ Could not test admin clients endpoint due to authentication failure")
+    
+    return True
+
+def test_exchange_rates_api():
+    print_test_header("GET /api/exchange-rates - Exchange Rates API")
+    
+    response = requests.get(f"{API_BASE_URL}/exchange-rates")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    rates_data = response.json()
+    required_keys = ["base_currency", "rates", "last_updated"]
+    if not assert_contains_keys(rates_data, required_keys, "Exchange rates data structure"):
+        return False
+    
+    # Check if rates include USD and GBP
+    rates = rates_data.get("rates", {})
+    if "USD" not in rates:
+        print("❌ Exchange rates do not include USD")
+        return False
+    
+    if "GBP" not in rates:
+        print("❌ Exchange rates do not include GBP")
+        return False
+    
+    print(f"✅ Exchange rates API returned rates: EUR: {rates.get('EUR')}, USD: {rates.get('USD')}, GBP: {rates.get('GBP')}")
+    return True
+
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
+    
+    # Test admin authentication
+    if not test_admin_login():
+        print("❌ Admin authentication test failed")
+    else:
+        print("✅ Admin authentication test passed")
+    
+    # Test clients API
+    if not test_clients_api():
+        print("❌ Clients API test failed")
+    else:
+        print("✅ Clients API test passed")
+    
+    # Test transaction filtering
+    if not test_transaction_filtering():
+        print("❌ Transaction filtering test failed")
+    else:
+        print("✅ Transaction filtering test passed")
+    
+    # Test balance calculation
+    if not test_balance_calculation():
+        print("❌ Balance calculation test failed")
+    else:
+        print("✅ Balance calculation test passed")
+    
+    # Test exchange rates API
+    if not test_exchange_rates_api():
+        print("❌ Exchange rates API test failed")
+    else:
+        print("✅ Exchange rates API test passed")
+    
+    # Test multi-currency functionality
+    if not test_multi_currency_transactions():
+        print("❌ Multi-currency USD transactions test failed")
+    else:
+        print("✅ Multi-currency USD transactions test passed")
     
     # Test Sovanza transactions currency fields
     if not test_sovanza_transactions_currency_fields():
@@ -1146,12 +1400,6 @@ def run_all_tests():
         print("❌ Sovanza $50 USD transaction test failed")
     else:
         print("✅ Sovanza $50 USD transaction test passed")
-    
-    # Test multi-currency functionality
-    if not test_multi_currency_transactions():
-        print("❌ Multi-currency USD transactions test failed")
-    else:
-        print("✅ Multi-currency USD transactions test passed")
     
     # Test PDF generation with date filtering
     if not test_pdf_generation_with_date_filtering():
