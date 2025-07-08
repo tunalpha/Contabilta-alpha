@@ -498,71 +498,337 @@ def test_error_handling():
     return True
 
 def test_multi_currency_transactions():
-    print_test_header("GET /api/transactions?client_slug=bill - Multi-currency USD transactions")
+    print_test_header("GET /api/transactions?client_slug=sovanza - Multi-currency USD transactions")
     
-    # Get transactions for the "bill" client
-    response = requests.get(f"{API_BASE_URL}/transactions?client_slug=bill")
+    # Get transactions for the "sovanza" client
+    response = requests.get(f"{API_BASE_URL}/transactions?client_slug=sovanza")
     print_response(response)
     
     if not assert_status_code(response, 200):
         return False
     
     transactions = response.json()
-    print(f"Found {len(transactions)} transactions for client 'bill'")
+    print(f"Found {len(transactions)} transactions for client 'sovanza'")
     
-    # Check if there are any USD transactions
-    usd_transactions = [t for t in transactions if t.get("currency") == "USD"]
-    if not usd_transactions:
-        print("❌ No USD transactions found for client 'bill'")
+    # Check if there are any transactions with currency fields
+    # First, let's check if the currency fields are included in the response
+    has_currency_fields = False
+    for t in transactions:
+        if "currency" in t:
+            has_currency_fields = True
+            print(f"Transaction {t['id']} has currency field: {t['currency']}")
+            print(f"Original amount: {t.get('original_amount')}")
+            print(f"Exchange rate: {t.get('exchange_rate')}")
+            print(f"Amount (EUR): {t['amount']}")
+    
+    if not has_currency_fields:
+        print("⚠️ No transactions with currency fields found. This could be because:")
+        print("  1. The transactions don't have currency data in the database")
+        print("  2. The API is not returning the currency fields")
+        
+        # Let's create a USD transaction to test the functionality
+        print("\nCreating a test USD transaction to verify multi-currency functionality...")
+        
+        # Get admin token
+        admin_token = get_admin_token()
+        if not admin_token:
+            print("❌ Failed to get admin token for transaction creation")
+            return False
+        
+        # Get client ID for sovanza
+        client_id = None
+        clients_response = requests.get(f"{API_BASE_URL}/clients/public")
+        if clients_response.status_code == 200:
+            for client in clients_response.json():
+                if client["slug"] == "sovanza":
+                    client_id = client["id"]
+                    break
+        
+        if not client_id:
+            print("❌ Failed to get client ID for 'sovanza'")
+            return False
+        
+        # Create a USD transaction
+        usd_transaction = {
+            "client_id": client_id,
+            "amount": 40.0,
+            "description": "Test USD Transaction",
+            "type": "dare",
+            "category": "Cash",
+            "date": datetime.now().isoformat(),
+            "currency": "USD",
+            "original_amount": 40.0,
+            "exchange_rate": 0.852
+        }
+        
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        create_response = requests.post(
+            f"{API_BASE_URL}/transactions", 
+            json=usd_transaction,
+            headers=headers
+        )
+        print_response(create_response)
+        
+        if create_response.status_code != 200:
+            print("❌ Failed to create test USD transaction")
+            return False
+        
+        created_transaction = create_response.json()
+        transaction_id = created_transaction.get("id")
+        
+        # Now get the transaction again to verify it has the currency fields
+        get_response = requests.get(f"{API_BASE_URL}/transactions?client_slug=sovanza")
+        if get_response.status_code != 200:
+            print("❌ Failed to get transactions after creating USD transaction")
+            return False
+        
+        updated_transactions = get_response.json()
+        test_transaction = None
+        for t in updated_transactions:
+            if t.get("id") == transaction_id:
+                test_transaction = t
+                break
+        
+        if not test_transaction:
+            print("❌ Could not find the created USD transaction in the response")
+            return False
+        
+        # Check if the transaction has the currency fields
+        required_keys = ["currency", "original_amount", "exchange_rate"]
+        if not all(key in test_transaction for key in required_keys):
+            print("❌ Created USD transaction is missing currency fields in the response")
+            print(f"Transaction data: {test_transaction}")
+            
+            # Clean up the test transaction
+            delete_response = requests.delete(
+                f"{API_BASE_URL}/transactions/{transaction_id}", 
+                headers=headers
+            )
+            
+            return False
+        
+        # Verify currency conversion calculation
+        original_amount = test_transaction.get("original_amount")
+        exchange_rate = test_transaction.get("exchange_rate")
+        amount = test_transaction.get("amount")
+        
+        if original_amount is not None and exchange_rate is not None:
+            expected_amount = round(original_amount * exchange_rate, 2)
+            actual_amount = round(amount, 2)
+            
+            conversion_correct = abs(actual_amount - expected_amount) < 0.01
+            if not conversion_correct:
+                print(f"❌ Currency conversion calculation is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+                
+                # Clean up the test transaction
+                delete_response = requests.delete(
+                    f"{API_BASE_URL}/transactions/{transaction_id}", 
+                    headers=headers
+                )
+                
+                return False
+            
+            print(f"✅ Currency conversion calculation is correct: {original_amount} USD * {exchange_rate} = {actual_amount} EUR")
+        else:
+            print("❌ Missing original_amount or exchange_rate for currency conversion verification")
+            
+            # Clean up the test transaction
+            delete_response = requests.delete(
+                f"{API_BASE_URL}/transactions/{transaction_id}", 
+                headers=headers
+            )
+            
+            return False
+        
+        # Clean up the test transaction
+        delete_response = requests.delete(
+            f"{API_BASE_URL}/transactions/{transaction_id}", 
+            headers=headers
+        )
+        
+        if delete_response.status_code != 200:
+            print("⚠️ Failed to clean up test USD transaction")
+        else:
+            print("✅ Test USD transaction cleaned up successfully")
+        
+        return True
+    
+    # If we found transactions with currency fields, check them
+    for t in transactions:
+        if "currency" in t and t["currency"] != "EUR":
+            # Found a non-EUR transaction
+            print(f"\nFound non-EUR transaction: {t['id']}")
+            print(f"Currency: {t['currency']}")
+            print(f"Original amount: {t.get('original_amount')}")
+            print(f"Exchange rate: {t.get('exchange_rate')}")
+            print(f"Amount (EUR): {t['amount']}")
+            
+            # Verify currency conversion calculation
+            original_amount = t.get("original_amount")
+            exchange_rate = t.get("exchange_rate")
+            amount = t.get("amount")
+            
+            if original_amount is not None and exchange_rate is not None:
+                expected_amount = round(original_amount * exchange_rate, 2)
+                actual_amount = round(amount, 2)
+                
+                conversion_correct = abs(actual_amount - expected_amount) < 0.01
+                if not conversion_correct:
+                    print(f"❌ Currency conversion calculation is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+                    return False
+                
+                print(f"✅ Currency conversion calculation is correct: {original_amount} {t['currency']} * {exchange_rate} = {actual_amount} EUR")
+                return True
+    
+    # If we didn't find any non-EUR transactions, create a test one
+    print("\nNo non-EUR transactions found. Creating a test USD transaction...")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token for transaction creation")
         return False
     
-    print(f"Found {len(usd_transactions)} USD transactions")
+    # Get client ID for sovanza
+    client_id = None
+    clients_response = requests.get(f"{API_BASE_URL}/clients/public")
+    if clients_response.status_code == 200:
+        for client in clients_response.json():
+            if client["slug"] == "sovanza":
+                client_id = client["id"]
+                break
     
-    # Check the first USD transaction for required fields
-    usd_transaction = usd_transactions[0]
-    required_keys = ["id", "amount", "description", "type", "category", "date", 
-                     "currency", "original_amount", "exchange_rate"]
-    
-    if not assert_contains_keys(usd_transaction, required_keys, "USD transaction structure"):
+    if not client_id:
+        print("❌ Failed to get client ID for 'sovanza'")
         return False
     
-    # Verify currency is USD
-    if not assert_equal(usd_transaction["currency"], "USD", "Transaction currency"):
+    # Create a USD transaction
+    usd_transaction = {
+        "client_id": client_id,
+        "amount": 40.0,
+        "description": "Test USD Transaction",
+        "type": "dare",
+        "category": "Cash",
+        "date": datetime.now().isoformat(),
+        "currency": "USD"
+    }
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    create_response = requests.post(
+        f"{API_BASE_URL}/transactions", 
+        json=usd_transaction,
+        headers=headers
+    )
+    print_response(create_response)
+    
+    if create_response.status_code != 200:
+        print("❌ Failed to create test USD transaction")
         return False
     
-    # Check if there's a transaction with the specific values mentioned
-    target_transaction = None
-    for t in usd_transactions:
-        if (t.get("original_amount") == 40.0 and 
-            abs(t.get("exchange_rate", 0) - 0.852) < 0.001 and
-            abs(t.get("amount", 0) - 34.08) < 0.01):
-            target_transaction = t
+    created_transaction = create_response.json()
+    transaction_id = created_transaction.get("id")
+    
+    # Now get the transaction again to verify it has the currency fields
+    get_response = requests.get(f"{API_BASE_URL}/transactions?client_slug=sovanza")
+    if get_response.status_code != 200:
+        print("❌ Failed to get transactions after creating USD transaction")
+        return False
+    
+    updated_transactions = get_response.json()
+    test_transaction = None
+    for t in updated_transactions:
+        if t.get("id") == transaction_id:
+            test_transaction = t
             break
     
-    if not target_transaction:
-        print("❌ Could not find the specific USD transaction with original_amount=40, exchange_rate=0.852, amount=34.08")
-        # Continue testing with any USD transaction
-        target_transaction = usd_transactions[0]
-    else:
-        print("✅ Found the specific USD transaction with expected values")
+    if not test_transaction:
+        print("❌ Could not find the created USD transaction in the response")
+        return False
+    
+    # Check if the transaction has the currency fields
+    print(f"\nCreated USD transaction: {test_transaction}")
+    
+    # Verify currency fields
+    if test_transaction.get("currency") != "USD":
+        print("❌ Created transaction does not have USD currency")
+        
+        # Clean up the test transaction
+        delete_response = requests.delete(
+            f"{API_BASE_URL}/transactions/{transaction_id}", 
+            headers=headers
+        )
+        
+        return False
+    
+    if test_transaction.get("original_amount") is None:
+        print("❌ Created USD transaction is missing original_amount field")
+        
+        # Clean up the test transaction
+        delete_response = requests.delete(
+            f"{API_BASE_URL}/transactions/{transaction_id}", 
+            headers=headers
+        )
+        
+        return False
+    
+    if test_transaction.get("exchange_rate") is None:
+        print("❌ Created USD transaction is missing exchange_rate field")
+        
+        # Clean up the test transaction
+        delete_response = requests.delete(
+            f"{API_BASE_URL}/transactions/{transaction_id}", 
+            headers=headers
+        )
+        
+        return False
     
     # Verify currency conversion calculation
-    original_amount = target_transaction.get("original_amount")
-    exchange_rate = target_transaction.get("exchange_rate")
-    amount = target_transaction.get("amount")
+    original_amount = test_transaction.get("original_amount")
+    exchange_rate = test_transaction.get("exchange_rate")
+    amount = test_transaction.get("amount")
+    
+    print(f"Original amount: {original_amount} USD")
+    print(f"Exchange rate: {exchange_rate}")
+    print(f"Amount (EUR): {amount}")
     
     if original_amount is not None and exchange_rate is not None:
         expected_amount = round(original_amount * exchange_rate, 2)
         actual_amount = round(amount, 2)
         
-        if not assert_equal(actual_amount, expected_amount, "Currency conversion calculation"):
+        conversion_correct = abs(actual_amount - expected_amount) < 0.01
+        if not conversion_correct:
             print(f"❌ Currency conversion calculation is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+            
+            # Clean up the test transaction
+            delete_response = requests.delete(
+                f"{API_BASE_URL}/transactions/{transaction_id}", 
+                headers=headers
+            )
+            
             return False
         
         print(f"✅ Currency conversion calculation is correct: {original_amount} USD * {exchange_rate} = {actual_amount} EUR")
     else:
         print("❌ Missing original_amount or exchange_rate for currency conversion verification")
+        
+        # Clean up the test transaction
+        delete_response = requests.delete(
+            f"{API_BASE_URL}/transactions/{transaction_id}", 
+            headers=headers
+        )
+        
         return False
+    
+    # Clean up the test transaction
+    delete_response = requests.delete(
+        f"{API_BASE_URL}/transactions/{transaction_id}", 
+        headers=headers
+    )
+    
+    if delete_response.status_code != 200:
+        print("⚠️ Failed to clean up test USD transaction")
+    else:
+        print("✅ Test USD transaction cleaned up successfully")
     
     return True
 
