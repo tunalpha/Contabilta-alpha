@@ -1,0 +1,14 @@
+{
+  "name": "contabilita-alpha",
+  "version": "1.0.0",
+  "description": "Sistema di contabilità multi-cliente con AI insights",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd frontend && yarn build",
+    "dev": "cd frontend && yarn start",
+    "install-deps": "cd frontend && yarn install && cd ../backend && pip install -r requirements.txt"
+  },
+  "keywords": ["contabilita", "accounting", "multi-client", "AI", "analytics"],
+  "author": "Alpha Contabilità",
+  "license": "MIT"
+}
