@@ -1118,7 +1118,31 @@ function App() {
       noTransactionsFiltered: "No transactions found with selected filters",
       totalTransactions: "Total transactions",
       clientManagement: "👥 Client Management",
-      resetLink: "🔄 Reset Link"
+      resetLink: "🔄 Reset Link",
+      
+      // AI Insights
+      smartInsights: "🧠 Smart Insights",
+      priority: "Priority",
+      highPriority: "🔴 Priority",
+      bestMonth: "Your best month",
+      spendingTrend: "Spending trend",
+      mainCategory: "Main category",
+      monthEndForecast: "Month-end forecast",
+      financialScore: "Financial score",
+      excellent: "Excellent!",
+      good: "Good",
+      acceptable: "Acceptable",
+      needsImprovement: "Needs improvement",
+      basedOnPatterns: "(based on patterns)",
+      increase: "increase",
+      decrease: "decrease",
+      vsPreviousMonth: "vs previous month",
+      ofExpenses: "of expenses",
+      
+      // Analytics
+      analytics: "📊 Analytics",
+      monthlyTrend: "📈 Monthly Trend",
+      expensesByCategory: "🍰 Expenses by Category"
     }
   };
 
