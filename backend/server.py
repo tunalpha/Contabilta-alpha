@@ -23,7 +23,7 @@ import io
 import aiohttp
 import asyncio
 
-app = FastAPI(title="Contabilità Alpha - Multi Cliente")
+app = FastAPI(title="Contabilità - Multi Cliente")
 
 # CORS configuration
 app.add_middleware(
