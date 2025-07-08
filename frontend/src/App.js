@@ -31,7 +31,8 @@ function App() {
     description: '',
     type: 'dare',
     category: 'Cash',
-    client_id: ''
+    client_id: '',
+    currency: 'EUR'
   });
   const [editFormData, setEditFormData] = useState({
     amount: '',
