@@ -1113,49 +1113,6 @@ function App() {
                 </div>
               </div>
             </div>
-                    </linearGradient>
-                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.2"/>
-                    </filter>
-                  </defs>
-                  
-                  {/* Calculator base */}
-                  <rect x="12" y="12" width="72" height="72" rx="12" ry="12" 
-                        fill="url(#alphaGradient)" filter="url(#shadow)"/>
-                  
-                  {/* Calculator screen */}
-                  <rect x="18" y="18" width="60" height="16" rx="4" ry="4" 
-                        fill="#ffffff" opacity="0.9"/>
-                  
-                  {/* Calculator buttons grid */}
-                  <circle cx="26" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="38" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="50" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="62" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="70" cy="46" r="3" fill="#ffffff" opacity="0.3"/>
-                  
-                  <circle cx="26" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="38" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="50" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="62" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="70" cy="58" r="3" fill="#ffffff" opacity="0.3"/>
-                  
-                  <circle cx="26" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="38" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="50" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="62" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
-                  <circle cx="70" cy="70" r="3" fill="#ffffff" opacity="0.3"/>
-                  
-                  {/* Letter A overlay */}
-                  <path d="M48 20 L35 68 L41 68 L44 58 L52 58 L55 68 L61 68 L48 20 Z M46 50 L50 50 L48 42 Z" 
-                        fill="#ffffff" opacity="0.95" stroke="none"/>
-                  
-                  {/* Accent elements */}
-                  <circle cx="22" cy="25" r="2" fill="#ffffff" opacity="0.6"/>
-                  <circle cx="74" cy="25" r="2" fill="#ffffff" opacity="0.6"/>
-                </svg>
-              </div>
-            </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
               {t('title')}
             </h1>
