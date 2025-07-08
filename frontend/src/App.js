@@ -1800,10 +1800,9 @@ function App() {
           <div className="mb-4">
             <div className="mx-auto h-24 w-24 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg border-4 border-white">
               <div className="text-center">
-                src="/logo2.png"
-                alt="Alpha Logo" 
-                className="h-20 w-20"
-              />
+                <div className="text-2xl font-bold text-white">📊</div>
+                <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
+              </div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
