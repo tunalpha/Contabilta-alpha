@@ -539,6 +539,7 @@ function App() {
           description: editFormData.description || 'Transazione senza descrizione',
           type: editFormData.type,
           category: editFormData.category,
+          currency: editFormData.currency,
           date: editingTransaction.date
         }),
       });
