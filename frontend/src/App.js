@@ -648,7 +648,7 @@ function App() {
     const originalAmount = transaction.original_amount;
     
     if (originalAmount && currency !== 'EUR') {
-      // Show ORIGINAL currency as primary, EUR as secondary
+      // Show ORIGINAL currency as primary
       const currencySymbols = {
         'USD': '$',
         'GBP': '£',
@@ -661,6 +661,19 @@ function App() {
       // Show only EUR for EUR transactions
       return `€${amount.toFixed(2)}`;
     }
+  };
+
+  // Helper function to get tooltip text for converted transactions
+  const getCurrencyTooltip = (transaction) => {
+    const amount = transaction.amount;
+    const currency = transaction.currency || 'EUR';
+    const originalAmount = transaction.original_amount;
+    const exchangeRate = transaction.exchange_rate;
+    
+    if (originalAmount && currency !== 'EUR' && exchangeRate) {
+      return `Convertito in €${amount.toFixed(2)} (tasso: 1 ${currency} = €${exchangeRate.toFixed(4)})`;
+    }
+    return '';
   };
 
   // Helper function for balance (always show EUR)
