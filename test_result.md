@@ -484,3 +484,7 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "deploy_ready"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completato test finale completo del backend. Tutte le API funzionano correttamente: Admin login, CRUD transazioni, bilanci, multi-valuta USD/EUR, exchange rates API, PDF generation, e client management. Verificato anche il rebranding da 'Contabilità Alpha' a 'Contabilità'. Il backend è pronto per il deploy in produzione."
