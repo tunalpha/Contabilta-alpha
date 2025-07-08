@@ -2080,6 +2080,44 @@ function App() {
           </div>
         </div>
 
+        {/* Smart Financial Insights */}
+        {notifications.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">🧠 Insights Intelligenti</h2>
+              <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                {notifications.filter(n => n.priority === 'high').length} Prioritari
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {notifications.slice(0, 6).map((notification, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-xl border-l-4 ${
+                    notification.type === 'success' ? 'bg-green-50 border-green-500' :
+                    notification.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
+                    notification.type === 'danger' ? 'bg-red-50 border-red-500' :
+                    'bg-blue-50 border-blue-500'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">{notification.icon}</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{notification.title}</h3>
+                      <p className="text-gray-600 text-sm mt-1">{notification.message}</p>
+                      {notification.priority === 'high' && (
+                        <span className="inline-block mt-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
+                          🔴 Prioritario
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mb-8">
           <button
