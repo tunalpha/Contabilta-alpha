@@ -472,6 +472,7 @@ function App() {
           description: formData.description || 'Transazione senza descrizione',
           type: formData.type,
           category: formData.category,
+          currency: formData.currency,
           date: new Date().toISOString()
         }),
       });
