@@ -1157,6 +1157,14 @@ function App() {
     fetchExchangeRates();
   }, []);
 
+  // Generate smart insights when transactions change
+  useEffect(() => {
+    if (transactions.length > 0 && balance) {
+      const insights = generateFinancialInsights(transactions, balance);
+      setNotifications(insights);
+    }
+  }, [transactions, balance]);
+
   // Helper function to calculate EUR equivalent
   const calculateEurEquivalent = (amount, currency) => {
     if (!amount || !currency || currency === 'EUR') return amount;
