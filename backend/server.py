@@ -92,6 +92,9 @@ class TransactionResponse(BaseModel):
     type: str
     category: str
     date: datetime
+    currency: str = "EUR"
+    original_amount: Optional[float] = None
+    exchange_rate: Optional[float] = None
 
 class LoginRequest(BaseModel):
     password: str
