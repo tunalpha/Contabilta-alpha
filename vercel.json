@@ -23,8 +23,5 @@
       "src": "/(.*)",
       "dest": "frontend/build/index.html"
     }
-  ],
-  "env": {
-    "MONGODB_URL": "@mongodb_url"
-  }
+  ]
 }
