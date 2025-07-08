@@ -1992,7 +1992,7 @@ function App() {
                       <div className={`text-xl font-bold ${
                         transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
                       </div>
                     </div>
                   </div>
