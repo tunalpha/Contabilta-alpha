@@ -794,6 +794,15 @@ async def generate_client_pdf(
             textColor=colors.navy
         )
         
+        logo_style = ParagraphStyle(
+            'LogoStyle',
+            parent=styles['Normal'],
+            fontSize=36,
+            spaceAfter=10,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
         subtitle_style = ParagraphStyle(
             'CustomSubtitle',
             parent=styles['Heading2'],
@@ -803,7 +812,9 @@ async def generate_client_pdf(
             textColor=colors.darkblue
         )
         
-        # Title
+        # Header with Logo
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("📊 ALPHA", logo_style))
         story.append(Paragraph("🧮 Contabilità", title_style))
         story.append(Paragraph("Estratto Conto", subtitle_style))
         story.append(Spacer(1, 20))
