@@ -647,14 +647,6 @@ function App() {
     const currency = transaction.currency || 'EUR';
     const originalAmount = transaction.original_amount;
     
-    // Debug logging (remove in production)
-    console.log('Transaction data:', {
-      amount,
-      currency,
-      originalAmount,
-      description: transaction.description
-    });
-    
     if (originalAmount && currency !== 'EUR') {
       // Show ORIGINAL currency as primary
       const currencySymbols = {
