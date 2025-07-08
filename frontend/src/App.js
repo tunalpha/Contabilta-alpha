@@ -1209,10 +1209,10 @@ function App() {
   // Generate smart insights when transactions change
   useEffect(() => {
     if (transactions.length > 0 && balance) {
-      const insights = generateFinancialInsights(transactions, balance);
+      const insights = generateFinancialInsights(transactions, balance, t);
       setNotifications(insights);
     }
-  }, [transactions, balance]);
+  }, [transactions, balance, language]);
 
   // Helper function to calculate EUR equivalent
   const calculateEurEquivalent = (amount, currency) => {
