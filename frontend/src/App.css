@@ -20,6 +20,13 @@
   background: #555;
 }
 
+/* Hide Made with Emergent badge */
+div[style*="position: fixed"][style*="bottom: 10px"][style*="right: 10px"],
+div[style*="position: fixed"][style*="bottom: 20px"][style*="right: 20px"],
+a[href*="emergent"] {
+  display: none !important;
+}
+
 /* Custom animations */
 @keyframes slideIn {
   from {
