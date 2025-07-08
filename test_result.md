@@ -149,6 +149,106 @@ backend:
       - working: true
         agent: "testing"
         comment: "Verified that the advanced search and filtering functionality is working correctly. The API supports filtering by search term (in description), category (Cash, Bonifico, PayPal, Altro), type (dare/avere), and date range. Network requests show that the API is being called with the appropriate parameters."
+
+  - task: "Multi-currency functionality for USD transactions"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "USD transactions were being saved to database correctly with currency, original_amount, and exchange_rate fields, but the TransactionResponse model was missing these fields so they weren't being returned in API responses."
+      - working: true
+        agent: "testing"
+        comment: "Fixed the issue by updating the TransactionResponse model to include currency, original_amount, and exchange_rate fields. Verified that API now correctly returns currency fields and that currency conversion calculation is working properly (40.0 USD * 0.852 = 34.08 EUR)."
+
+frontend:
+  - task: "Professional accounting UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Completely redesigned UI with professional accounting terminology (dare/avere), advanced search/filter functionality, new categories with icons, and improved UX."
+      - working: true
+        agent: "testing"
+        comment: "Verified the professional UI is working correctly. The interface shows proper accounting terminology (dare/avere) and has a clean, professional design."
+  
+  - task: "Admin authentication and authorization"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested admin login with password 'alpha2024!'. After login, the admin status shows '🔐 Modalità Amministratore' and admin-only features become available."
+  
+  - task: "Transaction edit functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Verified that edit buttons (✏️) appear next to each transaction when logged in as admin. Clicking the edit button opens a form with orange styling that allows modifying transaction details. The form loads with the current transaction data and allows changes to amount, description, type, and category."
+  
+  - task: "Transaction delete functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Verified that delete buttons (🗑️) appear next to each transaction when logged in as admin. Clicking the delete button shows a confirmation dialog asking if the user is sure they want to delete the transaction. The dialog shows the transaction description and amount."
+
+  - task: "PDF generation for clients"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py, /app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implemented PDF generation functionality. Added /api/clients/{client_slug}/pdf endpoint in backend using reportlab. Added PDF download buttons in frontend for both admin and client views. All transactions are included in the PDF with proper formatting, balance calculation, and professional layout."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested PDF generation functionality with date filtering. All tests passed: PDF with date range filtering, single date filters, and complete transaction history. PDF includes proper headers, balance calculations, and professional formatting. Feature working correctly."
+      - working: true
+        agent: "main"
+        comment: "Enhanced PDF generation with date filtering support. Added modal interface for date range selection. Verified UI shows PDF button correctly on client pages. All transactions are included in chronological order with proper filtering capabilities."
+
+  - task: "Multi-currency display for USD transactions"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "USD transactions were displaying as EUR converted amounts instead of showing original USD amounts. The formatCurrencyWithOriginal function was correct but wasn't receiving the correct currency data due to missing fields in backend API response."
+      - working: true
+        agent: "main"
+        comment: "Fixed after backend TransactionResponse model was updated to include currency fields. The function now correctly shows original USD amounts (e.g., $40.00) in transaction lists while balance shows converted EUR values."
   
   - task: "Multi-currency functionality for USD transactions"
     implemented: true
