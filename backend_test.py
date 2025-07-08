@@ -497,8 +497,83 @@ def test_error_handling():
     
     return True
 
+def test_multi_currency_transactions():
+    print_test_header("GET /api/transactions?client_slug=bill - Multi-currency USD transactions")
+    
+    # Get transactions for the "bill" client
+    response = requests.get(f"{API_BASE_URL}/transactions?client_slug=bill")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return False
+    
+    transactions = response.json()
+    print(f"Found {len(transactions)} transactions for client 'bill'")
+    
+    # Check if there are any USD transactions
+    usd_transactions = [t for t in transactions if t.get("currency") == "USD"]
+    if not usd_transactions:
+        print("❌ No USD transactions found for client 'bill'")
+        return False
+    
+    print(f"Found {len(usd_transactions)} USD transactions")
+    
+    # Check the first USD transaction for required fields
+    usd_transaction = usd_transactions[0]
+    required_keys = ["id", "amount", "description", "type", "category", "date", 
+                     "currency", "original_amount", "exchange_rate"]
+    
+    if not assert_contains_keys(usd_transaction, required_keys, "USD transaction structure"):
+        return False
+    
+    # Verify currency is USD
+    if not assert_equal(usd_transaction["currency"], "USD", "Transaction currency"):
+        return False
+    
+    # Check if there's a transaction with the specific values mentioned
+    target_transaction = None
+    for t in usd_transactions:
+        if (t.get("original_amount") == 40.0 and 
+            abs(t.get("exchange_rate", 0) - 0.852) < 0.001 and
+            abs(t.get("amount", 0) - 34.08) < 0.01):
+            target_transaction = t
+            break
+    
+    if not target_transaction:
+        print("❌ Could not find the specific USD transaction with original_amount=40, exchange_rate=0.852, amount=34.08")
+        # Continue testing with any USD transaction
+        target_transaction = usd_transactions[0]
+    else:
+        print("✅ Found the specific USD transaction with expected values")
+    
+    # Verify currency conversion calculation
+    original_amount = target_transaction.get("original_amount")
+    exchange_rate = target_transaction.get("exchange_rate")
+    amount = target_transaction.get("amount")
+    
+    if original_amount is not None and exchange_rate is not None:
+        expected_amount = round(original_amount * exchange_rate, 2)
+        actual_amount = round(amount, 2)
+        
+        if not assert_equal(actual_amount, expected_amount, "Currency conversion calculation"):
+            print(f"❌ Currency conversion calculation is incorrect: {original_amount} * {exchange_rate} = {expected_amount}, but got {actual_amount}")
+            return False
+        
+        print(f"✅ Currency conversion calculation is correct: {original_amount} USD * {exchange_rate} = {actual_amount} EUR")
+    else:
+        print("❌ Missing original_amount or exchange_rate for currency conversion verification")
+        return False
+    
+    return True
+
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
+    
+    # Test multi-currency functionality
+    if not test_multi_currency_transactions():
+        print("❌ Multi-currency USD transactions test failed")
+    else:
+        print("✅ Multi-currency USD transactions test passed")
     
     # Test PDF generation with date filtering
     if not test_pdf_generation_with_date_filtering():
@@ -530,7 +605,7 @@ def run_all_tests():
     else:
         print("✅ Error handling test passed")
     
-    print("\n🏁 ALL PDF GENERATION TESTS COMPLETED 🏁\n")
+    print("\n🏁 ALL TESTS COMPLETED 🏁\n")
 
 if __name__ == "__main__":
     run_all_tests()
