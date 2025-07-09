@@ -258,6 +258,13 @@ function App() {
   const [showClientLogin, setShowClientLogin] = useState(false);
   const [clientLoginError, setClientLoginError] = useState('');
   const [clientToken, setClientToken] = useState('');
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordChangeData, setPasswordChangeData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [passwordChangeError, setPasswordChangeError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
