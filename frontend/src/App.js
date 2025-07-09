@@ -953,6 +953,7 @@ function App() {
   };
 
   const [showPDFModal, setShowPDFModal] = useState(false);
+  const [showPDFShareModal, setShowPDFShareModal] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [pdfDateFilters, setPdfDateFilters] = useState({ dateFrom: '', dateTo: '', targetClientSlug: '' });
   const [language, setLanguage] = useState('it'); // 'it' or 'en'
