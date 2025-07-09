@@ -1323,38 +1323,81 @@ function App() {
   // Share PDF functions
   const sharePDFViaWhatsApp = async () => {
     try {
-      // First generate and download the PDF
-      await downloadPDF();
+      // Create shareable link
+      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date_from: '', date_to: '' })
+      });
       
-      // Then open WhatsApp with message
-      setTimeout(() => {
-        const whatsappText = `Ciao! Ti ho appena inviato l'estratto conto di ${selectedClient.name}. Controlla i tuoi download! 📄`;
+      if (response.ok) {
+        const data = await response.json();
+        const shareUrl = `${window.location.origin}${data.share_url}`;
+        const whatsappText = `Ciao! Ecco l'estratto conto di ${selectedClient.name}: ${shareUrl}`;
+        
         window.open(`https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`, '_blank');
-      }, 1000);
-      
-      setShowPDFShareModal(false);
-      alert('PDF scaricato! Ora puoi inviarlo tramite WhatsApp.');
+        setShowPDFShareModal(false);
+        alert('Link creato e condiviso su WhatsApp!');
+      } else {
+        throw new Error('Errore creazione link');
+      }
     } catch (error) {
-      alert('Errore nella generazione del PDF');
+      console.error('Error sharing PDF:', error);
+      alert('Errore nella condivisione');
     }
   };
 
   const sharePDFViaEmail = async () => {
     try {
-      // First generate and download the PDF
-      await downloadPDF();
+      // Create shareable link
+      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date_from: '', date_to: '' })
+      });
       
-      // Then open email with instructions
-      setTimeout(() => {
+      if (response.ok) {
+        const data = await response.json();
+        const shareUrl = `${window.location.origin}${data.share_url}`;
+        
         const subject = `Estratto Conto - ${selectedClient.name}`;
-        const body = `In allegato trovi l'estratto conto per ${selectedClient.name}.\n\nIl PDF è stato scaricato nella cartella Download del tuo dispositivo.\n\nCordiali saluti`;
+        const body = `Ciao,\n\nIn allegato trovi l'estratto conto per ${selectedClient.name}:\n\n${shareUrl}\n\n(Il link scade tra 24 ore)\n\nCordiali saluti`;
+        
         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-      }, 1000);
-      
-      setShowPDFShareModal(false);
-      alert('PDF scaricato! Ora puoi allegarlo all\'email.');
+        setShowPDFShareModal(false);
+        alert('Link creato e condiviso via email!');
+      } else {
+        throw new Error('Errore creazione link');
+      }
     } catch (error) {
-      alert('Errore nella generazione del PDF');
+      console.error('Error sharing PDF:', error);
+      alert('Errore nella condivisione');
+    }
+  };
+
+  const copyPDFLink = async () => {
+    try {
+      // Create shareable link
+      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date_from: '', date_to: '' })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const shareUrl = `${window.location.origin}${data.share_url}`;
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copiato negli appunti!');
+        setShowPDFShareModal(false);
+      } else {
+        throw new Error('Errore creazione link');
+      }
+    } catch (error) {
+      console.error('Error copying link:', error);
+      alert('Errore nella copia del link');
     }
   };
 
