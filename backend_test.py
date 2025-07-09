@@ -1446,7 +1446,7 @@ def test_client_password_management():
     # Test client details endpoint
     client_details_response = requests.get(
         f"{API_BASE_URL}/clients/{client_slug}",
-        headers={"Authorization": f"Bearer {client_token}"}
+        headers={"Authorization": f"Bearer client_{client_id}"}
     )
     print_response(client_details_response)
     
@@ -1458,7 +1458,7 @@ def test_client_password_management():
     # Test transactions endpoint
     transactions_response = requests.get(
         f"{API_BASE_URL}/transactions?client_slug={client_slug}",
-        headers={"Authorization": f"Bearer {client_token}"}
+        headers={"Authorization": f"Bearer client_{client_id}"}
     )
     print_response(transactions_response)
     
@@ -1470,7 +1470,7 @@ def test_client_password_management():
     # Test balance endpoint
     balance_response = requests.get(
         f"{API_BASE_URL}/balance?client_slug={client_slug}",
-        headers={"Authorization": f"Bearer {client_token}"}
+        headers={"Authorization": f"Bearer client_{client_id}"}
     )
     print_response(balance_response)
     
@@ -1482,7 +1482,7 @@ def test_client_password_management():
     # Test statistics endpoint
     statistics_response = requests.get(
         f"{API_BASE_URL}/statistics?client_slug={client_slug}",
-        headers={"Authorization": f"Bearer {client_token}"}
+        headers={"Authorization": f"Bearer client_{client_id}"}
     )
     print_response(statistics_response)
     
