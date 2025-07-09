@@ -2190,11 +2190,19 @@ function App() {
           >
             {showFilters ? t('hideFilters') : t('filters')}
           </button>
+          
           <button
-            onClick={() => handlePDFDownload()}
+            onClick={() => setShowPDFModal(true)}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
           >
             {t('downloadPDF')}
+          </button>
+          
+          <button
+            onClick={() => setShowPDFShareModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+          >
+            {t('sharePDF')}
           </button>
         </div>
 
