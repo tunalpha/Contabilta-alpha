@@ -2584,6 +2584,14 @@ function App() {
                 </button>
                 
                 <button
+                  onClick={copyPDFLink}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl flex items-center space-x-3"
+                >
+                  <span className="text-2xl">🔗</span>
+                  <span className="font-semibold">{t('copyLink')}</span>
+                </button>
+                
+                <button
                   onClick={() => setShowPDFModal(true)}
                   className="w-full bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl flex items-center space-x-3"
                 >
