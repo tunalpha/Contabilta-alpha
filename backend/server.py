@@ -831,13 +831,107 @@ async def get_shared_pdf(link_id: str):
             del pdf_links[link_id]
             raise HTTPException(status_code=410, detail="Link expired")
         
-        # Generate PDF using existing function
+        # Generate PDF directly
         client_slug = link_data["client_slug"]
-        date_from = link_data["date_from"]
-        date_to = link_data["date_to"]
+        date_from = link_data["date_from"] or None
+        date_to = link_data["date_to"] or None
         
-        # Use existing PDF generation logic
-        return await generate_client_pdf(client_slug, date_from, date_to)
+        # Find client
+        client = await db.clients.find_one({"slug": client_slug})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Build query filter
+        query_filter = {"client_id": client["name"]}
+        
+        if date_from:
+            query_filter["date"] = {"$gte": date_from}
+        if date_to:
+            if "date" in query_filter:
+                query_filter["date"]["$lte"] = date_to
+            else:
+                query_filter["date"] = {"$lte": date_to}
+        
+        # Get transactions
+        transactions = []
+        async for transaction in db.transactions.find(query_filter).sort("date", -1):
+            transactions.append(transaction_helper(transaction))
+        
+        # Generate PDF
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from reportlab.graphics.shapes import Drawing, Circle, String
+        from reportlab.graphics import renderPDF
+        from reportlab.platypus import Flowable
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+        import io
+        
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+        
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.navy
+        )
+        
+        # Header
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("📊 ALPHA - Contabilità", title_style))
+        story.append(Paragraph("Estratto Conto", styles['Heading2']))
+        story.append(Spacer(1, 20))
+        
+        # Client info
+        story.append(Paragraph(f"<b>Cliente:</b> {client['name']}", styles['Normal']))
+        story.append(Paragraph(f"<b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Transactions table
+        if transactions:
+            table_data = [['Data', 'Descrizione', 'Tipo', 'Importo']]
+            for transaction in transactions:
+                table_data.append([
+                    transaction['date'][:10],
+                    transaction['description'][:40],
+                    transaction['type'].upper(),
+                    f"€ {transaction['amount']:.2f}"
+                ])
+            
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(table)
+        else:
+            story.append(Paragraph("Nessuna transazione trovata per il periodo selezionato", styles['Normal']))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=estratto-conto-{client['name']}.pdf"}
+        )
         
     except HTTPException:
         raise
