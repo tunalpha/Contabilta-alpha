@@ -483,7 +483,16 @@ function App() {
         url += `?client_slug=${selectedClient.slug}`;
       }
       
-      const response = await fetch(url);
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add client token if available
+      if (clientToken) {
+        headers['Authorization'] = `Bearer ${clientToken}`;
+      }
+      
+      const response = await fetch(url, { headers });
       const data = await response.json();
       setTransactions(data);
       setFilteredTransactions(data);
@@ -502,7 +511,16 @@ function App() {
         url += `?client_slug=${selectedClient.slug}`;
       }
       
-      const response = await fetch(url);
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add client token if available
+      if (clientToken) {
+        headers['Authorization'] = `Bearer ${clientToken}`;
+      }
+      
+      const response = await fetch(url, { headers });
       const data = await response.json();
       setBalance(data);
     } catch (error) {
