@@ -1531,8 +1531,7 @@ function App() {
 
       if (response.ok) {
         // Update client list to reflect password status
-        const updatedClients = await fetchClients();
-        setClients(updatedClients);
+        await fetchClients();
         alert('✅ Password impostata con successo!');
       } else {
         throw new Error('Errore nell\'impostazione della password');
