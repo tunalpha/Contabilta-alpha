@@ -1389,15 +1389,27 @@ function App() {
         const shareUrl = `${window.location.origin}${data.share_url}`;
         
         // Copy to clipboard
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Link copiato negli appunti!');
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(shareUrl);
+          alert('Link copiato negli appunti!');
+        } else {
+          // Fallback per browser che non supportano clipboard API
+          const textArea = document.createElement('textarea');
+          textArea.value = shareUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('Link copiato negli appunti!');
+        }
         setShowPDFShareModal(false);
       } else {
-        throw new Error('Errore creazione link');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Errore creazione link');
       }
     } catch (error) {
       console.error('Error copying link:', error);
-      alert('Errore nella copia del link');
+      alert(`Errore: ${error.message}`);
     }
   };
 
