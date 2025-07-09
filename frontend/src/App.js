@@ -2932,23 +2932,6 @@ function App() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4 justify-center mb-8">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
-          >
-            {showFilters ? t('hideFilters') : t('filters')}
-          </button>
-          
-          <button
-            onClick={() => setShowPDFModal(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
-          >
-            {t('downloadPDF')}
-          </button>
-        </div>
-
         {/* Analytics Section - MOVED TO BOTTOM */}
         {transactions.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
