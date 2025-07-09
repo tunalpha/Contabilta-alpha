@@ -2237,13 +2237,6 @@ function App() {
           >
             {t('downloadPDF')}
           </button>
-          
-          <button
-            onClick={() => setShowPDFShareModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
-          >
-            {t('sharePDF')}
-          </button>
         </div>
 
         {/* Analytics Section */}
