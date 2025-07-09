@@ -2401,7 +2401,34 @@ function App() {
                       />
                       <button
                         type="button"
-                        onClick={() => navigator.clipboard.writeText(clientPassword)}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(clientPassword);
+                            // Feedback visivo temporaneo
+                            const btn = document.querySelector('[title="Copia password"]');
+                            const originalText = btn.textContent;
+                            btn.textContent = '✅';
+                            setTimeout(() => {
+                              btn.textContent = originalText;
+                            }, 1000);
+                          } catch (err) {
+                            // Fallback per browser che non supportano clipboard API
+                            const textArea = document.createElement('textarea');
+                            textArea.value = clientPassword;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            
+                            // Feedback visivo
+                            const btn = document.querySelector('[title="Copia password"]');
+                            const originalText = btn.textContent;
+                            btn.textContent = '✅';
+                            setTimeout(() => {
+                              btn.textContent = originalText;
+                            }, 1000);
+                          }
+                        }}
                         className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
                         title="Copia password"
                       >
