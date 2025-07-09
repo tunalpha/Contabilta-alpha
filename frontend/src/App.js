@@ -2396,15 +2396,44 @@ function App() {
                   La password proteggerà l'accesso al link del cliente. Minimo 6 caratteri.
                 </p>
                 <form onSubmit={handlePasswordSubmit}>
-                  <input
-                    type="password"
-                    value={clientPassword}
-                    onChange={(e) => setClientPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                    placeholder="Inserisci password (min 6 caratteri)"
-                    minLength="6"
-                    required
-                  />
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password Cliente
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={clientPassword}
+                        onChange={(e) => setClientPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                        placeholder="Inserisci password (min 6 caratteri)"
+                        minLength="6"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(clientPassword)}
+                        className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                        title="Copia password"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={generateRandomPassword}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mb-2"
+                    >
+                      🎲 Genera Password Casuale
+                    </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Genera una password di 8 caratteri (lettere + numeri)
+                    </p>
+                  </div>
+                  
                   <div className="flex gap-4">
                     <button
                       type="submit"
