@@ -1444,6 +1444,149 @@ function App() {
     alert(`🔗 Link copiato negli appunti!\n\n${link}`);
   };
 
+  // Client password management functions
+  const handleSetClientPassword = async (clientId, password) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${clientId}/password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (response.ok) {
+        // Update client list to reflect password status
+        const updatedClients = await fetchClients();
+        setClients(updatedClients);
+        alert('✅ Password impostata con successo!');
+      } else {
+        throw new Error('Errore nell\'impostazione della password');
+      }
+    } catch (error) {
+      console.error('Error setting client password:', error);
+      alert('❌ Errore nell\'impostazione della password');
+    }
+  };
+
+  const handleRemoveClientPassword = async (clientId) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${clientId}/password`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+
+      if (response.ok) {
+        // Update client list to reflect password status
+        const updatedClients = await fetchClients();
+        setClients(updatedClients);
+        alert('✅ Password rimossa con successo!');
+      } else {
+        throw new Error('Errore nella rimozione della password');
+      }
+    } catch (error) {
+      console.error('Error removing client password:', error);
+      alert('❌ Errore nella rimozione della password');
+    }
+  };
+
+  const openPasswordModal = (client) => {
+    setPasswordModalClient(client);
+    setClientPassword('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (clientPassword.length < 6) {
+      alert('La password deve essere di almeno 6 caratteri');
+      return;
+    }
+    
+    await handleSetClientPassword(passwordModalClient.id, clientPassword);
+    setShowPasswordModal(false);
+    setPasswordModalClient(null);
+    setClientPassword('');
+  };
+
+  // Client login functions
+  const handleClientLogin = async (clientSlug, password) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${clientSlug}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store client token
+        setClientToken(data.token);
+        localStorage.setItem('clientToken', data.token);
+        setShowClientLogin(false);
+        setClientLoginError('');
+        
+        // Now fetch client data with proper authentication
+        await fetchClientData(clientSlug);
+        
+        return true;
+      } else {
+        setClientLoginError(data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error during client login:', error);
+      setClientLoginError('Errore di connessione');
+      return false;
+    }
+  };
+
+  const fetchClientData = async (clientSlug) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add client token if available
+      if (clientToken) {
+        headers['Authorization'] = `Bearer ${clientToken}`;
+      }
+      
+      const [clientResponse, transactionsResponse, balanceResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/clients/${clientSlug}`, { headers }),
+        fetch(`${BACKEND_URL}/api/transactions?client_slug=${clientSlug}`, { headers }),
+        fetch(`${BACKEND_URL}/api/balance?client_slug=${clientSlug}`, { headers })
+      ]);
+
+      if (clientResponse.status === 401) {
+        // Need password authentication
+        setShowClientLogin(true);
+        return;
+      }
+
+      if (clientResponse.ok && transactionsResponse.ok && balanceResponse.ok) {
+        const clientData = await clientResponse.json();
+        const transactionsData = await transactionsResponse.json();
+        const balanceData = await balanceResponse.json();
+        
+        setSelectedClient(clientData);
+        setTransactions(transactionsData);
+        setBalance(balanceData);
+      } else {
+        throw new Error('Errore nel caricamento dei dati');
+      }
+    } catch (error) {
+      console.error('Error fetching client data:', error);
+      alert('❌ Errore nel caricamento dei dati del cliente');
+    }
+  };
+
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Cliente sconosciuto';
