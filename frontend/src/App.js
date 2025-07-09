@@ -1339,11 +1339,12 @@ function App() {
         setShowPDFShareModal(false);
         alert('Link creato e condiviso su WhatsApp!');
       } else {
-        throw new Error('Errore creazione link');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Errore creazione link');
       }
     } catch (error) {
       console.error('Error sharing PDF:', error);
-      alert('Errore nella condivisione');
+      alert(`Errore: ${error.message}`);
     }
   };
 
@@ -1367,11 +1368,12 @@ function App() {
         setShowPDFShareModal(false);
         alert('Link creato e condiviso via email!');
       } else {
-        throw new Error('Errore creazione link');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Errore creazione link');
       }
     } catch (error) {
       console.error('Error sharing PDF:', error);
-      alert('Errore nella condivisione');
+      alert(`Errore: ${error.message}`);
     }
   };
 
