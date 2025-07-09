@@ -2911,33 +2911,80 @@ function App() {
                 </div>
               </div>
               
-              {/* Category Pie Chart */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('expensesByCategory')}</h3>
-                <div style={{ height: '300px' }}>
-                  <Pie 
-                    data={getCategoryPieData(transactions)}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'right',
-                        },
-                        tooltip: {
-                          callbacks: {
-                            label: function(context) {
-                              const label = context.label || '';
-                              const value = context.raw || 0;
-                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                              const percentage = ((value / total) * 100).toFixed(1);
-                              return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+              {/* Category Pie Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Income Pie Chart */}
+                <div className="bg-green-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-green-700 mb-4">💰 Entrate per Categoria</h3>
+                  <div style={{ height: '250px' }}>
+                    <Pie 
+                      data={getIncomePieData(transactions)}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              boxWidth: 12,
+                              padding: 8,
+                              font: {
+                                size: 11
+                              }
+                            }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                              }
                             }
                           }
                         }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Expenses Pie Chart */}
+                <div className="bg-red-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-red-700 mb-4">💸 Uscite per Categoria</h3>
+                  <div style={{ height: '250px' }}>
+                    <Pie 
+                      data={getCategoryPieData(transactions)}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              boxWidth: 12,
+                              padding: 8,
+                              font: {
+                                size: 11
+                              }
+                            }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
