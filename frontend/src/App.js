@@ -698,6 +698,8 @@ function App() {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('Client creation result:', result); // Debug
+        
         const newClient = result.client;
         const autoPassword = result.auto_password;
         const clientLink = `${window.location.origin}${result.link}`;
@@ -707,7 +709,10 @@ function App() {
         fetchClients();
         
         // Show the auto-generated password to admin (ONLY TIME IT'S SHOWN)
-        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\n🔗 Link cliente: ${clientLink}\n\n🔒 PASSWORD GENERATA: ${autoPassword}\n\n⚠️ IMPORTANTE: Salva questa password e comunicala al cliente.\nNon sarà più possibile visualizzarla!\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`);
+        const passwordMessage = `✅ Cliente "${newClient.name}" creato con successo!\n\n🔗 Link cliente: ${clientLink}\n\n🔒 PASSWORD GENERATA: ${autoPassword}\n\n⚠️ IMPORTANTE: Salva questa password e comunicala al cliente.\nNon sarà più possibile visualizzarla!\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`;
+        
+        console.log('Password message:', passwordMessage); // Debug
+        alert(passwordMessage);
       } else {
         const errorData = await response.json();
         alert(`Errore: ${errorData.detail}`);
