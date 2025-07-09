@@ -2008,7 +2008,14 @@ function App() {
                     onClick={() => setSelectedClient(client)}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-gray-800">{client.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-lg text-gray-800">{client.name}</h3>
+                        {client.has_password && (
+                          <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                            🔒 Protetto
+                          </span>
+                        )}
+                      </div>
                       {isAdmin && (
                         <button
                           onClick={(e) => {
