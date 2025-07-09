@@ -1321,10 +1321,8 @@ function App() {
     }
   };
 
-  // Share PDF functions
-  const sharePDFViaWhatsApp = async () => {
+  const createShareLink = async () => {
     try {
-      // Create shareable link
       const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1334,85 +1332,43 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         const shareUrl = `${window.location.origin}${data.share_url}`;
-        const whatsappText = `Ciao! Ecco l'estratto conto di ${selectedClient.name}: ${shareUrl}`;
-        
-        window.open(`https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`, '_blank');
-        setShowPDFShareModal(false);
-        alert('Link creato e condiviso su WhatsApp!');
+        setGeneratedLink(shareUrl);
+        return shareUrl;
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Errore creazione link');
+        throw new Error('Errore creazione link');
       }
     } catch (error) {
-      console.error('Error sharing PDF:', error);
-      alert(`Errore: ${error.message}`);
+      console.error('Error creating link:', error);
+      alert('Errore nella creazione del link');
+      return null;
+    }
+  };
+
+  const sharePDFViaWhatsApp = async () => {
+    const link = await createShareLink();
+    if (link) {
+      const whatsappText = `Ciao! Ecco l'estratto conto di ${selectedClient.name}: ${link}`;
+      // Apertura diretta WhatsApp (funziona meglio su mobile)
+      window.location.href = `https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`;
     }
   };
 
   const sharePDFViaEmail = async () => {
-    try {
-      // Create shareable link
-      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date_from: '', date_to: '' })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const shareUrl = `${window.location.origin}${data.share_url}`;
-        
-        const subject = `Estratto Conto - ${selectedClient.name}`;
-        const body = `Ciao,\n\nIn allegato trovi l'estratto conto per ${selectedClient.name}:\n\n${shareUrl}\n\n(Il link scade tra 24 ore)\n\nCordiali saluti`;
-        
-        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-        setShowPDFShareModal(false);
-        alert('Link creato e condiviso via email!');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Errore creazione link');
-      }
-    } catch (error) {
-      console.error('Error sharing PDF:', error);
-      alert(`Errore: ${error.message}`);
+    const link = await createShareLink();
+    if (link) {
+      const subject = `Estratto Conto - ${selectedClient.name}`;
+      const body = `Ciao,\n\nEcco l'estratto conto per ${selectedClient.name}:\n\n${link}\n\n(Il link scade tra 24 ore)\n\nCordiali saluti`;
+      // Apertura diretta email
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
   };
 
   const copyPDFLink = async () => {
-    try {
-      // Create shareable link
-      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/pdf/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date_from: '', date_to: '' })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const shareUrl = `${window.location.origin}${data.share_url}`;
-        
-        // Copy to clipboard
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareUrl);
-          alert('Link copiato negli appunti!');
-        } else {
-          // Fallback per browser che non supportano clipboard API
-          const textArea = document.createElement('textarea');
-          textArea.value = shareUrl;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          alert('Link copiato negli appunti!');
-        }
-        setShowPDFShareModal(false);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Errore creazione link');
-      }
-    } catch (error) {
-      console.error('Error copying link:', error);
-      alert(`Errore: ${error.message}`);
+    const link = await createShareLink();
+    if (link) {
+      // Mostra link visibile per copia manuale
+      setGeneratedLink(link);
+      alert('Link generato! Puoi copiarlo manualmente dalla finestra.');
     }
   };
 
