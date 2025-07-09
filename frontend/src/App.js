@@ -1585,6 +1585,16 @@ function App() {
     setShowPasswordModal(true);
   };
 
+  // Generate random password function
+  const generateRandomPassword = () => {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setClientPassword(password);
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (clientPassword.length < 6) {
