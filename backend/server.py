@@ -465,7 +465,9 @@ async def client_login(client_slug: str, login_request: ClientLoginRequest):
             return ClientLoginResponse(
                 success=True,
                 token=f"client_{client['id']}",
-                message="Accesso consentito - nessuna password richiesta"
+                message="Accesso consentito - nessuna password richiesta",
+                first_login=False,
+                client_name=client["name"]
             )
         
         # Verify password
@@ -474,15 +476,21 @@ async def client_login(client_slug: str, login_request: ClientLoginRequest):
             # Generate client token
             client_token = hashlib.sha256(f"{client['id']}_{client['slug']}_{datetime.now().isoformat()}".encode()).hexdigest()
             
+            # Check if this is first login
+            is_first_login = client.get("first_login", False)
+            
             return ClientLoginResponse(
                 success=True,
                 token=client_token,
-                message="Login cliente riuscito"
+                message="Login cliente riuscito",
+                first_login=is_first_login,
+                client_name=client["name"]
             )
         else:
             return ClientLoginResponse(
                 success=False,
-                message="Password errata"
+                message="Password errata",
+                first_login=False
             )
             
     except HTTPException:
