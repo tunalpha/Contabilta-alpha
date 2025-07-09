@@ -611,14 +611,10 @@ async def create_client(client_request: ClientCreateRequest, admin_verified: boo
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/clients/{client_slug}")
-async def get_client_by_slug(client_slug: str):
-    """Get client by slug (PUBLIC - for client pages)"""
+async def get_client_by_slug(client_slug: str, client_verified: dict = Depends(verify_client_access)):
+    """Get client by slug (PUBLIC - but password protected if set)"""
     try:
-        client = await db.clients.find_one({"slug": client_slug, "active": True})
-        if not client:
-            raise HTTPException(status_code=404, detail="Client not found")
-        
-        return client_helper(client)
+        return client_helper(client_verified)
     except HTTPException:
         raise
     except Exception as e:
