@@ -788,6 +788,62 @@ async def get_statistics(client_slug: Optional[str] = Query(None, description="C
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/clients/{client_slug}/pdf/share")
+async def create_pdf_share_link(client_slug: str, date_from: str = "", date_to: str = ""):
+    """Create a temporary shareable link for PDF"""
+    try:
+        # Generate unique link ID
+        link_id = secrets.token_urlsafe(16)
+        
+        # Store link data with expiration (24 hours)
+        expiration = datetime.now() + timedelta(hours=24)
+        pdf_links[link_id] = {
+            "client_slug": client_slug,
+            "date_from": date_from,
+            "date_to": date_to,
+            "expires_at": expiration,
+            "created_at": datetime.now()
+        }
+        
+        # Return shareable URL
+        return {
+            "link_id": link_id,
+            "share_url": f"/pdf/share/{link_id}",
+            "expires_at": expiration.isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating share link: {str(e)}")
+
+@app.get("/pdf/share/{link_id}")
+async def get_shared_pdf(link_id: str):
+    """Access PDF via temporary link"""
+    try:
+        # Check if link exists and is valid
+        if link_id not in pdf_links:
+            raise HTTPException(status_code=404, detail="Link not found")
+        
+        link_data = pdf_links[link_id]
+        
+        # Check if link has expired
+        if datetime.now() > link_data["expires_at"]:
+            # Clean up expired link
+            del pdf_links[link_id]
+            raise HTTPException(status_code=410, detail="Link expired")
+        
+        # Generate PDF using existing function
+        client_slug = link_data["client_slug"]
+        date_from = link_data["date_from"]
+        date_to = link_data["date_to"]
+        
+        # Use existing PDF generation logic
+        return await generate_client_pdf(client_slug, date_from, date_to)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error accessing shared PDF: {str(e)}")
+
 @app.get("/api/clients/{client_slug}/pdf")
 async def generate_client_pdf(
     client_slug: str,
