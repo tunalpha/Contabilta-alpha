@@ -2320,6 +2320,63 @@ function App() {
     );
   }
 
+  // CLIENT LOGIN MODAL
+  if (showClientLogin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-96">
+          <div className="text-center mb-6">
+            <div className="mx-auto h-16 w-16 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg border-4 border-white mb-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-white">📊</div>
+                <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">🔒 Accesso Cliente</h2>
+            <p className="text-gray-600">
+              Questo cliente è protetto da password. Inserisci la password per accedere.
+            </p>
+          </div>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleClientLogin(currentClientSlug, clientLoginPassword);
+          }}>
+            <div className="mb-4">
+              <input
+                type="password"
+                value={clientLoginPassword}
+                onChange={(e) => setClientLoginPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Inserisci la password..."
+                required
+              />
+            </div>
+            
+            {clientLoginError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{clientLoginError}</p>
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200"
+            >
+              🔓 Accedi
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-gray-500 text-sm">
+              Non conosci la password? Contatta l'amministratore.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // CLIENT VIEW
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
