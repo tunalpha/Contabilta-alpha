@@ -102,7 +102,54 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Contabilità Alpha/Marzia - app per gestire entrate e uscite con terminologia dare/avere, ricerca cronologia e categorie Cash/Bonifico/PayPal/Altro"
+user_problem_statement: "Implementazione password protection per i link dei clienti nell'applicazione Contabilità Alpha - Sistema di sicurezza per impedire accesso non autorizzato ai dati contabili tramite protezione password personalizzata per ogni cliente"
+
+backend:
+  - task: "Client password authentication system"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implementato sistema di autenticazione password per clienti. Aggiunto campo password al modello Client, endpoint per set/update/delete password, sistema di login cliente, middleware di autenticazione. Aggiornati endpoint pubblici per richiedere autenticazione quando necessario."
+
+frontend:
+  - task: "Client password protection UI"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implementata UI per gestione password clienti: modal admin per impostare password, schermata login clienti, badge visivo per clienti protetti, gestione sessioni cliente con localStorage. Aggiornate funzioni fetch per includere autenticazione."
+
+metadata:
+  created_by: "main_agent"
+  version: "4.0"
+  test_sequence: 3
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Client password authentication system"
+    - "Client password protection UI"
+    - "Password modal functionality"
+    - "Client login screen"
+    - "Authentication middleware"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implementato sistema completo di password protection per link clienti. Backend: aggiunto campo password al modello Client, endpoint per gestione password, sistema di login cliente, middleware di autenticazione. Frontend: modal admin per impostare password, schermata login clienti, badge visivo protezione, gestione sessioni. Necessario testing per verificare funzionamento corretto."
 
 backend:
   - task: "Transaction CRUD API with filtering"
