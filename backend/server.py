@@ -113,6 +113,7 @@ class Client(BaseModel):
     slug: str  # URL-friendly name (e.g., "mario-rossi")
     created_date: datetime
     active: bool = True
+    password: Optional[str] = None  # Password protection for client access
 
 class ClientResponse(BaseModel):
     id: str
