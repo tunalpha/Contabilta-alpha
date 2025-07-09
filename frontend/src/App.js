@@ -1531,6 +1531,10 @@ function App() {
         if (response.ok) {
           const updatedClient = await response.json();
           
+          // Clear any cached tokens for the old slug
+          const oldSlug = client.slug;
+          localStorage.removeItem(`clientToken_${oldSlug}`);
+          
           // Update the client in the local state
           setClients(prevClients => 
             prevClients.map(c => 
@@ -1542,7 +1546,7 @@ function App() {
           
           // Show new link
           const newLink = `${window.location.origin}/cliente/${updatedClient.slug}`;
-          alert(`✅ Link resettato con successo!\n\nNuovo link:\n${newLink}\n\nIl vecchio link non è più accessibile.`);
+          alert(`✅ Link resettato con successo!\n\nNuovo link:\n${newLink}\n\n⚠️ IMPORTANTE: Il vecchio link non è più accessibile.\nEventuali sessioni salvate sono state cancellate.`);
           
         } else {
           throw new Error('Errore nel reset del link');
