@@ -1481,8 +1481,8 @@ function App() {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token: adminToken })
+            'Authorization': `Bearer ${adminToken}`
+          }
         });
 
         if (response.ok) {
