@@ -234,7 +234,8 @@ def client_helper(client) -> dict:
         "name": client["name"],
         "slug": client["slug"],
         "created_date": client["created_date"],
-        "active": client["active"]
+        "active": client["active"],
+        "has_password": bool(client.get("password"))
     }
 
 def transaction_helper(transaction) -> dict:
