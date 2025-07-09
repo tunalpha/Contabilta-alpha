@@ -1534,11 +1534,15 @@ function App() {
         await fetchClients();
         alert('✅ Password impostata con successo!');
       } else {
+        alert('❌ Errore nell\'impostazione della password');
         throw new Error('Errore nell\'impostazione della password');
       }
     } catch (error) {
       console.error('Error setting client password:', error);
-      alert('❌ Errore nell\'impostazione della password');
+      if (!error.message.includes('Errore nell\'impostazione della password')) {
+        alert('❌ Errore nell\'impostazione della password');
+      }
+      throw error; // Re-throw per permettere a handlePasswordSubmit di gestirlo
     }
   };
 
