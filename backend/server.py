@@ -201,7 +201,8 @@ async def verify_client_access(client_slug: str, authorization: Optional[str] = 
         
         # For now, we'll implement a simple session-based approach
         # In a real app, you'd use proper JWT or session management
-        if authorization.startswith("Bearer client_"):
+        if authorization.startswith("Bearer client_") or authorization.startswith("Bearer "):
+            # Accept both formats: "Bearer client_xxx" and "Bearer xxx"
             return client
         else:
             raise HTTPException(status_code=403, detail="Token cliente non valido")
