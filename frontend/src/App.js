@@ -2068,6 +2068,37 @@ function App() {
                         🔄 Reset
                       </button>
                     </div>
+                    
+                    {/* Password Management Buttons */}
+                    {isAdmin && (
+                      <div className="mt-2 flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPasswordModal(client);
+                          }}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                          title="Imposta password protezione"
+                        >
+                          🔒 {client.has_password ? 'Modifica' : 'Aggiungi'} Password
+                        </button>
+                        
+                        {client.has_password && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Rimuovere la password di protezione per ${client.name}?`)) {
+                                handleRemoveClientPassword(client.id);
+                              }
+                            }}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                            title="Rimuovi password protezione"
+                          >
+                            🔓 Rimuovi
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
