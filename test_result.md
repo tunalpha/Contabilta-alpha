@@ -153,6 +153,8 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Implementato sistema completo di password protection per link clienti. Backend: aggiunto campo password al modello Client, endpoint per gestione password, sistema di login cliente, middleware di autenticazione. Frontend: modal admin per impostare password, schermata login clienti, badge visivo protezione, gestione sessioni. Necessario testing per verificare funzionamento corretto."
+  - agent: "testing"
+    message: "Completato il testing del sistema di password protection per i clienti. Tutti i test sono passati con successo. Verificato che: 1) Gli admin possono impostare e rimuovere password per i clienti, 2) I clienti possono fare login con password corretta, 3) Gli endpoint pubblici richiedono autenticazione quando il cliente ha password, 4) Gli endpoint sono accessibili senza autenticazione quando il cliente non ha password. Il sistema di protezione password funziona correttamente."
 
 backend:
   - task: "Transaction CRUD API with filtering"
