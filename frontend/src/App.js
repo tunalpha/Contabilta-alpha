@@ -2525,9 +2525,18 @@ function App() {
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm mb-2">
               Non conosci la password? Contatta l'amministratore.
             </p>
+            <button
+              onClick={() => {
+                localStorage.removeItem('clientToken');
+                window.location.reload();
+              }}
+              className="text-red-500 text-xs hover:text-red-700"
+            >
+              🔄 Pulisci Cache e Riprova
+            </button>
           </div>
         </div>
       </div>
