@@ -436,7 +436,7 @@ async def set_client_password(client_id: str, password_request: ClientPasswordRe
         # Update client with password
         result = await db.clients.update_one(
             {"id": client_id},
-            {"$set": {"password": hashed_password}}
+            {"$set": {"password": hashed_password, "first_login": True}}
         )
         
         if result.modified_count == 1:
