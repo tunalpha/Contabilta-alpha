@@ -1358,8 +1358,6 @@ function App() {
     }
   };
 
-  };
-
   const handlePDFDownload = (clientSlug = null) => {
     setShowPDFModal(true);
     // Se non specificato, usa il client corrente
