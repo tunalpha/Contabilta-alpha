@@ -392,6 +392,14 @@ function App() {
     }
   }, [adminToken]);
 
+  // Initialize client token from localStorage
+  useEffect(() => {
+    const storedClientToken = localStorage.getItem('clientToken');
+    if (storedClientToken) {
+      setClientToken(storedClientToken);
+    }
+  }, []);
+
   useEffect(() => {
     if (currentView === 'admin' && isAdmin) {
       fetchClients();
