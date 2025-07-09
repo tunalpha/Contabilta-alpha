@@ -242,6 +242,9 @@ function App() {
   const [currentClientSlug, setCurrentClientSlug] = useState('');
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordModalClient, setPasswordModalClient] = useState(null);
+  const [clientPassword, setClientPassword] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [balance, setBalance] = useState({
