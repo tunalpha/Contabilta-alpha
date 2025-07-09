@@ -2841,10 +2841,7 @@ function App() {
           </button>
         </div>
 
-        {/* Filters Section */}
-        {showFilters && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Cronologia e Filtri</h2>
+        {/* PDF Date Selection Modal */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
