@@ -68,6 +68,11 @@ class AlphaLogoFlowable(Flowable):
     def wrap(self, availWidth, availHeight):
         return self.size, self.size
 import asyncio
+import secrets
+from datetime import datetime, timedelta
+
+# Temporary PDF links storage (in production use Redis/database)
+pdf_links = {}
 
 app = FastAPI(title="Contabilità - Multi Cliente")
 
