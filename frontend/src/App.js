@@ -1288,7 +1288,43 @@ function App() {
     }
   };
 
-  const downloadPDF = async (dateFrom = '', dateTo = '') => {
+  // Share PDF functions
+  const sharePDFViaWhatsApp = async () => {
+    try {
+      // First generate and download the PDF
+      await downloadPDF();
+      
+      // Then open WhatsApp with message
+      setTimeout(() => {
+        const whatsappText = `Ciao! Ti ho appena inviato l'estratto conto di ${selectedClient.name}. Controlla i tuoi download! 📄`;
+        window.open(`https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`, '_blank');
+      }, 1000);
+      
+      setShowPDFShareModal(false);
+      alert('PDF scaricato! Ora puoi inviarlo tramite WhatsApp.');
+    } catch (error) {
+      alert('Errore nella generazione del PDF');
+    }
+  };
+
+  const sharePDFViaEmail = async () => {
+    try {
+      // First generate and download the PDF
+      await downloadPDF();
+      
+      // Then open email with instructions
+      setTimeout(() => {
+        const subject = `Estratto Conto - ${selectedClient.name}`;
+        const body = `In allegato trovi l'estratto conto per ${selectedClient.name}.\n\nIl PDF è stato scaricato nella cartella Download del tuo dispositivo.\n\nCordiali saluti`;
+        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+      }, 1000);
+      
+      setShowPDFShareModal(false);
+      alert('PDF scaricato! Ora puoi allegarlo all\'email.');
+    } catch (error) {
+      alert('Errore nella generazione del PDF');
+    }
+  };
     try {
       let url = `${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`;
       const params = new URLSearchParams();
