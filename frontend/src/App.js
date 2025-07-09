@@ -1544,46 +1544,6 @@ function App() {
     }
   };
 
-  const fetchClientData = async (clientSlug) => {
-    try {
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      // Add client token if available
-      if (clientToken) {
-        headers['Authorization'] = `Bearer ${clientToken}`;
-      }
-      
-      const [clientResponse, transactionsResponse, balanceResponse] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/clients/${clientSlug}`, { headers }),
-        fetch(`${BACKEND_URL}/api/transactions?client_slug=${clientSlug}`, { headers }),
-        fetch(`${BACKEND_URL}/api/balance?client_slug=${clientSlug}`, { headers })
-      ]);
-
-      if (clientResponse.status === 401) {
-        // Need password authentication
-        setShowClientLogin(true);
-        return;
-      }
-
-      if (clientResponse.ok && transactionsResponse.ok && balanceResponse.ok) {
-        const clientData = await clientResponse.json();
-        const transactionsData = await transactionsResponse.json();
-        const balanceData = await balanceResponse.json();
-        
-        setSelectedClient(clientData);
-        setTransactions(transactionsData);
-        setBalance(balanceData);
-      } else {
-        throw new Error('Errore nel caricamento dei dati');
-      }
-    } catch (error) {
-      console.error('Error fetching client data:', error);
-      alert('❌ Errore nel caricamento dei dati del cliente');
-    }
-  };
-
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Cliente sconosciuto';
