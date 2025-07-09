@@ -1078,14 +1078,13 @@ async def get_shared_pdf(link_id: str):
 async def generate_client_pdf(
     client_slug: str,
     date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
-    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
+    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
+    authorization: Optional[str] = Header(None)
 ):
-    """Generate PDF report for a specific client (PUBLIC)"""
+    """Generate PDF report for a specific client (PUBLIC but password protected if set)"""
     try:
-        # Get client data
-        client = await db.clients.find_one({"slug": client_slug, "active": True})
-        if not client:
-            raise HTTPException(status_code=404, detail="Client not found")
+        # Verify client access (password protection)
+        client = await verify_client_access(client_slug, authorization)
         
         # Build query filter for transactions
         query_filter = {"client_id": client["id"]}
