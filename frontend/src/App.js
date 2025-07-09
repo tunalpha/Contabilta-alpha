@@ -1666,6 +1666,63 @@ function App() {
     }
   };
 
+  // Handle client password change
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    
+    if (passwordChangeData.new_password !== passwordChangeData.confirm_password) {
+      setPasswordChangeError('Le password non corrispondono');
+      return;
+    }
+    
+    if (passwordChangeData.new_password.length < 6) {
+      setPasswordChangeError('La password deve essere di almeno 6 caratteri');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          current_password: passwordChangeData.current_password,
+          new_password: passwordChangeData.new_password
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowPasswordChange(false);
+        setPasswordChangeError('');
+        setPasswordChangeData({
+          current_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+        
+        alert('🎉 Password cambiata con successo!\n\nDa ora puoi usare la tua nuova password personalizzata per accedere.');
+        
+        // Now load client data
+        setTransactions([]);
+        setFilteredTransactions([]);
+        setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
+        
+        setTimeout(async () => {
+          await fetchClientData(currentClientSlug);
+        }, 100);
+        
+      } else {
+        setPasswordChangeError(data.message || 'Errore nel cambio password');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordChangeError('Errore di connessione');
+    }
+  };
+
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Cliente sconosciuto';
