@@ -164,6 +164,10 @@ class PasswordRecoveryResponse(BaseModel):
 class ClientPasswordRequest(BaseModel):
     password: str
 
+class ClientPasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 class ClientLoginRequest(BaseModel):
     password: str
 
