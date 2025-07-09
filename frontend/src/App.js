@@ -544,10 +544,18 @@ function App() {
       }
       
       const response = await fetch(url, { headers });
-      const data = await response.json();
-      setBalance(data);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data);
+      } else {
+        // In caso di errore, imposta balance di default
+        setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
+      }
     } catch (error) {
       console.error('Error fetching balance:', error);
+      // In caso di errore, imposta balance di default
+      setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
     }
   };
 
