@@ -1141,8 +1141,8 @@ function App() {
       currency: "Valuta",
       
       // Balance
-      totalAvere: "Totale Avere (Crediti)",
-      totalDare: "Totale Dare (Debiti)",
+      totalAvere: "Totale Avere (Incassi)",
+      totalDare: "Totale Dare (Pagamenti)",
       netBalance: "Saldo Netto",
       
       // PDF
