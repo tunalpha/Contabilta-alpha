@@ -182,6 +182,35 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
     
     return True
 
+# Client authentication dependency
+async def verify_client_access(client_slug: str, authorization: Optional[str] = Header(None)):
+    """Verify client access - either no password set or valid client token"""
+    try:
+        # Find client by slug
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # If no password set, allow access
+        if not client.get("password"):
+            return client
+        
+        # If password is set, require valid authorization
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Password richiesta per accedere")
+        
+        # For now, we'll implement a simple session-based approach
+        # In a real app, you'd use proper JWT or session management
+        if authorization.startswith("Bearer client_"):
+            return client
+        else:
+            raise HTTPException(status_code=403, detail="Token cliente non valido")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Currency conversion functions
 async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> float:
     """Get exchange rate from one currency to another using free API"""
