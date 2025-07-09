@@ -2489,6 +2489,59 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* PDF Share Modal */}
+        {showPDFShareModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('sharePDFTitle')}</h2>
+              <p className="text-gray-600 mb-6">{t('selectShareMethod')}</p>
+              
+              <div className="space-y-4">
+                <button
+                  onClick={() => {
+                    const whatsappText = `Ecco l'estratto conto di ${selectedClient.name}: `;
+                    window.open(`https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`, '_blank');
+                    setShowPDFShareModal(false);
+                  }}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex items-center space-x-3"
+                >
+                  <span className="text-2xl">📱</span>
+                  <span className="font-semibold">{t('shareViaWhatsApp')}</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    const subject = `Estratto Conto - ${selectedClient.name}`;
+                    const body = `In allegato l'estratto conto per ${selectedClient.name}.`;
+                    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                    setShowPDFShareModal(false);
+                  }}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl flex items-center space-x-3"
+                >
+                  <span className="text-2xl">📧</span>
+                  <span className="font-semibold">{t('shareViaEmail')}</span>
+                </button>
+                
+                <button
+                  onClick={() => setShowPDFModal(true)}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl flex items-center space-x-3"
+                >
+                  <span className="text-2xl">📄</span>
+                  <span className="font-semibold">{t('downloadPDF')}</span>
+                </button>
+              </div>
+              
+              <button
+                onClick={() => setShowPDFShareModal(false)}
+                className="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-xl"
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* WhatsApp Floating Button - Only in client view */}
         {currentView === 'client' && selectedClient && (
           <a
