@@ -1357,47 +1357,7 @@ function App() {
       alert('Errore nella generazione del PDF');
     }
   };
-    try {
-      let url = `${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`;
-      const params = new URLSearchParams();
-      
-      if (dateFrom) params.append('date_from', dateFrom);
-      if (dateTo) params.append('date_to', dateTo);
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-      
-      const response = await fetch(url);
-      if (response.ok) {
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        
-        let filename = `estratto_conto_${currentClientSlug}`;
-        if (dateFrom && dateTo) {
-          filename += `_${dateFrom}_${dateTo}`;
-        } else if (dateFrom) {
-          filename += `_dal_${dateFrom}`;
-        } else if (dateTo) {
-          filename += `_al_${dateTo}`;
-        }
-        filename += `_${new Date().toISOString().split('T')[0]}.pdf`;
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-        alert(t('pdfSuccess'));
-      } else {
-        throw new Error('Errore nel download');
-      }
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      alert(t('pdfError'));
-    }
+
   };
 
   const handlePDFDownload = (clientSlug = null) => {
