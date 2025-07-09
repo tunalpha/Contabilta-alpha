@@ -434,7 +434,10 @@ function App() {
       const response = await fetch(`${BACKEND_URL}/api/clients/${slug}`, { headers });
       
       if (response.status === 401) {
-        // Need password authentication
+        // Need password authentication - reset state
+        setSelectedClient(null);
+        setTransactions([]);
+        setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
         setShowClientLogin(true);
         return;
       }
