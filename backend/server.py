@@ -123,6 +123,7 @@ class ClientResponse(BaseModel):
     active: bool
     total_transactions: int = 0
     balance: float = 0.0
+    has_password: bool = False  # Don't expose actual password
 
 class Transaction(BaseModel):
     id: Optional[str] = None
