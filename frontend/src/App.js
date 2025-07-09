@@ -1553,8 +1553,7 @@ function App() {
 
       if (response.ok) {
         // Update client list to reflect password status
-        const updatedClients = await fetchClients();
-        setClients(updatedClients);
+        await fetchClients();
         alert('✅ Password rimossa con successo!');
       } else {
         throw new Error('Errore nella rimozione della password');
