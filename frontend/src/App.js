@@ -2884,7 +2884,7 @@ function App() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i tipi</option>
-                  <option value="avere">Avere (Crediti)</option>
+                  <option value="avere">Avere (Incassi)</option>
                   <option value="dare">Dare (Debiti)</option>
                 </select>
               </div>
@@ -3209,7 +3209,7 @@ function App() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i tipi</option>
-                  <option value="avere">Avere (Crediti)</option>
+                  <option value="avere">Avere (Incassi)</option>
                   <option value="dare">Dare (Debiti)</option>
                 </select>
               </div>
