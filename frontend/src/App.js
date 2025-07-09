@@ -254,7 +254,6 @@ function App() {
   });
   const [showLogin, setShowLogin] = useState(false);
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
   const [clientPassword, setClientPassword] = useState('');
   const [clientLoginPassword, setClientLoginPassword] = useState('');
