@@ -2621,6 +2621,111 @@ function App() {
     );
   }
 
+  // CLIENT PASSWORD CHANGE MODAL
+  if (showPasswordChange) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-96">
+          <div className="text-center mb-6">
+            <div className="mx-auto h-16 w-16 flex items-center justify-center bg-gradient-to-br from-green-500 to-blue-600 rounded-full shadow-lg border-4 border-white mb-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-white">🔑</div>
+                <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">🎉 Primo Accesso!</h2>
+            <p className="text-gray-600 text-sm">
+              Benvenuto! Questa è la tua password temporanea.<br/>
+              Per sicurezza, ti consigliamo di cambiarla con una personalizzata.
+            </p>
+          </div>
+          
+          <form onSubmit={handlePasswordChange}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password Attuale (temporanea)
+              </label>
+              <input
+                type="password"
+                value={passwordChangeData.current_password}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nuova Password (min 6 caratteri)
+              </label>
+              <input
+                type="password"
+                value={passwordChangeData.new_password}
+                onChange={(e) => setPasswordChangeData({...passwordChangeData, new_password: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Inserisci nuova password..."
+                minLength="6"
+                required
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Conferma Nuova Password
+              </label>
+              <input
+                type="password"
+                value={passwordChangeData.confirm_password}
+                onChange={(e) => setPasswordChangeData({...passwordChangeData, confirm_password: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Conferma nuova password..."
+                minLength="6"
+                required
+              />
+            </div>
+            
+            {passwordChangeError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{passwordChangeError}</p>
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                🔑 Cambia Password
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordChange(false);
+                  // Continue with current password
+                  setTransactions([]);
+                  setFilteredTransactions([]);
+                  setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
+                  
+                  setTimeout(async () => {
+                    await fetchClientData(currentClientSlug);
+                  }, 100);
+                }}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                🔄 Continua
+              </button>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-gray-500 text-xs">
+                Puoi continuare con la password attuale e cambiarla successivamente.
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   // CLIENT VIEW
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
