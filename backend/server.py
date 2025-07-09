@@ -161,6 +161,17 @@ class PasswordRecoveryResponse(BaseModel):
     success: bool
     message: str
 
+class ClientPasswordRequest(BaseModel):
+    password: str
+
+class ClientLoginRequest(BaseModel):
+    password: str
+
+class ClientLoginResponse(BaseModel):
+    success: bool
+    token: Optional[str] = None
+    message: str
+
 # Authentication dependency
 async def verify_admin_token(authorization: Optional[str] = Header(None)):
     if not authorization:
