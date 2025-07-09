@@ -575,9 +575,9 @@ async def get_clients_public():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/clients", response_model=dict)
+@app.post("/api/clients", response_model=ClientResponse)
 async def create_client(client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
-    """Create a new client with auto-generated password (ADMIN ONLY)"""
+    """Create a new client (ADMIN ONLY)"""
     try:
         # Generate slug from name
         slug = create_slug(client_request.name)
@@ -593,32 +593,17 @@ async def create_client(client_request: ClientCreateRequest, admin_verified: boo
                 counter += 1
             slug = new_slug
         
-        # Generate automatic password
-        import secrets
-        import string
-        password_chars = string.ascii_letters + string.digits
-        auto_password = ''.join(secrets.choice(password_chars) for _ in range(8))
-        
-        # Hash the password
-        hashed_password = hashlib.sha256(auto_password.encode()).hexdigest()
-        
         client_dict = {
             "id": str(uuid.uuid4()),
             "name": client_request.name,
             "slug": slug,
             "created_date": datetime.now(),
-            "active": True,
-            "password": hashed_password
+            "active": True
         }
         
         result = await db.clients.insert_one(client_dict)
         if result.inserted_id:
-            # Return client data with the plain password (only shown once)
-            return {
-                "client": ClientResponse(**client_dict, total_transactions=0, balance=0.0, has_password=True),
-                "auto_password": auto_password,
-                "link": f"/cliente/{slug}"
-            }
+            return ClientResponse(**client_dict, total_transactions=0, balance=0.0, has_password=False)
         else:
             raise HTTPException(status_code=500, detail="Failed to create client")
     except HTTPException:
