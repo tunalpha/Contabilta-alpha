@@ -603,6 +603,12 @@ function App() {
   };
 
   const applyFilters = () => {
+    // Assicuriamoci che transactions sia un array valido
+    if (!transactions || !Array.isArray(transactions)) {
+      setFilteredTransactions([]);
+      return;
+    }
+    
     let filtered = [...transactions];
 
     if (filters.search) {
