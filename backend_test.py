@@ -1350,6 +1350,412 @@ def test_exchange_rates_api():
     print(f"✅ Exchange rates API returned rates: EUR: {rates.get('EUR')}, USD: {rates.get('USD')}, GBP: {rates.get('GBP')}")
     return True
 
+def test_client_password_management():
+    print_test_header("Client Password Management")
+    
+    # Get admin token for authenticated requests
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token for client password management")
+        return False
+    
+    # Get a client to test with
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    if response.status_code != 200 or not response.json():
+        print("❌ Failed to get client for password management test")
+        return False
+    
+    test_client = response.json()[0]
+    client_id = test_client["id"]
+    client_slug = test_client["slug"]
+    
+    print(f"Testing with client: {test_client['name']} (ID: {client_id}, Slug: {client_slug})")
+    
+    # Step 1: Set password for the client
+    print("\n--- Setting client password ---")
+    password = "testpassword123"
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    set_password_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_id}/password",
+        json={"password": password},
+        headers=headers
+    )
+    print_response(set_password_response)
+    
+    if not assert_status_code(set_password_response, 200):
+        return False
+    
+    # Step 2: Verify client now has password set
+    print("\n--- Verifying client has password set ---")
+    client_response = requests.get(f"{API_BASE_URL}/clients", headers=headers)
+    if client_response.status_code != 200:
+        print("❌ Failed to get clients list")
+        return False
+    
+    updated_client = next((c for c in client_response.json() if c["id"] == client_id), None)
+    if not updated_client:
+        print("❌ Could not find client in response")
+        return False
+    
+    if not assert_equal(updated_client["has_password"], True, "Client has_password flag"):
+        return False
+    
+    # Step 3: Test client login with correct password
+    print("\n--- Testing client login with correct password ---")
+    login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": password}
+    )
+    print_response(login_response)
+    
+    if not assert_status_code(login_response, 200):
+        return False
+    
+    login_data = login_response.json()
+    if not assert_equal(login_data["success"], True, "Login success"):
+        return False
+    
+    client_token = login_data["token"]
+    if not client_token:
+        print("❌ Login response does not contain a token")
+        return False
+    
+    print("✅ Client login successful with correct password")
+    
+    # Step 4: Test client login with incorrect password
+    print("\n--- Testing client login with incorrect password ---")
+    wrong_login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": "wrongpassword"}
+    )
+    print_response(wrong_login_response)
+    
+    if not assert_status_code(wrong_login_response, 200):
+        return False
+    
+    wrong_login_data = wrong_login_response.json()
+    if not assert_equal(wrong_login_data["success"], False, "Login failure with wrong password"):
+        return False
+    
+    print("✅ Client login correctly fails with wrong password")
+    
+    # Step 5: Test accessing protected endpoints with valid token
+    print("\n--- Testing protected endpoints with valid token ---")
+    
+    # Test client details endpoint
+    client_details_response = requests.get(
+        f"{API_BASE_URL}/clients/{client_slug}",
+        headers={"Authorization": f"Bearer {client_token}"}
+    )
+    print_response(client_details_response)
+    
+    if not assert_status_code(client_details_response, 200):
+        return False
+    
+    print("✅ Client details endpoint accessible with valid token")
+    
+    # Test transactions endpoint
+    transactions_response = requests.get(
+        f"{API_BASE_URL}/transactions?client_slug={client_slug}",
+        headers={"Authorization": f"Bearer {client_token}"}
+    )
+    print_response(transactions_response)
+    
+    if not assert_status_code(transactions_response, 200):
+        return False
+    
+    print("✅ Transactions endpoint accessible with valid token")
+    
+    # Test balance endpoint
+    balance_response = requests.get(
+        f"{API_BASE_URL}/balance?client_slug={client_slug}",
+        headers={"Authorization": f"Bearer {client_token}"}
+    )
+    print_response(balance_response)
+    
+    if not assert_status_code(balance_response, 200):
+        return False
+    
+    print("✅ Balance endpoint accessible with valid token")
+    
+    # Test statistics endpoint
+    statistics_response = requests.get(
+        f"{API_BASE_URL}/statistics?client_slug={client_slug}",
+        headers={"Authorization": f"Bearer {client_token}"}
+    )
+    print_response(statistics_response)
+    
+    if not assert_status_code(statistics_response, 200):
+        return False
+    
+    print("✅ Statistics endpoint accessible with valid token")
+    
+    # Step 6: Test accessing protected endpoints without token (should fail)
+    print("\n--- Testing protected endpoints without token ---")
+    
+    # Test client details endpoint without token
+    client_details_no_auth = requests.get(f"{API_BASE_URL}/clients/{client_slug}")
+    print_response(client_details_no_auth)
+    
+    if not assert_status_code(client_details_no_auth, 401):
+        return False
+    
+    print("✅ Client details endpoint correctly returns 401 without token")
+    
+    # Test transactions endpoint without token
+    transactions_no_auth = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+    print_response(transactions_no_auth)
+    
+    if not assert_status_code(transactions_no_auth, 401):
+        return False
+    
+    print("✅ Transactions endpoint correctly returns 401 without token")
+    
+    # Step 7: Remove password protection
+    print("\n--- Removing password protection ---")
+    remove_password_response = requests.delete(
+        f"{API_BASE_URL}/clients/{client_id}/password",
+        headers=headers
+    )
+    print_response(remove_password_response)
+    
+    if not assert_status_code(remove_password_response, 200):
+        return False
+    
+    # Step 8: Verify client no longer has password set
+    print("\n--- Verifying client no longer has password ---")
+    client_response_after = requests.get(f"{API_BASE_URL}/clients", headers=headers)
+    if client_response_after.status_code != 200:
+        print("❌ Failed to get clients list after password removal")
+        return False
+    
+    updated_client_after = next((c for c in client_response_after.json() if c["id"] == client_id), None)
+    if not updated_client_after:
+        print("❌ Could not find client in response after password removal")
+        return False
+    
+    if not assert_equal(updated_client_after["has_password"], False, "Client has_password flag after removal"):
+        return False
+    
+    # Step 9: Test accessing endpoints without token after password removal (should work)
+    print("\n--- Testing endpoints without token after password removal ---")
+    
+    client_details_after = requests.get(f"{API_BASE_URL}/clients/{client_slug}")
+    print_response(client_details_after)
+    
+    if not assert_status_code(client_details_after, 200):
+        return False
+    
+    print("✅ Client details endpoint accessible without token after password removal")
+    
+    transactions_after = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+    print_response(transactions_after)
+    
+    if not assert_status_code(transactions_after, 200):
+        return False
+    
+    print("✅ Transactions endpoint accessible without token after password removal")
+    
+    print("✅ Client password management test passed")
+    return True
+
+def test_client_login_without_password():
+    print_test_header("Client Login Without Password")
+    
+    # Get a client that doesn't have a password set
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    if response.status_code != 200 or not response.json():
+        print("❌ Failed to get clients for login test")
+        return False
+    
+    # Get admin token to check which clients don't have passwords
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token")
+        return False
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    admin_clients_response = requests.get(f"{API_BASE_URL}/clients", headers=headers)
+    if admin_clients_response.status_code != 200:
+        print("❌ Failed to get clients with admin token")
+        return False
+    
+    # Find a client without password
+    clients = admin_clients_response.json()
+    client_without_password = next((c for c in clients if not c["has_password"]), None)
+    
+    if not client_without_password:
+        print("⚠️ All clients have passwords set. Creating a new client without password.")
+        
+        # Create a new client without password
+        create_response = requests.post(
+            f"{API_BASE_URL}/clients",
+            json={"name": "Test Client Without Password"},
+            headers=headers
+        )
+        
+        if create_response.status_code != 200:
+            print("❌ Failed to create test client")
+            return False
+        
+        client_without_password = create_response.json()
+    
+    client_slug = client_without_password["slug"]
+    print(f"Testing with client without password: {client_without_password['name']} (Slug: {client_slug})")
+    
+    # Test login for client without password
+    login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": ""}
+    )
+    print_response(login_response)
+    
+    if not assert_status_code(login_response, 200):
+        return False
+    
+    login_data = login_response.json()
+    if not assert_equal(login_data["success"], True, "Login success without password"):
+        return False
+    
+    if not login_data.get("token"):
+        print("❌ Login response does not contain a token even though no password is required")
+        return False
+    
+    print("✅ Client without password can login successfully without providing a password")
+    
+    # Test accessing endpoints without token for client without password
+    client_details_response = requests.get(f"{API_BASE_URL}/clients/{client_slug}")
+    print_response(client_details_response)
+    
+    if not assert_status_code(client_details_response, 200):
+        return False
+    
+    print("✅ Client details endpoint accessible without token for client without password")
+    
+    transactions_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+    print_response(transactions_response)
+    
+    if not assert_status_code(transactions_response, 200):
+        return False
+    
+    print("✅ Transactions endpoint accessible without token for client without password")
+    
+    print("✅ Client login without password test passed")
+    return True
+
+def test_password_change():
+    print_test_header("Client Password Change")
+    
+    # Get admin token for authenticated requests
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token for password change test")
+        return False
+    
+    # Get a client to test with
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    if response.status_code != 200 or not response.json():
+        print("❌ Failed to get client for password change test")
+        return False
+    
+    test_client = response.json()[0]
+    client_id = test_client["id"]
+    client_slug = test_client["slug"]
+    
+    print(f"Testing password change with client: {test_client['name']} (ID: {client_id}, Slug: {client_slug})")
+    
+    # Step 1: Set initial password
+    initial_password = "initialpassword123"
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    set_password_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_id}/password",
+        json={"password": initial_password},
+        headers=headers
+    )
+    
+    if set_password_response.status_code != 200:
+        print("❌ Failed to set initial password")
+        return False
+    
+    print("✅ Initial password set successfully")
+    
+    # Step 2: Verify login works with initial password
+    login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": initial_password}
+    )
+    
+    if login_response.status_code != 200 or not login_response.json()["success"]:
+        print("❌ Login with initial password failed")
+        return False
+    
+    print("✅ Login with initial password successful")
+    
+    # Step 3: Change password
+    new_password = "newpassword456"
+    
+    change_password_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_id}/password",
+        json={"password": new_password},
+        headers=headers
+    )
+    print_response(change_password_response)
+    
+    if not assert_status_code(change_password_response, 200):
+        return False
+    
+    print("✅ Password changed successfully")
+    
+    # Step 4: Verify old password no longer works
+    old_login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": initial_password}
+    )
+    print_response(old_login_response)
+    
+    if old_login_response.status_code != 200:
+        print("❌ Unexpected status code when trying old password")
+        return False
+    
+    old_login_data = old_login_response.json()
+    if old_login_data["success"]:
+        print("❌ Old password still works after change")
+        return False
+    
+    print("✅ Old password correctly rejected after change")
+    
+    # Step 5: Verify new password works
+    new_login_response = requests.post(
+        f"{API_BASE_URL}/clients/{client_slug}/login",
+        json={"password": new_password}
+    )
+    print_response(new_login_response)
+    
+    if not assert_status_code(new_login_response, 200):
+        return False
+    
+    new_login_data = new_login_response.json()
+    if not assert_equal(new_login_data["success"], True, "Login success with new password"):
+        return False
+    
+    print("✅ New password works correctly")
+    
+    # Step 6: Clean up by removing password
+    remove_password_response = requests.delete(
+        f"{API_BASE_URL}/clients/{client_id}/password",
+        headers=headers
+    )
+    
+    if remove_password_response.status_code != 200:
+        print("⚠️ Failed to clean up by removing password")
+    else:
+        print("✅ Password removed successfully")
+    
+    print("✅ Password change test passed")
+    return True
+
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
     
@@ -1400,6 +1806,24 @@ def run_all_tests():
         print("❌ Sovanza $50 USD transaction test failed")
     else:
         print("✅ Sovanza $50 USD transaction test passed")
+    
+    # Test client password management
+    if not test_client_password_management():
+        print("❌ Client password management test failed")
+    else:
+        print("✅ Client password management test passed")
+    
+    # Test client login without password
+    if not test_client_login_without_password():
+        print("❌ Client login without password test failed")
+    else:
+        print("✅ Client login without password test passed")
+    
+    # Test password change
+    if not test_password_change():
+        print("❌ Password change test failed")
+    else:
+        print("✅ Password change test passed")
     
     # Test PDF generation with date filtering
     if not test_pdf_generation_with_date_filtering():
