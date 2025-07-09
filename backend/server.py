@@ -703,18 +703,18 @@ async def get_transactions(
     category: Optional[str] = Query(None, description="Filtra per categoria"),
     type: Optional[str] = Query(None, description="Filtra per tipo (dare/avere)"),
     date_from: Optional[str] = Query(None, description="Data inizio (YYYY-MM-DD)"),
-    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)")
+    date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
+    authorization: Optional[str] = Header(None)
 ):
-    """Get transactions (PUBLIC for specific client, ADMIN for all)"""
+    """Get transactions (PUBLIC for specific client with auth, ADMIN for all)"""
     try:
         # Build query filter
         query_filter = {}
         
-        # If client_slug is provided, filter by client
+        # If client_slug is provided, verify client access
         if client_slug:
-            client = await db.clients.find_one({"slug": client_slug, "active": True})
-            if not client:
-                raise HTTPException(status_code=404, detail="Client not found")
+            # Verify client access (password protection)
+            client = await verify_client_access(client_slug, authorization)
             query_filter["client_id"] = client["id"]
         
         # Search in description
