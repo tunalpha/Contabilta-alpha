@@ -92,13 +92,49 @@ const getCategoryPieData = (transactions) => {
   const labels = Object.keys(categoryData);
   const data = Object.values(categoryData);
   const colors = [
-    '#3B82F6', // Blue
     '#EF4444', // Red
-    '#10B981', // Green
     '#F59E0B', // Yellow
     '#8B5CF6', // Purple
     '#EC4899', // Pink
     '#6B7280', // Gray
+    '#F97316', // Orange
+    '#84CC16', // Lime
+  ];
+  
+  return {
+    labels,
+    datasets: [
+      {
+        data,
+        backgroundColor: colors.slice(0, labels.length),
+        borderColor: colors.slice(0, labels.length),
+        borderWidth: 2,
+      },
+    ],
+  };
+};
+
+// Income Pie Chart Data
+const getIncomePieData = (transactions) => {
+  const categoryData = {};
+  
+  transactions.forEach(transaction => {
+    if (transaction.type === 'avere') { // Only incoming transactions for income
+      const category = transaction.category;
+      categoryData[category] = (categoryData[category] || 0) + transaction.amount;
+    }
+  });
+  
+  const labels = Object.keys(categoryData);
+  const data = Object.values(categoryData);
+  const colors = [
+    '#10B981', // Green
+    '#3B82F6', // Blue
+    '#06B6D4', // Cyan
+    '#0891B2', // Sky
+    '#059669', // Emerald
+    '#16A34A', // Green-600
+    '#65A30D', // Lime-600
   ];
   
   return {
