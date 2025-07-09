@@ -1319,6 +1319,36 @@ function App() {
       throw error;
     }
   };
+    try {
+      let url = `${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`;
+      const params = new URLSearchParams();
+      
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url);
+      if (response.ok) {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `estratto-conto-${selectedClient.name}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        throw new Error('Errore nel download');
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      throw error;
+    }
+  };
 
   // Share PDF functions
   const sharePDFViaWhatsApp = async () => {
