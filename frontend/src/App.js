@@ -1630,6 +1630,20 @@ function App() {
         setShowClientLogin(false);
         setClientLoginError('');
         
+        // Check if this is first login
+        if (data.first_login) {
+          // Show password change modal
+          setPasswordChangeData({
+            current_password: password,
+            new_password: '',
+            confirm_password: ''
+          });
+          setShowPasswordChange(true);
+          
+          // Don't load client data yet - wait for password change
+          return true;
+        }
+        
         // Reset state before loading new data
         setTransactions([]);
         setFilteredTransactions([]);
