@@ -1605,8 +1605,15 @@ function App() {
         setShowClientLogin(false);
         setClientLoginError('');
         
-        // Now fetch client data with proper authentication
-        await fetchClientData(clientSlug);
+        // Reset state before loading new data
+        setTransactions([]);
+        setFilteredTransactions([]);
+        setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
+        
+        // Now fetch client data with proper authentication - wait for completion
+        setTimeout(async () => {
+          await fetchClientData(clientSlug);
+        }, 100); // Small delay to ensure state is reset
         
         return true;
       } else {
