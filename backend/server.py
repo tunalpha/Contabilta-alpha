@@ -171,6 +171,8 @@ class ClientLoginResponse(BaseModel):
     success: bool
     token: Optional[str] = None
     message: str
+    first_login: bool = False
+    client_name: Optional[str] = None
 
 # Authentication dependency
 async def verify_admin_token(authorization: Optional[str] = Header(None)):
