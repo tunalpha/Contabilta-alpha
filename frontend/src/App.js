@@ -697,22 +697,11 @@ function App() {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log('Client creation result:', result); // Debug
-        
-        const newClient = result.client;
-        const autoPassword = result.auto_password;
-        const clientLink = `${window.location.origin}${result.link}`;
-        
+        const newClient = await response.json();
         setClientFormData({ name: '' });
         setShowClientForm(false);
         fetchClients();
-        
-        // Show the auto-generated password to admin (ONLY TIME IT'S SHOWN)
-        const passwordMessage = `✅ Cliente "${newClient.name}" creato con successo!\n\n🔗 Link cliente: ${clientLink}\n\n🔒 PASSWORD GENERATA: ${autoPassword}\n\n⚠️ IMPORTANTE: Salva questa password e comunicala al cliente.\nNon sarà più possibile visualizzarla!\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`;
-        
-        console.log('Password message:', passwordMessage); // Debug
-        alert(passwordMessage);
+        alert(`✅ Cliente "${newClient.name}" creato con successo!\n\nLink condivisibile: ${window.location.origin}/cliente/${newClient.slug}\n\n⚠️ IMPORTANTE: Il cliente non ha ancora una password.\nClicca "🔒 Aggiungi Password" per proteggerlo.\n\nClienti: ${clients.length + 1}/${MAX_CLIENTS}`);
       } else {
         const errorData = await response.json();
         alert(`Errore: ${errorData.detail}`);
