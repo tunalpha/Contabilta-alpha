@@ -2525,11 +2525,7 @@ function App() {
               
               <div className="space-y-4">
                 <button
-                  onClick={() => {
-                    const whatsappText = `Ecco l'estratto conto di ${selectedClient.name}: `;
-                    window.open(`https://wa.me/393772411743?text=${encodeURIComponent(whatsappText)}`, '_blank');
-                    setShowPDFShareModal(false);
-                  }}
+                  onClick={sharePDFViaWhatsApp}
                   className="w-full bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex items-center space-x-3"
                 >
                   <span className="text-2xl">📱</span>
@@ -2537,12 +2533,7 @@ function App() {
                 </button>
                 
                 <button
-                  onClick={() => {
-                    const subject = `Estratto Conto - ${selectedClient.name}`;
-                    const body = `In allegato l'estratto conto per ${selectedClient.name}.`;
-                    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-                    setShowPDFShareModal(false);
-                  }}
+                  onClick={sharePDFViaEmail}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl flex items-center space-x-3"
                 >
                   <span className="text-2xl">📧</span>
