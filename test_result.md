@@ -107,15 +107,18 @@ user_problem_statement: "Implementazione password protection per i link dei clie
 backend:
   - task: "Client password authentication system"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Implementato sistema di autenticazione password per clienti. Aggiunto campo password al modello Client, endpoint per set/update/delete password, sistema di login cliente, middleware di autenticazione. Aggiornati endpoint pubblici per richiedere autenticazione quando necessario."
+      - working: true
+        agent: "testing"
+        comment: "Verificato il funzionamento completo del sistema di password protection per i clienti. Testati con successo: impostazione password, login cliente, protezione endpoint pubblici, rimozione password. Verificato che gli endpoint richiedono autenticazione quando il cliente ha password e sono accessibili senza autenticazione quando non ha password."
 
 frontend:
   - task: "Client password protection UI"
