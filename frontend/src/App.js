@@ -1577,10 +1577,16 @@ function App() {
       return;
     }
     
-    await handleSetClientPassword(passwordModalClient.id, clientPassword);
-    setShowPasswordModal(false);
-    setPasswordModalClient(null);
-    setClientPassword('');
+    try {
+      await handleSetClientPassword(passwordModalClient.id, clientPassword);
+      // Chiudi il modal solo dopo che l'operazione è completata con successo
+      setShowPasswordModal(false);
+      setPasswordModalClient(null);
+      setClientPassword('');
+    } catch (error) {
+      // In caso di errore, non chiudere il modal
+      console.error('Error in password submit:', error);
+    }
   };
 
   // Client login functions
