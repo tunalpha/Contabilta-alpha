@@ -606,41 +606,46 @@ function App() {
   };
 
   const applyFilters = () => {
-    // Assicuriamoci che transactions sia un array valido
-    if (!transactions || !Array.isArray(transactions)) {
+    // Assicuriamoci che transactions sia un array valido - enhanced defensive programming
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
       setFilteredTransactions([]);
       return;
     }
     
-    let filtered = [...transactions];
+    try {
+      let filtered = [...transactions];
 
-    if (filters.search) {
-      filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(filters.search.toLowerCase())
-      );
+      if (filters.search) {
+        filtered = filtered.filter(t => 
+          t.description && t.description.toLowerCase().includes(filters.search.toLowerCase())
+        );
+      }
+
+      if (filters.category) {
+        filtered = filtered.filter(t => t.category === filters.category);
+      }
+
+      if (filters.type) {
+        filtered = filtered.filter(t => t.type === filters.type);
+      }
+
+      if (filters.dateFrom) {
+        filtered = filtered.filter(t => 
+          t.date && new Date(t.date) >= new Date(filters.dateFrom)
+        );
+      }
+
+      if (filters.dateTo) {
+        filtered = filtered.filter(t => 
+          t.date && new Date(t.date) <= new Date(filters.dateTo + 'T23:59:59')
+        );
+      }
+
+      setFilteredTransactions(filtered);
+    } catch (error) {
+      console.error('Error in applyFilters:', error);
+      setFilteredTransactions([]);
     }
-
-    if (filters.category) {
-      filtered = filtered.filter(t => t.category === filters.category);
-    }
-
-    if (filters.type) {
-      filtered = filtered.filter(t => t.type === filters.type);
-    }
-
-    if (filters.dateFrom) {
-      filtered = filtered.filter(t => 
-        new Date(t.date) >= new Date(filters.dateFrom)
-      );
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter(t => 
-        new Date(t.date) <= new Date(filters.dateTo + 'T23:59:59')
-      );
-    }
-
-    setFilteredTransactions(filtered);
   };
 
   const MAX_CLIENTS = 30; // Limite massimo clienti (Piano Gratuito)
