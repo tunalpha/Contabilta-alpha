@@ -251,6 +251,13 @@ function App() {
   });
   const [showLogin, setShowLogin] = useState(false);
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordModalClient, setPasswordModalClient] = useState(null);
+  const [clientPassword, setClientPassword] = useState('');
+  const [clientLoginPassword, setClientLoginPassword] = useState('');
+  const [showClientLogin, setShowClientLogin] = useState(false);
+  const [clientLoginError, setClientLoginError] = useState('');
+  const [clientToken, setClientToken] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
