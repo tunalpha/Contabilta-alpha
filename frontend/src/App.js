@@ -414,7 +414,23 @@ function App() {
 
   const fetchClientData = async (slug) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/clients/${slug}`);
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add client token if available
+      if (clientToken) {
+        headers['Authorization'] = `Bearer ${clientToken}`;
+      }
+      
+      const response = await fetch(`${BACKEND_URL}/api/clients/${slug}`, { headers });
+      
+      if (response.status === 401) {
+        // Need password authentication
+        setShowClientLogin(true);
+        return;
+      }
+      
       if (response.ok) {
         const clientData = await response.json();
         setSelectedClient(clientData);
