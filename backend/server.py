@@ -389,6 +389,100 @@ async def recover_password():
             message="Errore durante il recupero password"
         )
 
+# CLIENT PASSWORD MANAGEMENT ENDPOINTS
+
+@app.post("/api/clients/{client_id}/password", response_model=dict)
+async def set_client_password(client_id: str, password_request: ClientPasswordRequest, admin_verified: bool = Depends(verify_admin_token)):
+    """Set or update password for a client (ADMIN ONLY)"""
+    try:
+        # Check if client exists
+        client = await db.clients.find_one({"id": client_id, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Hash the password
+        hashed_password = hashlib.sha256(password_request.password.encode()).hexdigest()
+        
+        # Update client with password
+        result = await db.clients.update_one(
+            {"id": client_id},
+            {"$set": {"password": hashed_password}}
+        )
+        
+        if result.modified_count == 1:
+            return {"success": True, "message": "Password impostata con successo"}
+        else:
+            raise HTTPException(status_code=500, detail="Errore nell'impostazione della password")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/clients/{client_slug}/login", response_model=ClientLoginResponse)
+async def client_login(client_slug: str, login_request: ClientLoginRequest):
+    """Login for client access (PUBLIC)"""
+    try:
+        # Find client by slug
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Check if client has password protection
+        if not client.get("password"):
+            return ClientLoginResponse(
+                success=True,
+                token=f"client_{client['id']}",
+                message="Accesso consentito - nessuna password richiesta"
+            )
+        
+        # Verify password
+        hashed_password = hashlib.sha256(login_request.password.encode()).hexdigest()
+        if hashed_password == client["password"]:
+            # Generate client token
+            client_token = hashlib.sha256(f"{client['id']}_{client['slug']}_{datetime.now().isoformat()}".encode()).hexdigest()
+            
+            return ClientLoginResponse(
+                success=True,
+                token=client_token,
+                message="Login cliente riuscito"
+            )
+        else:
+            return ClientLoginResponse(
+                success=False,
+                message="Password errata"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/clients/{client_id}/password")
+async def remove_client_password(client_id: str, admin_verified: bool = Depends(verify_admin_token)):
+    """Remove password protection from a client (ADMIN ONLY)"""
+    try:
+        # Check if client exists
+        client = await db.clients.find_one({"id": client_id, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Remove password
+        result = await db.clients.update_one(
+            {"id": client_id},
+            {"$unset": {"password": ""}}
+        )
+        
+        if result.modified_count == 1:
+            return {"success": True, "message": "Password rimossa con successo"}
+        else:
+            raise HTTPException(status_code=500, detail="Errore nella rimozione della password")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # CLIENT MANAGEMENT ENDPOINTS
 
 @app.get("/api/clients", response_model=List[ClientResponse])
