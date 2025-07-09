@@ -2885,7 +2885,7 @@ function App() {
                 >
                   <option value="">Tutti i tipi</option>
                   <option value="avere">Avere (Incassi)</option>
-                  <option value="dare">Dare (Debiti)</option>
+                  <option value="dare">Dare (Pagamenti)</option>
                 </select>
               </div>
             </div>
@@ -3210,7 +3210,7 @@ function App() {
                 >
                   <option value="">Tutti i tipi</option>
                   <option value="avere">Avere (Incassi)</option>
-                  <option value="dare">Dare (Debiti)</option>
+                  <option value="dare">Dare (Pagamenti)</option>
                 </select>
               </div>
             </div>
