@@ -504,11 +504,23 @@ function App() {
       }
       
       const response = await fetch(url, { headers });
-      const data = await response.json();
-      setTransactions(data);
-      setFilteredTransactions(data);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Assicuriamoci che sia sempre un array
+        const transactionsArray = Array.isArray(data) ? data : [];
+        setTransactions(transactionsArray);
+        setFilteredTransactions(transactionsArray);
+      } else {
+        // In caso di errore, imposta array vuoto
+        setTransactions([]);
+        setFilteredTransactions([]);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      // In caso di errore, imposta array vuoto
+      setTransactions([]);
+      setFilteredTransactions([]);
     }
   };
 
