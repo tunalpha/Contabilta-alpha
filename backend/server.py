@@ -218,6 +218,47 @@ async def verify_client_access(client_slug: str, authorization: Optional[str] = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/clients/{client_slug}/change-password")
+async def change_client_password(client_slug: str, change_request: ClientPasswordChangeRequest):
+    """Change client password (CLIENT ONLY - for first login)"""
+    try:
+        # Find client by slug
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        # Check if client has password protection
+        if not client.get("password"):
+            raise HTTPException(status_code=400, detail="Client has no password set")
+        
+        # Verify current password
+        current_hashed = hashlib.sha256(change_request.current_password.encode()).hexdigest()
+        if current_hashed != client["password"]:
+            raise HTTPException(status_code=400, detail="Password corrente errata")
+        
+        # Validate new password
+        if len(change_request.new_password) < 6:
+            raise HTTPException(status_code=400, detail="La nuova password deve essere di almeno 6 caratteri")
+        
+        # Hash new password
+        new_hashed = hashlib.sha256(change_request.new_password.encode()).hexdigest()
+        
+        # Update client with new password and remove first_login flag
+        result = await db.clients.update_one(
+            {"id": client["id"]},
+            {"$set": {"password": new_hashed}, "$unset": {"first_login": ""}}
+        )
+        
+        if result.modified_count == 1:
+            return {"success": True, "message": "Password cambiata con successo"}
+        else:
+            raise HTTPException(status_code=500, detail="Errore nel cambio password")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Currency conversion functions
 async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> float:
     """Get exchange rate from one currency to another using free API"""
