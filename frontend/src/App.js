@@ -2191,7 +2191,7 @@ function App() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {transactions.slice(0, 10).map((transaction) => (
+                  {transactions && transactions.slice(0, 10).map((transaction) => (
                     <div
                       key={transaction.id}
                       className={`p-3 rounded-lg border-l-4 ${
