@@ -2535,7 +2535,20 @@ function App() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('sharePDFTitle')}</h2>
-              <p className="text-gray-600 mb-6">{t('selectShareMethod')}</p>
+              
+              {generatedLink ? (
+                <div className="mb-6">
+                  <p className="text-gray-600 mb-4">Link generato:</p>
+                  <div className="bg-gray-100 p-4 rounded-lg break-all text-sm">
+                    <a href={generatedLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {generatedLink}
+                    </a>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">Tocca il link per aprire il PDF o copialo manualmente</p>
+                </div>
+              ) : (
+                <p className="text-gray-600 mb-6">{t('selectShareMethod')}</p>
+              )}
               
               <div className="space-y-4">
                 <button
@@ -2572,7 +2585,10 @@ function App() {
               </div>
               
               <button
-                onClick={() => setShowPDFShareModal(false)}
+                onClick={() => {
+                  setShowPDFShareModal(false);
+                  setGeneratedLink('');
+                }}
                 className="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-xl"
               >
                 {t('cancel')}
