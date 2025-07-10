@@ -1797,7 +1797,7 @@ function App() {
                 onClick={() => setLanguage(language === 'it' ? 'en' : 'it')}
                 className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
               >
-                {language === 'it' ? '🇬🇧 English' : '🇮🇹 Italiano'}
+                {language === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English'}
               </button>
             </div>
 
