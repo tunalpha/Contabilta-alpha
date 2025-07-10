@@ -3487,12 +3487,14 @@ function App() {
               <div className="flex items-end gap-2">
                 <button
                   onClick={() => {
-                    // Force re-filter (even though it's real-time)
-                    addToast(`🔍 Filtri applicati! Trovate ${filteredTransactions.length} transazioni`, 'success');
+                    // Apply filters and close panel
+                    applyFilters();
+                    setShowFilters(false);
+                    addToast(`✅ Filtri applicati! ${filteredTransactions.length} transazioni trovate`, 'success');
                   }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  ✅ Applica Filtri
+                  ✅ Applica e Chiudi
                 </button>
                 <button
                   onClick={() => {
