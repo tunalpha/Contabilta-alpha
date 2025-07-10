@@ -317,6 +317,7 @@ function App() {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
       if (file.size > 500000) { // 500KB limit
+        playSound('error');
         addToast('Immagine troppo grande! Max 500KB', 'error');
         return;
       }
@@ -326,10 +327,12 @@ function App() {
         const base64 = e.target.result;
         setCustomLogo(base64);
         localStorage.setItem('customLogo', base64);
+        playSound('success');
         addToast('🖼️ Logo aggiornato con successo!', 'success');
       };
       reader.readAsDataURL(file);
     } else {
+      playSound('error');
       addToast('Seleziona un\'immagine valida (JPG, PNG, etc.)', 'warning');
     }
   };
@@ -338,6 +341,7 @@ function App() {
   const resetLogo = () => {
     setCustomLogo(null);
     localStorage.removeItem('customLogo');
+    playSound('info');
     addToast('🔄 Logo ripristinato all\'originale', 'info');
   };
 
