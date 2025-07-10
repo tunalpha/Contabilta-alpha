@@ -491,45 +491,44 @@ function App() {
 
       // Create multiple layers for ambient music
       const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.1, ctx.currentTime); // Very low volume
+      masterGain.gain.setValueAtTime(0.3, ctx.currentTime); // Increased volume!
       masterGain.connect(ctx.destination);
 
       // Layer 1: Deep bass pad
       const bassOsc = ctx.createOscillator();
       const bassGain = ctx.createGain();
-      bassOsc.frequency.setValueAtTime(55, ctx.currentTime); // Low A
+      bassOsc.frequency.setValueAtTime(110, ctx.currentTime); // Higher bass note
       bassOsc.type = 'sine';
-      bassGain.gain.setValueAtTime(0.3, ctx.currentTime);
+      bassGain.gain.setValueAtTime(0.5, ctx.currentTime);
       bassOsc.connect(bassGain);
       bassGain.connect(masterGain);
 
-      // Layer 2: Mid-range harmony
+      // Layer 2: Mid-range harmony (beautiful chord)
       const midOsc = ctx.createOscillator();
       const midGain = ctx.createGain();
-      midOsc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+      midOsc.frequency.setValueAtTime(440, ctx.currentTime); // A4
       midOsc.type = 'triangle';
-      midGain.gain.setValueAtTime(0.2, ctx.currentTime);
+      midGain.gain.setValueAtTime(0.4, ctx.currentTime);
       midOsc.connect(midGain);
       midGain.connect(masterGain);
 
-      // Layer 3: High ambient sparkle
+      // Layer 3: High sparkle
       const highOsc = ctx.createOscillator();
       const highGain = ctx.createGain();
-      highOsc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      highOsc.frequency.setValueAtTime(660, ctx.currentTime); // E5
       highOsc.type = 'sine';
-      highGain.gain.setValueAtTime(0.1, ctx.currentTime);
+      highGain.gain.setValueAtTime(0.3, ctx.currentTime);
       highOsc.connect(highGain);
       highGain.connect(masterGain);
 
-      // Add subtle modulation for organic feel
+      // Add gentle modulation
       const lfo = ctx.createOscillator();
       const lfoGain = ctx.createGain();
-      lfo.frequency.setValueAtTime(0.1, ctx.currentTime); // Very slow modulation
+      lfo.frequency.setValueAtTime(0.2, ctx.currentTime); // Faster modulation
       lfo.type = 'sine';
-      lfoGain.gain.setValueAtTime(10, ctx.currentTime);
+      lfoGain.gain.setValueAtTime(20, ctx.currentTime);
       lfo.connect(lfoGain);
       lfoGain.connect(bassOsc.frequency);
-      lfoGain.connect(midOsc.frequency);
 
       // Start all oscillators
       bassOsc.start();
@@ -538,9 +537,12 @@ function App() {
       lfo.start();
 
       setMusicNodes({ bassOsc, midOsc, highOsc, lfo, masterGain });
+      
+      console.log('🎵 Background music started!');
 
     } catch (error) {
-      console.log('Background music not supported');
+      console.log('Background music not supported:', error);
+      addToast('❌ Audio non supportato dal browser', 'error');
     }
   };
 
