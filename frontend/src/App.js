@@ -4284,10 +4284,15 @@ return (
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => {
+                  console.log('🚨 DATE FROM CHANGING TO:', e.target.value);
                   const newFilters = { ...filters, dateFrom: e.target.value };
                   setFilters(newFilters);
-                  // Apply filters immediately when date changes
-                  console.log('🔄 Date From changed to:', e.target.value);
+                  
+                  // FORCE IMMEDIATE FILTER APPLICATION
+                  setTimeout(() => {
+                    console.log('🚨 FORCING FILTER APPLICATION NOW!');
+                    applyFilters();
+                  }, 50);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
