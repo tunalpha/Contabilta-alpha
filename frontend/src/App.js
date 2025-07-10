@@ -1157,7 +1157,7 @@ function App() {
       pdfError: "❌ Errore nel download del PDF. Riprova più tardi.",
 
       // Transactions
-      transactionHistory: "Cronologia e Filtri",
+      transactionHistory: "Lista Movimenti",
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
       totalTransactions: "Totale transazioni",
