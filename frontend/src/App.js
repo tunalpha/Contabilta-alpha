@@ -4417,7 +4417,7 @@ return (
           <h3 className={`text-xl font-bold ${themeClasses.text} mb-4`}>🎯 Spese per Categoria</h3>
           <div className="h-64">
             <Pie
-              data={getCategoryBreakdownData(filteredTransactions)}
+              data={getCategoryPieData(filteredTransactions)}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
