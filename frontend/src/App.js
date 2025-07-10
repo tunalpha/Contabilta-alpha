@@ -3048,7 +3048,7 @@ function App() {
 
         {/* Smart Financial Insights - MOVED DOWN */}
         {notifications.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8" style={{backgroundColor: '#ffffff !important'}}>
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-800">{t('smartInsights')}</h2>
               <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
