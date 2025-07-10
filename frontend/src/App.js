@@ -1162,6 +1162,7 @@ function App() {
 
       // Transactions
       transactionHistory: "Lista Movimenti",
+      transactionChronology: "Cronologia Transazioni",
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
       totalTransactions: "Totale transazioni",
