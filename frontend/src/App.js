@@ -1102,7 +1102,7 @@ function App() {
       loginAdmin: "Login Admin",
       newClient: "Nuovo Cliente",
       newTransaction: "Nuova Transazione",
-      filters: "🔍 Cronologia e Filtri",
+      filters: "🔍 Lista Movimenti",
       hideFilters: "Nascondi Filtri",
       downloadPDF: "📄 Scarica PDF",
       sharePDF: "📤 Condividi PDF",
