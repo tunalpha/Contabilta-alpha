@@ -833,14 +833,9 @@ function App() {
     if (transactions.length > 0) {
       applyFilters();
     }
-  }, [transactions]);
+  }, [transactions, filters]); // Add filters as dependency
 
-  // Auto-apply filters when filter criteria change
-  useEffect(() => {
-    if (transactions.length > 0) {
-      applyFilters();
-    }
-  }, [filters.dateFrom, filters.dateTo, filters.type, filters.search, filters.currency]);
+  // Remove the separate useEffect for filters since we're handling it above
 
   const fetchClientData = async (slug) => {
     try {
