@@ -3051,7 +3051,11 @@ function App() {
           {/* Language Toggle */}
           <div className="mt-4 text-center">
             <button
-              onClick={() => setLanguage(language === 'it' ? 'en' : 'it')}
+              onClick={() => {
+                const newLang = language === 'it' ? 'en' : 'it';
+                setLanguage(newLang);
+                addToast(`🌍 Lingua: ${newLang === 'it' ? 'Italiano' : 'English'}`, 'info');
+              }}
               className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
             >
               {language === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English'}
