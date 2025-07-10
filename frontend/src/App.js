@@ -4304,17 +4304,13 @@ return (
             <div className="flex items-end gap-2">
               <button
                 onClick={() => {
-                  // Apply filters and close panel
-                  applyFilters();
+                  // Just close the filters panel - filtering is automatic
                   setShowFilters(false);
-                  // Use correct count after filters are applied
-                  setTimeout(() => {
-                    addToast(`✅ Filtri applicati! ${filteredTransactions.length} transazioni trovate`, 'success');
-                  }, 100);
+                  addToast(`✅ Filtri applicati! ${filteredTransactions.length} transazioni trovate`, 'success');
                 }}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
               >
-                ✅ Applica e Chiudi
+                ✅ Chiudi Filtri
               </button>
               <button
                 onClick={() => {
