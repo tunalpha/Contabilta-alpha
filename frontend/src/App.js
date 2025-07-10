@@ -715,6 +715,83 @@ function App() {
     }
   };
 
+  // Balance Evolution Chart Component  
+  const BalanceEvolutionChart = ({ transactions }) => {
+    // Calculate cumulative balance over time
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    let cumulativeBalance = 0;
+    const data = [];
+    const labels = [];
+    
+    sortedTransactions.forEach((transaction, index) => {
+      const amount = transaction.type === 'avere' ? transaction.amount : -transaction.amount;
+      cumulativeBalance += amount;
+      
+      data.push(cumulativeBalance);
+      labels.push(formatDate(transaction.date));
+    });
+
+    const chartData = {
+      labels,
+      datasets: [
+        {
+          label: 'Evoluzione Saldo',
+          data,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(59, 130, 246)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Saldo: €${context.parsed.y.toFixed(2)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)',
+          },
+          ticks: {
+            callback: function(value) {
+              return '€' + value.toFixed(0);
+            }
+          }
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            maxTicksLimit: 6
+          }
+        }
+      }
+    };
+
+    return <Line data={chartData} options={options} />;
+  };
+
   const MAX_CLIENTS = 30; // Limite massimo clienti (Piano Gratuito)
 
   const handleClientSubmit = async (e) => {
