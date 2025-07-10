@@ -3307,6 +3307,19 @@ function App() {
               {language === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English'}
             </button>
             
+            {/* 🌙 DARK/LIGHT MODE TOGGLE */}
+            <button
+              onClick={toggleDarkMode}
+              className={`ml-3 px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                isDarkMode 
+                  ? 'bg-yellow-500 hover:bg-yellow-600 text-gray-900' 
+                  : 'bg-gray-800 hover:bg-gray-900 text-white'
+              }`}
+              title={`Modalità: ${isDarkMode ? 'Scura' : 'Chiara'}`}
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            
             {/* 🎨 THEME SELECTOR - CENTERED BELOW */}
             <div className="flex justify-center gap-2 mt-3">
               {Object.entries(themes).map(([key, theme]) => (
@@ -3323,6 +3336,7 @@ function App() {
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                   }`}
                   title={theme.name}
+                  disabled={isDarkMode}
                 >
                   {theme.icon}
                 </button>
