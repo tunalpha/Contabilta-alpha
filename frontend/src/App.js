@@ -3022,6 +3022,28 @@ function App() {
                 </button>
               ))}
             </div>
+            
+            {/* 🖼️ LOGO UPLOAD - NEW FEATURE */}
+            <div className="flex justify-center gap-2 mt-3">
+              <label className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200">
+                📷 Logo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+              </label>
+              {customLogo && (
+                <button
+                  onClick={resetLogo}
+                  className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                  title="Ripristina logo originale"
+                >
+                  ↺ Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
