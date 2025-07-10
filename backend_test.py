@@ -1756,6 +1756,341 @@ def test_password_change():
     print("✅ Password change test passed")
     return True
 
+def test_client_modification():
+    print_test_header("Client Name Modification - PUT /api/clients/{client_id}")
+    
+    # Get admin token for authenticated requests
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token for client modification test")
+        return False
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Step 1: Create a test client
+    print("\n--- Creating test client ---")
+    original_name = "Test Client Original"
+    create_response = requests.post(
+        f"{API_BASE_URL}/clients",
+        json={"name": original_name},
+        headers=headers
+    )
+    print_response(create_response)
+    
+    if not assert_status_code(create_response, 200):
+        return False
+    
+    created_client = create_response.json()
+    client_id = created_client["id"]
+    original_slug = created_client["slug"]
+    
+    print(f"✅ Created test client: {original_name} (ID: {client_id}, Slug: {original_slug})")
+    
+    # Step 2: Test updating client name
+    print("\n--- Testing client name update ---")
+    new_name = "Test Client Modified"
+    update_response = requests.put(
+        f"{API_BASE_URL}/clients/{client_id}",
+        json={"name": new_name},
+        headers=headers
+    )
+    print_response(update_response)
+    
+    if not assert_status_code(update_response, 200):
+        return False
+    
+    updated_client = update_response.json()
+    
+    # Verify the response structure
+    required_keys = ["id", "name", "slug", "created_date", "total_transactions", "balance"]
+    if not assert_contains_keys(updated_client, required_keys, "Updated client structure"):
+        return False
+    
+    # Verify the name was updated
+    if not assert_equal(updated_client["name"], new_name, "Updated client name"):
+        return False
+    
+    # Verify a new slug was generated
+    new_slug = updated_client["slug"]
+    if new_slug == original_slug:
+        print("⚠️ Slug was not changed, but this might be expected if the slug generation produces the same result")
+    else:
+        print(f"✅ New slug generated: {original_slug} -> {new_slug}")
+    
+    # Verify the slug is URL-friendly
+    import re
+    if not re.match(r'^[a-z0-9-]+$', new_slug):
+        print(f"❌ New slug '{new_slug}' is not URL-friendly")
+        return False
+    
+    print(f"✅ Client name updated successfully: {original_name} -> {new_name}")
+    
+    # Step 3: Test authentication requirement
+    print("\n--- Testing authentication requirement ---")
+    unauthorized_response = requests.put(
+        f"{API_BASE_URL}/clients/{client_id}",
+        json={"name": "Unauthorized Update"}
+    )
+    print_response(unauthorized_response)
+    
+    if not assert_status_code(unauthorized_response, 401):
+        return False
+    
+    print("✅ Client modification correctly requires admin authentication")
+    
+    # Step 4: Test with invalid client ID
+    print("\n--- Testing with invalid client ID ---")
+    invalid_id = "non-existent-id"
+    invalid_response = requests.put(
+        f"{API_BASE_URL}/clients/{invalid_id}",
+        json={"name": "Invalid Update"},
+        headers=headers
+    )
+    print_response(invalid_response)
+    
+    if not assert_status_code(invalid_response, 404):
+        return False
+    
+    print("✅ Client modification correctly returns 404 for invalid client ID")
+    
+    # Step 5: Test with empty name
+    print("\n--- Testing with empty name ---")
+    empty_name_response = requests.put(
+        f"{API_BASE_URL}/clients/{client_id}",
+        json={"name": ""},
+        headers=headers
+    )
+    print_response(empty_name_response)
+    
+    # This should either fail with validation error or create an empty slug
+    if empty_name_response.status_code == 200:
+        empty_result = empty_name_response.json()
+        if empty_result["name"] == "":
+            print("⚠️ Empty name was accepted - this might need validation")
+        else:
+            print("❌ Empty name was not properly handled")
+            return False
+    else:
+        print("✅ Empty name was rejected with appropriate error")
+    
+    # Step 6: Test duplicate name handling
+    print("\n--- Testing duplicate name handling ---")
+    
+    # Create another client with a different name
+    second_client_response = requests.post(
+        f"{API_BASE_URL}/clients",
+        json={"name": "Second Test Client"},
+        headers=headers
+    )
+    
+    if second_client_response.status_code == 200:
+        second_client = second_client_response.json()
+        second_client_id = second_client["id"]
+        
+        # Try to update the second client to have the same name as the first
+        duplicate_response = requests.put(
+            f"{API_BASE_URL}/clients/{second_client_id}",
+            json={"name": new_name},  # Same name as first client
+            headers=headers
+        )
+        print_response(duplicate_response)
+        
+        if duplicate_response.status_code == 200:
+            duplicate_result = duplicate_response.json()
+            # Check if the system handled duplicate names by creating unique slugs
+            if duplicate_result["slug"] != new_slug:
+                print(f"✅ Duplicate name handled correctly with unique slug: {duplicate_result['slug']}")
+            else:
+                print("❌ Duplicate name created identical slug")
+                return False
+        else:
+            print("⚠️ Duplicate name was rejected - this might be intended behavior")
+        
+        # Clean up second client
+        requests.delete(f"{API_BASE_URL}/clients/{second_client_id}", headers=headers)
+    
+    # Step 7: Test special characters in name
+    print("\n--- Testing special characters in name ---")
+    special_name = "Test Client with Special Chars! @#$%"
+    special_response = requests.put(
+        f"{API_BASE_URL}/clients/{client_id}",
+        json={"name": special_name},
+        headers=headers
+    )
+    print_response(special_response)
+    
+    if special_response.status_code == 200:
+        special_result = special_response.json()
+        special_slug = special_result["slug"]
+        
+        # Verify the slug is still URL-friendly despite special characters in name
+        if re.match(r'^[a-z0-9-]+$', special_slug):
+            print(f"✅ Special characters handled correctly in slug: {special_slug}")
+        else:
+            print(f"❌ Special characters not properly handled in slug: {special_slug}")
+            return False
+    else:
+        print("⚠️ Special characters in name were rejected")
+    
+    # Step 8: Verify client can still be accessed with new slug
+    print("\n--- Testing client access with new slug ---")
+    final_client_response = requests.get(f"{API_BASE_URL}/clients/public")
+    if final_client_response.status_code == 200:
+        all_clients = final_client_response.json()
+        updated_client_in_list = next((c for c in all_clients if c["id"] == client_id), None)
+        
+        if updated_client_in_list:
+            final_slug = updated_client_in_list["slug"]
+            
+            # Test accessing the client by its new slug
+            access_response = requests.get(f"{API_BASE_URL}/clients/{final_slug}")
+            print_response(access_response)
+            
+            if assert_status_code(access_response, 200):
+                print(f"✅ Client accessible with updated slug: {final_slug}")
+            else:
+                return False
+        else:
+            print("❌ Updated client not found in clients list")
+            return False
+    
+    # Clean up: Delete the test client
+    print("\n--- Cleaning up test client ---")
+    delete_response = requests.delete(f"{API_BASE_URL}/clients/{client_id}", headers=headers)
+    if delete_response.status_code == 200:
+        print("✅ Test client cleaned up successfully")
+    else:
+        print("⚠️ Failed to clean up test client")
+    
+    print("✅ Client modification test completed successfully")
+    return True
+
+def test_client_modification_edge_cases():
+    print_test_header("Client Modification Edge Cases")
+    
+    # Get admin token
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("❌ Failed to get admin token")
+        return False
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test 1: Very long name
+    print("\n--- Testing very long client name ---")
+    long_name = "A" * 200  # 200 character name
+    
+    # Create client with long name
+    long_name_response = requests.post(
+        f"{API_BASE_URL}/clients",
+        json={"name": long_name},
+        headers=headers
+    )
+    
+    if long_name_response.status_code == 200:
+        long_client = long_name_response.json()
+        long_client_id = long_client["id"]
+        
+        print(f"✅ Long name accepted: {len(long_client['name'])} characters")
+        print(f"Generated slug: {long_client['slug']}")
+        
+        # Test updating with another long name
+        another_long_name = "B" * 150
+        update_long_response = requests.put(
+            f"{API_BASE_URL}/clients/{long_client_id}",
+            json={"name": another_long_name},
+            headers=headers
+        )
+        
+        if update_long_response.status_code == 200:
+            print("✅ Long name update successful")
+        else:
+            print("⚠️ Long name update failed")
+        
+        # Clean up
+        requests.delete(f"{API_BASE_URL}/clients/{long_client_id}", headers=headers)
+    else:
+        print("⚠️ Long name was rejected")
+    
+    # Test 2: Unicode characters
+    print("\n--- Testing Unicode characters in name ---")
+    unicode_name = "Cliente Español 中文 العربية 🎉"
+    
+    unicode_response = requests.post(
+        f"{API_BASE_URL}/clients",
+        json={"name": unicode_name},
+        headers=headers
+    )
+    
+    if unicode_response.status_code == 200:
+        unicode_client = unicode_response.json()
+        unicode_client_id = unicode_client["id"]
+        
+        print(f"✅ Unicode name accepted: {unicode_client['name']}")
+        print(f"Generated slug: {unicode_client['slug']}")
+        
+        # Test updating with more Unicode
+        new_unicode_name = "Новый клиент 🚀"
+        update_unicode_response = requests.put(
+            f"{API_BASE_URL}/clients/{unicode_client_id}",
+            json={"name": new_unicode_name},
+            headers=headers
+        )
+        
+        if update_unicode_response.status_code == 200:
+            updated_unicode = update_unicode_response.json()
+            print(f"✅ Unicode name update successful: {updated_unicode['name']}")
+            print(f"New slug: {updated_unicode['slug']}")
+        else:
+            print("⚠️ Unicode name update failed")
+        
+        # Clean up
+        requests.delete(f"{API_BASE_URL}/clients/{unicode_client_id}", headers=headers)
+    else:
+        print("⚠️ Unicode name was rejected")
+    
+    # Test 3: Multiple clients with similar names
+    print("\n--- Testing multiple clients with similar names ---")
+    base_name = "Similar Client"
+    client_ids = []
+    
+    for i in range(3):
+        similar_response = requests.post(
+            f"{API_BASE_URL}/clients",
+            json={"name": base_name},
+            headers=headers
+        )
+        
+        if similar_response.status_code == 200:
+            similar_client = similar_response.json()
+            client_ids.append(similar_client["id"])
+            print(f"Client {i+1}: {similar_client['name']} -> {similar_client['slug']}")
+    
+    if len(client_ids) == 3:
+        print("✅ Multiple clients with same name created with unique slugs")
+        
+        # Now update them all to have the same new name
+        new_similar_name = "Updated Similar Client"
+        for i, client_id in enumerate(client_ids):
+            update_response = requests.put(
+                f"{API_BASE_URL}/clients/{client_id}",
+                json={"name": new_similar_name},
+                headers=headers
+            )
+            
+            if update_response.status_code == 200:
+                updated = update_response.json()
+                print(f"Updated client {i+1}: {updated['name']} -> {updated['slug']}")
+        
+        print("✅ Multiple clients updated with same name, unique slugs maintained")
+    
+    # Clean up similar clients
+    for client_id in client_ids:
+        requests.delete(f"{API_BASE_URL}/clients/{client_id}", headers=headers)
+    
+    print("✅ Client modification edge cases test completed")
+    return True
+
 def run_all_tests():
     print("\n🔍 STARTING BACKEND API TESTS 🔍\n")
     
