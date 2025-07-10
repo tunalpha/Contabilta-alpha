@@ -828,9 +828,19 @@ function App() {
     }
   }, [currentView, currentClientSlug, selectedClient, adminToken]);
 
+  // Auto-apply filters when transactions change
   useEffect(() => {
-    applyFilters();
-  }, [transactions, filters]);
+    if (transactions.length > 0) {
+      applyFilters();
+    }
+  }, [transactions]);
+
+  // Auto-apply filters when filter criteria change
+  useEffect(() => {
+    if (transactions.length > 0) {
+      applyFilters();
+    }
+  }, [filters.dateFrom, filters.dateTo, filters.type, filters.search, filters.currency]);
 
   const fetchClientData = async (slug) => {
     try {
