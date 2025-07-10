@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import QRCode from 'qrcode';
 import './App.css';
 import {
   Chart as ChartJS,
