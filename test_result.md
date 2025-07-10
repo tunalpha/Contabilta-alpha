@@ -149,16 +149,19 @@ frontend:
         comment: "Implementata UI per gestione password clienti: modal admin per impostare password, schermata login clienti, badge visivo per clienti protetti, gestione sessioni cliente con localStorage. Aggiornate funzioni fetch per includere autenticazione."
 
   - task: "Client name modification UI"
-    implemented: true
-    working: true
+    implemented: false
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: true
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Aggiunto pulsante di modifica nome cliente nella vista admin. Ora l'admin può cliccare sul pulsante ✏️ accanto a ogni cliente per modificarne il nome. Il pulsante apre il modal di modifica che utilizza l'endpoint backend esistente PUT /api/clients/{client_id}."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE: Edit buttons (✏️) are NOT visible in the admin interface despite admin login being successful. Tested thoroughly: 1) Admin login works (manual API login successful), 2) Admin mode is active (🔐 Modalità Amministratore visible), 3) Admin features work (Nuovo Cliente, Nuova Transazione buttons present), 4) BUT edit buttons are completely missing from client cards. The edit button code exists in App.js lines 2237-2248 but is not rendering. Frontend login via UI is also broken - no API requests are made when clicking login button. Two separate issues: UI login broken + edit buttons not rendering."
 
 metadata:
   created_by: "main_agent"
