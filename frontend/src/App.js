@@ -3327,6 +3327,17 @@ function App() {
               >
                 {soundEnabled ? '🔊' : '🔇'}
               </button>
+              <button
+                onClick={toggleBackgroundMusic}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  backgroundMusicEnabled 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-gray-400 hover:bg-gray-500 text-white'
+                }`}
+                title={`Musica ambientale: ${backgroundMusicEnabled ? 'Attiva' : 'Disattiva'}`}
+              >
+                {backgroundMusicEnabled ? '🎵' : '🎶'}
+              </button>
             </div>
           </div>
         </div>
