@@ -181,6 +181,18 @@ frontend:
         agent: "testing"
         comment: "CRITICAL BUG CONFIRMED: Admin login is completely broken in the frontend UI. Comprehensive testing shows: 1) Backend login API works perfectly (tested via curl), 2) Frontend login modal appears and accepts password, 3) BUT clicking 'Login' button makes NO network requests to /api/login, 4) React event handlers are not firing (button clicks not tracked), 5) Admin mode never activates, 6) Edit buttons (✏️) are not visible because isAdmin remains false. ROOT CAUSE: React onClick event handling is broken - the handleLogin function exists but is never called when button is clicked. This prevents ALL admin functionality including client name modification. Manual fetch test confirms network works, so this is specifically a React event handling issue."
 
+  - task: "Client view date filtering functionality"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE CONFIRMED: Date filters for client view are completely non-functional. Comprehensive testing reveals: 1) CLIENT ROUTING BROKEN - URL /cliente/9t2lax263w6l redirects to admin view instead of client view, 2) FILTER UI MISSING - The '🔍 Lista Movimenti' button is not rendered in any view, preventing access to date filtering functionality, 3) USER REPORT VALIDATED - Users cannot set date filters because the filter interface is completely inaccessible. Root cause: React routing issue for client URLs and missing filter UI components. This confirms the user's exact complaint that 'when they set dates, operations are not searched/filtered' - they can't even access the filter interface. The filtering logic exists in applyFilters() function (lines 1038-1107) but the UI components are not being rendered. URGENT FIX NEEDED for client view routing and filter UI rendering."
+
 metadata:
   created_by: "main_agent"
   version: "4.0"
