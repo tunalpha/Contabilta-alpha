@@ -771,10 +771,10 @@ function App() {
     
     // Check URL for client slug
     const path = window.location.pathname;
-    const clientMatch = path.match(/\/cliente\/(.+)/);
+    const clientMatch = path.match(/^\/([^\/]+)$/) && path !== '/';
 
     if (clientMatch) {
-      const slug = clientMatch[1];
+      const slug = path.substring(1); // Remove leading slash
       setCurrentClientSlug(slug);
       setCurrentView('client');
       fetchClientData(slug);
