@@ -2407,4 +2407,50 @@ def run_all_tests():
     print("\n🏁 ALL TESTS COMPLETED 🏁\n")
 
 if __name__ == "__main__":
-    run_all_tests()
+    print("🧮 CONTABILITÀ ALPHA - BACKEND API TESTING")
+    print("=" * 80)
+    print(f"Backend URL: {BACKEND_URL}")
+    print(f"API Base URL: {API_BASE_URL}")
+    print("=" * 80)
+    
+    # Run the specific test requested in the review
+    print("\n🎯 RUNNING SPECIFIC TEST: Current Client Slugs and Access Verification")
+    print("=" * 80)
+    
+    test_results = []
+    
+    # Main test requested in the review
+    test_results.append(("Current Client Slugs and Access", test_current_client_slugs_and_access()))
+    
+    # Additional related tests to provide comprehensive coverage
+    print("\n🔍 RUNNING ADDITIONAL RELATED TESTS")
+    print("=" * 80)
+    
+    test_results.append(("Clients API", test_clients_api()))
+    test_results.append(("Admin Login", test_admin_login()))
+    test_results.append(("Client Password Management", test_client_password_management()))
+    test_results.append(("Transaction Filtering", test_transaction_filtering()))
+    
+    # Print final summary
+    print("\n" + "="*80)
+    print("🏁 FINAL TEST RESULTS SUMMARY")
+    print("="*80)
+    
+    passed_tests = 0
+    total_tests = len(test_results)
+    
+    for test_name, result in test_results:
+        status = "✅ PASSED" if result else "❌ FAILED"
+        print(f"{status}: {test_name}")
+        if result:
+            passed_tests += 1
+    
+    print("="*80)
+    print(f"📊 OVERALL RESULTS: {passed_tests}/{total_tests} tests passed")
+    
+    if passed_tests == total_tests:
+        print("🎉 ALL TESTS PASSED! Client slugs and access are working correctly.")
+        sys.exit(0)
+    else:
+        print("⚠️ SOME TESTS FAILED! There are issues with client access or slugs.")
+        sys.exit(1)
