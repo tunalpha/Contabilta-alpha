@@ -606,6 +606,7 @@ function App() {
   };
 
   const handleLogin = async () => {
+    console.log('🔑 handleLogin called!', { loginPassword, BACKEND_URL });
     try {
       const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: 'POST',
