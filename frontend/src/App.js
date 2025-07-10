@@ -1048,8 +1048,13 @@ function App() {
   };
 
   const applyFilters = useCallback(() => {
+    console.log('🚨 APPLY FILTERS CALLED!');
+    console.log('🚨 Current transactions:', transactions?.length || 0);
+    console.log('🚨 Current filters:', filters);
+    
     // Assicuriamoci che transactions sia un array valido - enhanced defensive programming
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      console.log('❌ No transactions to filter');
       setFilteredTransactions([]);
       return;
     }
@@ -1076,32 +1081,40 @@ function App() {
         console.log('📋 After type filter:', filtered.length);
       }
 
-      // IMPROVED DATE FILTERING
+      // DATE FILTERING WITH EXTREME DEBUG
       if (filters.dateFrom) {
+        console.log('🚨 APPLYING DATE FROM FILTER:', filters.dateFrom);
         const fromDate = new Date(filters.dateFrom);
-        fromDate.setHours(0, 0, 0, 0); // Start of day
+        fromDate.setHours(0, 0, 0, 0);
+        console.log('🚨 From date object:', fromDate);
+        
+        const beforeCount = filtered.length;
         filtered = filtered.filter(t => {
           if (!t.date) return false;
           const transactionDate = new Date(t.date);
-          transactionDate.setHours(0, 0, 0, 0); // Start of day for comparison
+          transactionDate.setHours(0, 0, 0, 0);
           const result = transactionDate >= fromDate;
-          console.log('📅 Date filter check:', t.date, '>=', filters.dateFrom, '=', result);
+          console.log(`🚨 Transaction ${t.description}: ${t.date} >= ${filters.dateFrom} = ${result}`);
           return result;
         });
-        console.log('📅 After dateFrom filter:', filtered.length, 'dateFrom:', filters.dateFrom);
+        console.log(`🚨 DATE FROM FILTER: ${beforeCount} -> ${filtered.length}`);
       }
 
       if (filters.dateTo) {
+        console.log('🚨 APPLYING DATE TO FILTER:', filters.dateTo);
         const toDate = new Date(filters.dateTo);
-        toDate.setHours(23, 59, 59, 999); // End of day
+        toDate.setHours(23, 59, 59, 999);
+        console.log('🚨 To date object:', toDate);
+        
+        const beforeCount = filtered.length;
         filtered = filtered.filter(t => {
           if (!t.date) return false;
           const transactionDate = new Date(t.date);
           const result = transactionDate <= toDate;
-          console.log('📅 Date filter check:', t.date, '<=', filters.dateTo, '=', result);
+          console.log(`🚨 Transaction ${t.description}: ${t.date} <= ${filters.dateTo} = ${result}`);
           return result;
         });
-        console.log('📅 After dateTo filter:', filtered.length, 'dateTo:', filters.dateTo);
+        console.log(`🚨 DATE TO FILTER: ${beforeCount} -> ${filtered.length}`);
       }
 
       // Filter by currency
@@ -1110,10 +1123,11 @@ function App() {
         console.log('💰 After currency filter:', filtered.length);
       }
 
-      console.log('✅ FINAL FILTERED:', filtered.length);
+      console.log('🚨 FINAL FILTERED RESULT:', filtered.length);
+      console.log('🚨 Setting filteredTransactions to:', filtered.map(t => ({id: t.id, description: t.description, date: t.date})));
       setFilteredTransactions(filtered);
     } catch (error) {
-      console.error('Error in applyFilters:', error);
+      console.error('❌ Error in applyFilters:', error);
       setFilteredTransactions([]);
     }
   }, [transactions, filters]); // Dependencies ensure fresh values
