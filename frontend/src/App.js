@@ -1270,9 +1270,10 @@ function App() {
 
       // Transactions
       transactionHistory: "Lista Movimenti",
-      transactionChronology: "Cronologia Transazioni",
-      balanceEvolution: "Evoluzione del Tuo Saldo",
+      transactionChronology: "Cronologia Transazioni", 
+      balanceEvolution: "📈 Evoluzione del Tuo Saldo",
       balanceEvolutionDesc: "Grafico dell'andamento del tuo saldo nel tempo",
+      transactionsCount: "transazioni",
       noTransactions: "Nessuna transazione trovata",
       noTransactionsFiltered: "Nessuna transazione trovata con i filtri selezionati",
       totalTransactions: "Totale transazioni",
