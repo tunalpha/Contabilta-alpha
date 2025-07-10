@@ -1644,6 +1644,208 @@ def test_client_login_without_password():
     print("✅ Client login without password test passed")
     return True
 
+def test_current_client_slugs_and_access():
+    """
+    TEST OBIETTIVO: Verificare quali sono i client slug attuali nel database e testare l'accesso alla vista cliente
+    
+    DETTAGLI DEL TEST:
+    1. Chiamare GET /api/clients/public per ottenere la lista dei clienti pubblici
+    2. Verificare i slug attuali dei clienti
+    3. Testare l'accesso diretto a un client usando il suo slug attuale
+    4. Verificare che gli endpoint /api/clients/{slug}, /api/transactions?client_slug={slug} e /api/balance?client_slug={slug} funzionino
+    """
+    print_test_header("CURRENT CLIENT SLUGS AND ACCESS VERIFICATION")
+    
+    # Step 1: Get all current clients and their slugs
+    print("\n=== STEP 1: Getting current client slugs ===")
+    response = requests.get(f"{API_BASE_URL}/clients/public")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        print("❌ CRITICAL: Cannot get current client slugs from /api/clients/public")
+        return False
+    
+    clients = response.json()
+    if not clients:
+        print("❌ CRITICAL: No clients found in database")
+        return False
+    
+    print(f"✅ Found {len(clients)} clients in database")
+    print("\n=== CURRENT CLIENT SLUGS ===")
+    for i, client in enumerate(clients, 1):
+        print(f"{i}. Name: '{client['name']}' | Slug: '{client['slug']}' | Transactions: {client['total_transactions']} | Balance: €{client['balance']:.2f}")
+    
+    # Step 2: Test access to each client using their current slug
+    print("\n=== STEP 2: Testing access to each client ===")
+    all_tests_passed = True
+    
+    for client in clients:
+        client_name = client['name']
+        client_slug = client['slug']
+        has_password = client.get('has_password', False)
+        
+        print(f"\n--- Testing client: {client_name} (slug: {client_slug}) ---")
+        print(f"Password protected: {has_password}")
+        
+        # Test 1: GET /api/clients/{slug}
+        print(f"\nTesting: GET /api/clients/{client_slug}")
+        client_response = requests.get(f"{API_BASE_URL}/clients/{client_slug}")
+        print_response(client_response)
+        
+        if has_password:
+            # Should return 401 if password protected
+            if client_response.status_code == 401:
+                print(f"✅ Client {client_name} correctly requires authentication (401)")
+            else:
+                print(f"❌ Client {client_name} should require authentication but returned {client_response.status_code}")
+                all_tests_passed = False
+        else:
+            # Should return 200 if no password
+            if client_response.status_code == 200:
+                print(f"✅ Client {client_name} accessible without authentication")
+            else:
+                print(f"❌ Client {client_name} should be accessible but returned {client_response.status_code}")
+                all_tests_passed = False
+        
+        # Test 2: GET /api/transactions?client_slug={slug}
+        print(f"\nTesting: GET /api/transactions?client_slug={client_slug}")
+        transactions_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={client_slug}")
+        print_response(transactions_response)
+        
+        if has_password:
+            # Should return 401 if password protected
+            if transactions_response.status_code == 401:
+                print(f"✅ Transactions for {client_name} correctly require authentication (401)")
+            else:
+                print(f"❌ Transactions for {client_name} should require authentication but returned {transactions_response.status_code}")
+                all_tests_passed = False
+        else:
+            # Should return 200 if no password
+            if transactions_response.status_code == 200:
+                transactions = transactions_response.json()
+                print(f"✅ Transactions for {client_name} accessible: {len(transactions)} transactions found")
+            else:
+                print(f"❌ Transactions for {client_name} should be accessible but returned {transactions_response.status_code}")
+                all_tests_passed = False
+        
+        # Test 3: GET /api/balance?client_slug={slug}
+        print(f"\nTesting: GET /api/balance?client_slug={client_slug}")
+        balance_response = requests.get(f"{API_BASE_URL}/balance?client_slug={client_slug}")
+        print_response(balance_response)
+        
+        if has_password:
+            # Should return 401 if password protected
+            if balance_response.status_code == 401:
+                print(f"✅ Balance for {client_name} correctly requires authentication (401)")
+            else:
+                print(f"❌ Balance for {client_name} should require authentication but returned {balance_response.status_code}")
+                all_tests_passed = False
+        else:
+            # Should return 200 if no password
+            if balance_response.status_code == 200:
+                balance_data = balance_response.json()
+                print(f"✅ Balance for {client_name} accessible: Balance €{balance_data.get('balance', 0):.2f}")
+            else:
+                print(f"❌ Balance for {client_name} should be accessible but returned {balance_response.status_code}")
+                all_tests_passed = False
+    
+    # Step 3: Test with authentication for password-protected clients
+    print("\n=== STEP 3: Testing password-protected clients with authentication ===")
+    
+    # Get admin token to set/remove passwords for testing
+    admin_token = get_admin_token()
+    if not admin_token:
+        print("⚠️ Cannot get admin token for password testing")
+    else:
+        # Find a client without password to test password protection
+        client_without_password = next((c for c in clients if not c.get('has_password', False)), None)
+        
+        if client_without_password:
+            test_client_id = client_without_password['id']
+            test_client_slug = client_without_password['slug']
+            test_client_name = client_without_password['name']
+            
+            print(f"\nTesting password protection with client: {test_client_name}")
+            
+            # Set a password for this client
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            password = "testpass123"
+            
+            set_password_response = requests.post(
+                f"{API_BASE_URL}/clients/{test_client_id}/password",
+                json={"password": password},
+                headers=headers
+            )
+            
+            if set_password_response.status_code == 200:
+                print(f"✅ Password set for {test_client_name}")
+                
+                # Test login with correct password
+                login_response = requests.post(
+                    f"{API_BASE_URL}/clients/{test_client_slug}/login",
+                    json={"password": password}
+                )
+                
+                if login_response.status_code == 200 and login_response.json().get('success'):
+                    print(f"✅ Login successful for {test_client_name}")
+                    
+                    # Test accessing endpoints with authentication
+                    client_token = login_response.json().get('token')
+                    auth_headers = {"Authorization": f"Bearer {client_token}"}
+                    
+                    # Test client details with auth
+                    auth_client_response = requests.get(f"{API_BASE_URL}/clients/{test_client_slug}", headers=auth_headers)
+                    if auth_client_response.status_code == 200:
+                        print(f"✅ Client details accessible with authentication for {test_client_name}")
+                    else:
+                        print(f"❌ Client details not accessible with authentication for {test_client_name}: {auth_client_response.status_code}")
+                        all_tests_passed = False
+                    
+                    # Test transactions with auth
+                    auth_transactions_response = requests.get(f"{API_BASE_URL}/transactions?client_slug={test_client_slug}", headers=auth_headers)
+                    if auth_transactions_response.status_code == 200:
+                        print(f"✅ Transactions accessible with authentication for {test_client_name}")
+                    else:
+                        print(f"❌ Transactions not accessible with authentication for {test_client_name}: {auth_transactions_response.status_code}")
+                        all_tests_passed = False
+                    
+                    # Test balance with auth
+                    auth_balance_response = requests.get(f"{API_BASE_URL}/balance?client_slug={test_client_slug}", headers=auth_headers)
+                    if auth_balance_response.status_code == 200:
+                        print(f"✅ Balance accessible with authentication for {test_client_name}")
+                    else:
+                        print(f"❌ Balance not accessible with authentication for {test_client_name}: {auth_balance_response.status_code}")
+                        all_tests_passed = False
+                else:
+                    print(f"❌ Login failed for {test_client_name}")
+                    all_tests_passed = False
+                
+                # Clean up: remove password
+                remove_password_response = requests.delete(
+                    f"{API_BASE_URL}/clients/{test_client_id}/password",
+                    headers=headers
+                )
+                if remove_password_response.status_code == 200:
+                    print(f"✅ Password removed for {test_client_name}")
+                else:
+                    print(f"⚠️ Failed to remove password for {test_client_name}")
+            else:
+                print(f"❌ Failed to set password for {test_client_name}")
+                all_tests_passed = False
+    
+    # Step 4: Summary
+    print("\n=== FINAL SUMMARY ===")
+    if all_tests_passed:
+        print("✅ ALL CLIENT ACCESS TESTS PASSED")
+        print("✅ All current client slugs are working correctly")
+        print("✅ Authentication system is working properly")
+        print("✅ All endpoints (/api/clients/{slug}, /api/transactions, /api/balance) are accessible")
+    else:
+        print("❌ SOME CLIENT ACCESS TESTS FAILED")
+        print("❌ There are issues with client slug access or authentication")
+    
+    return all_tests_passed
+
 def test_password_change():
     print_test_header("Client Password Change")
     
