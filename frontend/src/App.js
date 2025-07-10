@@ -2006,7 +2006,7 @@ function App() {
 
               {/* Transaction Form */}
               {showForm && selectedClient && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8" style={{backgroundColor: '#ffffff !important'}}>
+                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
                   <h2 className="text-2xl font-bold text-gray-800 mb-4">
                     💰 Nuova Transazione per {selectedClient.name}
                   </h2>
