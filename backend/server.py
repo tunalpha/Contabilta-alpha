@@ -1434,6 +1434,159 @@ async def get_exchange_rates():
             "error": "Using fallback rates"
         }
 
+# Admin Password Reset Models
+class AdminPasswordResetRequest(BaseModel):
+    email: str
+
+class AdminPasswordResetConfirm(BaseModel):
+    reset_token: str
+    new_password: str
+
+@app.post("/api/admin/request-password-reset")
+async def request_admin_password_reset(request: AdminPasswordResetRequest):
+    """Send password reset email to admin"""
+    try:
+        # Generate reset token
+        reset_token = str(uuid.uuid4())
+        expires_at = datetime.now().replace(hour=datetime.now().hour + 1)  # 1 hour expiry
+        
+        # Store reset token in database
+        await db.admin_password_resets.insert_one({
+            "id": str(uuid.uuid4()),
+            "email": request.email,
+            "reset_token": reset_token,
+            "expires_at": expires_at,
+            "used": False,
+            "created_at": datetime.now()
+        })
+        
+        # Send email with reset link
+        reset_link = f"https://expense-master-88.preview.emergentagent.com/admin-reset?token={reset_token}"
+        
+        email_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <h2 style="color: #333;">🔐 Reset Password Admin - Contabilità Alpha</h2>
+                <p>Hai richiesto il reset della password amministratore.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_link}" style="background-color: #3B82F6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                        🔓 Resetta Password
+                    </a>
+                </div>
+                <p><strong>IMPORTANTE:</strong></p>
+                <ul>
+                    <li>Questo link scade tra 1 ora</li>
+                    <li>Clicca il link per impostare una nuova password</li>
+                    <li>Se non hai richiesto questo reset, ignora questa email</li>
+                </ul>
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
+                <p style="color: #6c757d; font-size: 12px;">
+                    Link: {reset_link}<br>
+                    Token: {reset_token}
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Configure email
+        message = MIMEMultipart("alternative")
+        message["Subject"] = "🔐 Reset Password Admin - Contabilità Alpha"
+        message["From"] = "admin@contabilita-alpha.com"
+        message["To"] = request.email
+        
+        html_part = MIMEText(email_body, "html")
+        message.attach(html_part)
+        
+        # Send email using SMTP
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname="smtp.gmail.com",
+                port=587,
+                start_tls=True,
+                username=os.getenv("SMTP_USERNAME", "your-email@gmail.com"),
+                password=os.getenv("SMTP_PASSWORD", "your-app-password"),
+            )
+        except Exception as email_error:
+            # If email fails, still return success for security (don't reveal if email exists)
+            print(f"Email send failed: {email_error}")
+        
+        return {
+            "success": True,
+            "message": "Se l'email è associata a un account admin, riceverai le istruzioni per il reset.",
+            "reset_link": reset_link,  # For testing only - remove in production
+            "token": reset_token  # For testing only - remove in production
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore nel reset password: {str(e)}")
+
+@app.post("/api/admin/confirm-password-reset")
+async def confirm_admin_password_reset(request: AdminPasswordResetConfirm):
+    """Confirm password reset with token and set new password"""
+    try:
+        # Find reset token
+        reset_record = await db.admin_password_resets.find_one({
+            "reset_token": request.reset_token,
+            "used": False
+        })
+        
+        if not reset_record:
+            raise HTTPException(status_code=400, detail="Token non valido o già utilizzato")
+        
+        # Check if token is expired
+        if datetime.now() > reset_record["expires_at"]:
+            raise HTTPException(status_code=400, detail="Token scaduto")
+        
+        # Hash new password
+        new_password_hash = hashlib.sha256(request.new_password.encode()).hexdigest()
+        
+        # Update admin password (assuming there's only one admin)
+        # For now, we'll store it in a simple way - in production you'd want a proper users table
+        admin_config = await db.admin_config.find_one() or {}
+        admin_config["password_hash"] = new_password_hash
+        admin_config["updated_at"] = datetime.now()
+        
+        await db.admin_config.replace_one({}, admin_config, upsert=True)
+        
+        # Mark token as used
+        await db.admin_password_resets.update_one(
+            {"reset_token": request.reset_token},
+            {"$set": {"used": True, "used_at": datetime.now()}}
+        )
+        
+        return {
+            "success": True,
+            "message": "Password admin aggiornata con successo!"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore nel confermare reset: {str(e)}")
+
+@app.get("/api/admin/verify-reset-token/{token}")
+async def verify_reset_token(token: str):
+    """Verify if a reset token is valid"""
+    try:
+        reset_record = await db.admin_password_resets.find_one({
+            "reset_token": token,
+            "used": False
+        })
+        
+        if not reset_record:
+            return {"valid": False, "message": "Token non valido"}
+        
+        if datetime.now() > reset_record["expires_at"]:
+            return {"valid": False, "message": "Token scaduto"}
+        
+        return {"valid": True, "email": reset_record["email"]}
+        
+    except Exception as e:
+        return {"valid": False, "message": "Errore nella verifica"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
