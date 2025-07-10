@@ -3085,7 +3085,7 @@ function App() {
 
         {/* Analytics Section - MOVED TO BOTTOM */}
         {transactions.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8" style={{backgroundColor: '#ffffff !important'}}>
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics')}</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Monthly Trend Chart */}
