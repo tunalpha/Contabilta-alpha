@@ -176,6 +176,7 @@ test_plan:
     - "Client password protection UI"
   stuck_tasks:
     - "Client name modification functionality"
+    - "Client name modification UI"
   test_all: false
   test_priority: "high_first"
 
