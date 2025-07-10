@@ -3024,7 +3024,7 @@ function App() {
         </div>
 
         {/* Transactions List - MOVED ABOVE SMART INSIGHTS */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-fade-in hover-lift">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             {t('transactionHistory')}
             {showFilters && (
