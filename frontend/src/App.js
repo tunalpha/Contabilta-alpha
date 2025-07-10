@@ -2895,6 +2895,77 @@ function App() {
           </button>
         </div>
 
+        {/* Transactions List - MOVED ABOVE SMART INSIGHTS */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            {t('transactionHistory')}
+            {showFilters && (
+              <span className="text-sm text-gray-500 ml-2">
+                ({filteredTransactions.length} di {transactions.length})
+              </span>
+            )}
+          </h2>
+          {(showFilters ? filteredTransactions : transactions).length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-lg">
+                {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
+                  ? 'Nessuna transazione trovata con i filtri selezionati'
+                  : 'Nessuna transazione trovata'
+                }
+              </div>
+              <div className="text-gray-500 text-sm mt-2">
+                {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
+                  ? 'Prova a modificare i filtri di ricerca'
+                  : 'L\'amministratore non ha ancora inserito transazioni'
+                }
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(showFilters ? filteredTransactions : transactions).map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className={`p-4 rounded-lg border-l-4 ${transaction.type === 'avere'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-red-500 bg-red-50'
+                    }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                          {getTypeIcon(transaction.type)}
+                        </span>
+                        <span className="text-lg">
+                          {getCategoryIcon(transaction.category)}
+                        </span>
+                        <div>
+                          <div className="font-medium text-gray-800 text-lg">
+                            {translateText(transaction.description)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {translateText(transaction.category)} • {translateText(transaction.type === 'avere' ? 'Avere' : 'Dare')} • {formatDate(transaction.date)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`text-xl font-bold ${transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        title={getCurrencyTooltip(transaction)}
+                      >
+                        {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Smart Insights - NOW BELOW TRANSACTIONS */}
         {/* PDF Date Selection Modal */}
         {notifications.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
