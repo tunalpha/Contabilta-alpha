@@ -415,6 +415,9 @@ function App() {
   }, [formData.type, selectedClient]);
 
   useEffect(() => {
+    // Force cache refresh
+    console.log('🔄 CACHE REFRESH TIMESTAMP:', new Date().toISOString());
+    
     // Check URL for client slug
     const path = window.location.pathname;
     const clientMatch = path.match(/\/cliente\/(.+)/);
