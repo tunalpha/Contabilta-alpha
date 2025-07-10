@@ -1374,6 +1374,9 @@ function App() {
       // Transactions
       transactionHistory: "Transaction Register",
       transactionChronology: "Transaction History",
+      balanceEvolution: "📈 Your Balance Evolution", 
+      balanceEvolutionDesc: "Chart showing your balance trend over time",
+      transactionsCount: "transactions",
       noTransactions: "No transactions found",
       noTransactionsFiltered: "No transactions found with selected filters",
       totalTransactions: "Total transactions",
