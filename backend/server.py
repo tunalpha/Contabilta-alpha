@@ -721,7 +721,7 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
                     **client_data,
                     total_transactions=transaction_count,
                     balance=total_avere - total_dare,
-                    has_password=bool(client.get("password"))
+                    has_password=bool(updated_client.get("password"))
                 )
             else:
                 raise HTTPException(status_code=404, detail="Client not found after update")
