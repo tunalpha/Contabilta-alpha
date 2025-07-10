@@ -2235,16 +2235,28 @@ function App() {
                         )}
                       </div>
                       {isAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClient(client);
-                          }}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="Elimina cliente"
-                        >
-                          🗑️
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClient(client);
+                            }}
+                            className="text-blue-500 hover:text-blue-700 p-1"
+                            title="Modifica nome cliente"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClient(client);
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Elimina cliente"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
