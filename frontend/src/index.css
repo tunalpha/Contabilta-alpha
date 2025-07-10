@@ -2,40 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* FORCE LIGHT THEME - ANDROID FIX */
-html, body, #root, * {
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
-    color-scheme: light !important;
-}
-
-/* Force all white backgrounds */
-.bg-white {
-    background-color: #ffffff !important;
-}
-
-/* Force all text colors */
-.text-gray-800, .text-gray-700, .text-gray-900 {
-    color: #1e293b !important;
-}
-
-.text-gray-600 {
-    color: #475569 !important;
-}
-
-/* Override any dark mode selectors */
-@media (prefers-color-scheme: dark) {
-    html, body, #root, *, div, span, h1, h2, h3, h4, h5, h6, p, input, button {
-        background-color: #f8fafc !important;
-        color: #1e293b !important;
-        color-scheme: light !important;
-    }
-    
-    .bg-white {
-        background-color: #ffffff !important;
-    }
-}
-
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
@@ -43,8 +9,6 @@ body {
         "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
 }
 
 code {
