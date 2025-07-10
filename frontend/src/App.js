@@ -338,6 +338,56 @@ function App() {
     localStorage.removeItem('customLogo');
   };
 
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
+
+  // Add toast notification
+  const addToast = (message, type = 'success', duration = 3000) => {
+    const id = Date.now();
+    const newToast = { id, message, type, duration };
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+      removeToast(id);
+    }, duration);
+  };
+
+  // Remove toast notification
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  // Toast Component
+  const Toast = ({ toast, onRemove }) => {
+    const typeStyles = {
+      success: 'bg-green-500 text-white',
+      warning: 'bg-yellow-500 text-white', 
+      error: 'bg-red-500 text-white',
+      info: 'bg-blue-500 text-white'
+    };
+
+    const icons = {
+      success: '✅',
+      warning: '⚠️',
+      error: '❌', 
+      info: 'ℹ️'
+    };
+
+    return (
+      <div className={`${typeStyles[toast.type]} px-4 py-3 rounded-lg shadow-lg mb-2 animate-fade-in flex items-center gap-2 min-w-64`}>
+        <span>{icons[toast.type]}</span>
+        <span className="flex-1">{toast.message}</span>
+        <button 
+          onClick={() => onRemove(toast.id)}
+          className="ml-2 hover:opacity-70"
+        >
+          ×
+        </button>
+      </div>
+    );
+  };
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
