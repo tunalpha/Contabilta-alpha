@@ -2932,7 +2932,7 @@ function App() {
           </div>
         )}
 
-        {/* Transactions List - MOVED TO TOP BEFORE ANALYTICS */}
+        {/* PDF Date Selection Modal */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             {t('transactionHistory')}
