@@ -3021,6 +3021,13 @@ function App() {
   // CLIENT VIEW
   return (
     <div className={`min-h-screen bg-gradient-to-br ${themes[currentTheme].primary}`}>
+      {/* 🔔 TOAST NOTIFICATIONS CONTAINER */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map(toast => (
+          <Toast key={toast.id} toast={toast} onRemove={removeToast} />
+        ))}
+      </div>
+      
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
