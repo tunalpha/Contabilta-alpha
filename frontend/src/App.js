@@ -308,6 +308,36 @@ function App() {
     }
   };
 
+  // Logo upload state
+  const [customLogo, setCustomLogo] = useState(localStorage.getItem('customLogo') || null);
+
+  // Handle logo upload
+  const handleLogoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      if (file.size > 500000) { // 500KB limit
+        alert('Immagine troppo grande! Max 500KB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target.result;
+        setCustomLogo(base64);
+        localStorage.setItem('customLogo', base64);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert('Seleziona un\'immagine valida (JPG, PNG, etc.)');
+    }
+  };
+
+  // Reset logo to default
+  const resetLogo = () => {
+    setCustomLogo(null);
+    localStorage.removeItem('customLogo');
+  };
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
