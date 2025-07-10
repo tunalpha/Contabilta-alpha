@@ -4349,7 +4349,7 @@ return (
           {t('smartInsights')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {generateInsights(filteredTransactions, balance).map((insight, index) => (
+          {generateFinancialInsights(filteredTransactions, balance, t).map((insight, index) => (
             <div
               key={index}
               className={`p-4 rounded-lg border-l-4 ${
