@@ -3124,10 +3124,10 @@ function App() {
 
         {/* PDF Date Selection Modal */}
 
-        {/* Transactions List */}
+        {/* Transaction Chronology */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            {t('transactionHistory')}
+            {t('transactionChronology')}
             {showFilters && (
               <span className="text-sm text-gray-500 ml-2">
                 ({filteredTransactions.length} di {transactions.length})
