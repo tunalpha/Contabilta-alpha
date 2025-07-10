@@ -277,6 +277,37 @@ function App() {
   const [currentView, setCurrentView] = useState('admin'); // 'admin' or 'client'
   const [currentClientSlug, setCurrentClientSlug] = useState('');
   const [clients, setClients] = useState([]);
+  // Theme state for color customization
+  const [currentTheme, setCurrentTheme] = useState('blue');
+  
+  // Theme configurations
+  const themes = {
+    blue: {
+      name: 'Azzurro Classico',
+      primary: 'from-blue-50 to-indigo-100',
+      accent: 'bg-blue-600 hover:bg-blue-700',
+      text: 'text-blue-600',
+      border: 'border-blue-500',
+      icon: '🔵'
+    },
+    green: {
+      name: 'Verde Business',
+      primary: 'from-green-50 to-emerald-100', 
+      accent: 'bg-green-600 hover:bg-green-700',
+      text: 'text-green-600',
+      border: 'border-green-500',
+      icon: '🟢'
+    },
+    purple: {
+      name: 'Viola Premium',
+      primary: 'from-purple-50 to-violet-100',
+      accent: 'bg-purple-600 hover:bg-purple-700', 
+      text: 'text-purple-600',
+      border: 'border-purple-500',
+      icon: '🟣'
+    }
+  };
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
