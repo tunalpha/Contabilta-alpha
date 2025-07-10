@@ -21,6 +21,47 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
         <title>Emergent | Fullstack App</title>
+        <script>
+            // Force light theme for Android
+            (function() {
+                // Set theme immediately
+                document.documentElement.style.setProperty('color-scheme', 'light only', 'important');
+                document.documentElement.style.setProperty('background-color', '#f3f4f6', 'important');
+                
+                // Override any system dark mode
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.style.setProperty('color-scheme', 'light only', 'important');
+                }
+                
+                // Force body styles
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.body.style.setProperty('background-color', '#f3f4f6', 'important');
+                    document.body.style.setProperty('color', '#1f2937', 'important');
+                    
+                    // Override all elements
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        *, *::before, *::after {
+                            color-scheme: light only !important;
+                        }
+                        html, body {
+                            background-color: #f3f4f6 !important;
+                            color: #1f2937 !important;
+                        }
+                        .bg-white {
+                            background-color: #ffffff !important;
+                        }
+                        .text-gray-800 {
+                            color: #1f2937 !important;
+                        }
+                        .text-gray-600 {
+                            color: #4b5563 !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                });
+            })();
+        </script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
