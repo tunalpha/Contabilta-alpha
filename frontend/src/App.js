@@ -590,6 +590,44 @@ function App() {
     };
   }, [backgroundMusicEnabled]);
 
+  // Dark/Light mode state
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
+
+  // Toggle dark/light mode
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode);
+    addToast(`🌙 Tema: ${newDarkMode ? 'Scuro' : 'Chiaro'}`, 'success');
+  };
+
+  // Get theme classes based on mode
+  const getThemeClasses = () => {
+    if (isDarkMode) {
+      return {
+        background: 'bg-gradient-to-br from-gray-900 to-gray-800',
+        card: 'bg-gray-800 border-gray-700',
+        text: 'text-gray-100',
+        textSecondary: 'text-gray-300',
+        border: 'border-gray-600',
+        input: 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-blue-400',
+        button: 'bg-gray-700 hover:bg-gray-600 text-gray-100'
+      };
+    } else {
+      return {
+        background: themes[currentTheme].primary,
+        card: 'bg-white border-gray-200', 
+        text: 'text-gray-800',
+        textSecondary: 'text-gray-600',
+        border: 'border-gray-300',
+        input: 'bg-white border-gray-300 text-gray-900 focus:ring-purple-500',
+        button: 'bg-white hover:bg-gray-50 text-gray-800'
+      };
+    }
+  };
+
+  const themeClasses = getThemeClasses();
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
