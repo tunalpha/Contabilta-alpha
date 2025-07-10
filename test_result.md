@@ -120,6 +120,21 @@ backend:
         agent: "testing"
         comment: "Verificato il funzionamento completo del sistema di password protection per i clienti. Testati con successo: impostazione password, login cliente, protezione endpoint pubblici, rimozione password. Verificato che gli endpoint richiedono autenticazione quando il cliente ha password e sono accessibili senza autenticazione quando non ha password."
 
+  - task: "Client name modification functionality"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Implementato endpoint PUT /api/clients/{client_id} per modificare i nomi dei clienti. L'endpoint genera automaticamente nuovi slug quando il nome viene aggiornato e gestisce la duplicazione dei slug aggiungendo numeri progressivi."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL BUG: L'endpoint PUT /api/clients/{client_id} restituisce errore 500 'MotorDatabase object is not callable'. L'errore suggerisce un problema con l'accesso al database nella funzione update_client. Admin login funziona correttamente, ma la modifica del nome del cliente fallisce sempre. Tutti gli altri endpoint funzionano correttamente. Richiede fix urgente del database access pattern."
+
 frontend:
   - task: "Client password protection UI"
     implemented: true
@@ -133,20 +148,30 @@ frontend:
         agent: "main"
         comment: "Implementata UI per gestione password clienti: modal admin per impostare password, schermata login clienti, badge visivo per clienti protetti, gestione sessioni cliente con localStorage. Aggiornate funzioni fetch per includere autenticazione."
 
+  - task: "Client name modification UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Aggiunto pulsante di modifica nome cliente nella vista admin. Ora l'admin può cliccare sul pulsante ✏️ accanto a ogni cliente per modificarne il nome. Il pulsante apre il modal di modifica che utilizza l'endpoint backend esistente PUT /api/clients/{client_id}."
+
 metadata:
   created_by: "main_agent"
   version: "4.0"
-  test_sequence: 3
+  test_sequence: 4
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Client password authentication system"
+    - "Client name modification functionality"
     - "Client password protection UI"
-    - "Password modal functionality"
-    - "Client login screen"
-    - "Authentication middleware"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Client name modification functionality"
   test_all: false
   test_priority: "high_first"
 
@@ -155,6 +180,10 @@ agent_communication:
     message: "Implementato sistema completo di password protection per link clienti. Backend: aggiunto campo password al modello Client, endpoint per gestione password, sistema di login cliente, middleware di autenticazione. Frontend: modal admin per impostare password, schermata login clienti, badge visivo protezione, gestione sessioni. Necessario testing per verificare funzionamento corretto."
   - agent: "testing"
     message: "Completato il testing del sistema di password protection per i clienti. Tutti i test sono passati con successo. Verificato che: 1) Gli admin possono impostare e rimuovere password per i clienti, 2) I clienti possono fare login con password corretta, 3) Gli endpoint pubblici richiedono autenticazione quando il cliente ha password, 4) Gli endpoint sono accessibili senza autenticazione quando il cliente non ha password. Il sistema di protezione password funziona correttamente."
+  - agent: "main"
+    message: "Implementato endpoint PUT /api/clients/{client_id} per la modifica dei nomi dei clienti. L'endpoint richiede autenticazione admin, genera automaticamente nuovi slug dai nomi aggiornati, gestisce la duplicazione dei slug, e restituisce il client aggiornato con statistiche complete. Aggiunta anche UI frontend con pulsante di modifica per ogni cliente nella vista admin."
+  - agent: "testing"
+    message: "CRITICAL ISSUE FOUND: L'endpoint PUT /api/clients/{client_id} per la modifica dei nomi dei clienti ha un bug critico. Restituisce sempre errore 500 'MotorDatabase object is not callable'. Ho testato: 1) Admin login - ✅ funziona, 2) Creazione client - ✅ funziona, 3) Modifica nome client - ❌ fallisce sempre con errore database, 4) Gestione edge cases - ✅ funziona per creazione. Il problema sembra essere nell'accesso al database nella funzione update_client. Tutti gli altri endpoint backend funzionano correttamente. RICHIEDE FIX URGENTE."
 
 backend:
   - task: "Transaction CRUD API with filtering"
@@ -430,19 +459,6 @@ agent_communication:
     message: "Completed comprehensive backend testing after the frontend syntax error fix. All backend APIs are functioning correctly. Tested Transaction CRUD API with filtering (client_slug, type, category, date range, search), Balance calculation API (dare/avere), Multi-currency functionality for USD transactions, Admin authentication, and Clients API. Verified that Sovanza client has USD transactions with proper currency conversion (exchange_rate=0.852). All tests passed successfully, confirming that the backend is working perfectly after the frontend fix."
 
 frontend:
-  - task: "Client name modification UI"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/App.js"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: true
-    status_history:
-      - working: false
-        agent: "main"
-        comment: "Aggiunto pulsante di modifica nome cliente nella vista admin. Ora l'admin può cliccare sul pulsante ✏️ accanto a ogni cliente per modificarne il nome. Il pulsante apre il modal di modifica che utilizza l'endpoint backend esistente PUT /api/clients/{client_id}."
-
-frontend:
   - task: "AI Insights Dashboard Implementation"
     implemented: true
     working: true
@@ -540,16 +556,3 @@ documentation:
       - working: true
         agent: "main"
         comment: "Licenza MIT creata, package.json root configurato per deploy, vercel.json ottimizzato. App pronta per deploy produzione con nome 'contabilita-alpha'."
-
-test_plan:
-  current_focus:
-    - "Deploy produzione Vercel"
-    - "Backup codice sorgente GitHub"
-    - "Test finale funzionalità complete"
-  stuck_tasks: []
-  test_all: false
-  test_priority: "deploy_ready"
-
-agent_communication:
-  - agent: "testing"
-    message: "Completato test finale completo del backend. Tutte le API funzionano correttamente: Admin login, CRUD transazioni, bilanci, multi-valuta USD/EUR, exchange rates API, PDF generation, e client management. Verificato anche il rebranding da 'Contabilità Alpha' a 'Contabilità'. Il backend è pronto per il deploy in produzione."
