@@ -413,9 +413,11 @@ function App() {
       });
       setQrCodeDataURL(qrDataURL);
       setShowQRModal(true);
+      playSound('success');
       addToast('📱 QR Code generato!', 'success');
     } catch (error) {
       console.error('Errore generazione QR:', error);
+      playSound('error');
       addToast('❌ Errore nella generazione QR', 'error');
     }
   };
@@ -426,6 +428,7 @@ function App() {
     link.download = `qr-code-${selectedClient?.name || 'cliente'}.png`;
     link.href = qrCodeDataURL;
     link.click();
+    playSound('success');
     addToast('💾 QR Code scaricato!', 'success');
   };
 
