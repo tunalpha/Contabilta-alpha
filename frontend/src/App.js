@@ -2932,6 +2932,74 @@ function App() {
           </div>
         )}
 
+        {/* Transactions List - MOVED TO TOP BEFORE ANALYTICS */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            {t('transactionHistory')}
+            {showFilters && (
+              <span className="text-sm text-gray-500 ml-2">
+                ({filteredTransactions.length} di {transactions.length})
+              </span>
+            )}
+          </h2>
+          {(showFilters ? filteredTransactions : transactions).length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-lg">
+                {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
+                  ? 'Nessuna transazione trovata con i filtri selezionati'
+                  : 'Nessuna transazione trovata'
+                }
+              </div>
+              <div className="text-gray-500 text-sm mt-2">
+                {showFilters && (filters.search || filters.category || filters.type || filters.dateFrom || filters.dateTo)
+                  ? 'Prova a modificare i filtri di ricerca'
+                  : 'L\'amministratore non ha ancora inserito transazioni'
+                }
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(showFilters ? filteredTransactions : transactions).map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  onClick={() => setSelectedTransaction(selectedTransaction?.id === transaction.id ? null : transaction)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{getCategoryIcon(transaction.category)}</span>
+                        <div className="text-sm text-gray-500">
+                          {translateText(transaction.category)} • {translateText(transaction.type === 'avere' ? 'Avere' : 'Dare')} • {formatDate(transaction.date)}
+                        </div>
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800 text-lg">
+                            {translateText(transaction.description)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {translateText(transaction.category)} • {translateText(transaction.type === 'avere' ? 'Avere' : 'Dare')} • {formatDate(transaction.date)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`text-xl font-bold ${transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        title={getCurrencyTooltip(transaction)}
+                      >
+                        {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Analytics Section - MOVED TO BOTTOM */}
         {transactions.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
