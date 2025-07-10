@@ -2,10 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force light theme for all devices */
-html {
-    color-scheme: light only !important;
-    background-color: #f3f4f6 !important;
+/* FORCE LIGHT THEME - ANDROID FIX */
+html, body, #root, * {
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+    color-scheme: light !important;
+}
+
+/* Force all white backgrounds */
+.bg-white {
+    background-color: #ffffff !important;
+}
+
+/* Force all text colors */
+.text-gray-800, .text-gray-700, .text-gray-900 {
+    color: #1e293b !important;
+}
+
+.text-gray-600 {
+    color: #475569 !important;
+}
+
+/* Override any dark mode selectors */
+@media (prefers-color-scheme: dark) {
+    html, body, #root, *, div, span, h1, h2, h3, h4, h5, h6, p, input, button {
+        background-color: #f8fafc !important;
+        color: #1e293b !important;
+        color-scheme: light !important;
+    }
+    
+    .bg-white {
+        background-color: #ffffff !important;
+    }
 }
 
 body {
@@ -15,47 +43,8 @@ body {
         "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #f3f4f6 !important;
-    color: #1f2937 !important;
-}
-
-/* Force light theme for all elements */
-* {
-    color-scheme: light only !important;
-}
-
-/* Force white background for all cards */
-.bg-white {
-    background-color: #ffffff !important;
-}
-
-/* Force text colors */
-.text-gray-800 {
-    color: #1f2937 !important;
-}
-
-.text-gray-600 {
-    color: #4b5563 !important;
-}
-
-/* Override any dark mode detection */
-@media (prefers-color-scheme: dark) {
-    html, body, div, span, h1, h2, h3, h4, h5, h6, p {
-        background-color: #f3f4f6 !important;
-        color: #1f2937 !important;
-    }
-    
-    .bg-white {
-        background-color: #ffffff !important;
-    }
-    
-    .text-gray-800 {
-        color: #1f2937 !important;
-    }
-    
-    .text-gray-600 {
-        color: #4b5563 !important;
-    }
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
 }
 
 code {
