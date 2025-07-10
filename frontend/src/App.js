@@ -29,7 +29,7 @@ ChartJS.register(
 const getMonthlyTrendData = (transactions) => {
   const monthlyData = {};
   const last6Months = [];
-  
+
   // Get last 6 months
   for (let i = 5; i >= 0; i--) {
     const date = new Date();
@@ -39,12 +39,12 @@ const getMonthlyTrendData = (transactions) => {
     last6Months.push({ key: monthKey, label: monthLabel });
     monthlyData[monthKey] = { avere: 0, dare: 0 };
   }
-  
+
   // Process transactions
   transactions.forEach(transaction => {
     const date = new Date(transaction.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
+
     if (monthlyData[monthKey]) {
       if (transaction.type === 'avere') {
         monthlyData[monthKey].avere += transaction.amount;
@@ -53,11 +53,11 @@ const getMonthlyTrendData = (transactions) => {
       }
     }
   });
-  
+
   const labels = last6Months.map(m => m.label);
   const avereData = last6Months.map(m => monthlyData[m.key].avere);
   const dareData = last6Months.map(m => monthlyData[m.key].dare);
-  
+
   return {
     labels,
     datasets: [
@@ -81,14 +81,14 @@ const getMonthlyTrendData = (transactions) => {
 
 const getCategoryPieData = (transactions) => {
   const categoryData = {};
-  
+
   transactions.forEach(transaction => {
     if (transaction.type === 'dare') { // Only outgoing transactions for expenses
       const category = transaction.category;
       categoryData[category] = (categoryData[category] || 0) + transaction.amount;
     }
   });
-  
+
   const labels = Object.keys(categoryData);
   const data = Object.values(categoryData);
   const colors = [
@@ -100,7 +100,7 @@ const getCategoryPieData = (transactions) => {
     '#F97316', // Orange
     '#84CC16', // Lime
   ];
-  
+
   return {
     labels,
     datasets: [
@@ -117,14 +117,14 @@ const getCategoryPieData = (transactions) => {
 // Income Pie Chart Data
 const getIncomePieData = (transactions) => {
   const categoryData = {};
-  
+
   transactions.forEach(transaction => {
     if (transaction.type === 'avere') { // Only incoming transactions for income
       const category = transaction.category;
       categoryData[category] = (categoryData[category] || 0) + transaction.amount;
     }
   });
-  
+
   const labels = Object.keys(categoryData);
   const data = Object.values(categoryData);
   const colors = [
@@ -136,7 +136,7 @@ const getIncomePieData = (transactions) => {
     '#16A34A', // Green-600
     '#65A30D', // Lime-600
   ];
-  
+
   return {
     labels,
     datasets: [
@@ -153,11 +153,11 @@ const getIncomePieData = (transactions) => {
 // Smart AI Insights Functions
 const generateFinancialInsights = (transactions, balance, t) => {
   if (!transactions || transactions.length === 0) return [];
-  
+
   const insights = [];
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  
+
   // 1. Best performing month
   const monthlyPerformance = {};
   transactions.forEach(tr => {
@@ -169,11 +169,11 @@ const generateFinancialInsights = (transactions, balance, t) => {
     if (tr.type === 'avere') monthlyPerformance[monthKey].avere += tr.amount;
     else monthlyPerformance[monthKey].dare += tr.amount;
   });
-  
+
   const bestMonth = Object.values(monthlyPerformance)
     .map(m => ({ ...m, net: m.avere - m.dare }))
     .sort((a, b) => b.net - a.net)[0];
-  
+
   if (bestMonth) {
     insights.push({
       type: 'success',
@@ -183,27 +183,27 @@ const generateFinancialInsights = (transactions, balance, t) => {
       priority: 'high'
     });
   }
-  
+
   // 2. Spending trend analysis
   const last30Days = transactions.filter(tr => {
     const daysAgo = (Date.now() - new Date(tr.date).getTime()) / (1000 * 60 * 60 * 24);
     return daysAgo <= 30 && tr.type === 'dare';
   });
-  
+
   const prev30Days = transactions.filter(tr => {
     const daysAgo = (Date.now() - new Date(tr.date).getTime()) / (1000 * 60 * 60 * 24);
     return daysAgo > 30 && daysAgo <= 60 && tr.type === 'dare';
   });
-  
+
   const currentSpending = last30Days.reduce((sum, tr) => sum + tr.amount, 0);
   const previousSpending = prev30Days.reduce((sum, tr) => sum + tr.amount, 0);
-  
+
   if (previousSpending > 0) {
     const change = ((currentSpending - previousSpending) / previousSpending) * 100;
     const trend = change > 0 ? t('increase') : t('decrease');
     const emoji = change > 0 ? '📈' : '📉';
     const color = change > 0 ? 'warning' : 'success';
-    
+
     insights.push({
       type: color,
       icon: emoji,
@@ -212,16 +212,16 @@ const generateFinancialInsights = (transactions, balance, t) => {
       priority: Math.abs(change) > 20 ? 'high' : 'medium'
     });
   }
-  
+
   // 3. Category analysis
   const categorySpending = {};
   transactions.filter(tr => tr.type === 'dare').forEach(tr => {
     categorySpending[tr.category] = (categorySpending[tr.category] || 0) + tr.amount;
   });
-  
+
   const topCategory = Object.entries(categorySpending)
-    .sort(([,a], [,b]) => b - a)[0];
-  
+    .sort(([, a], [, b]) => b - a)[0];
+
   if (topCategory) {
     const percentage = (topCategory[1] / Object.values(categorySpending).reduce((a, b) => a + b, 0)) * 100;
     insights.push({
@@ -232,18 +232,18 @@ const generateFinancialInsights = (transactions, balance, t) => {
       priority: 'medium'
     });
   }
-  
+
   // 4. Cash flow prediction
   const avgMonthlyIncome = transactions
     .filter(tr => tr.type === 'avere')
     .reduce((sum, tr) => sum + tr.amount, 0) / Math.max(1, new Set(transactions.map(tr => tr.date.split('-').slice(0, 2).join('-'))).size);
-  
+
   const avgMonthlyExpenses = transactions
-    .filter(tr => tr.type === 'dare')  
+    .filter(tr => tr.type === 'dare')
     .reduce((sum, tr) => sum + tr.amount, 0) / Math.max(1, new Set(transactions.map(tr => tr.date.split('-').slice(0, 2).join('-'))).size);
-  
+
   const prediction = avgMonthlyIncome - avgMonthlyExpenses;
-  
+
   insights.push({
     type: prediction > 0 ? 'success' : 'danger',
     icon: prediction > 0 ? '💚' : '🔴',
@@ -251,12 +251,12 @@ const generateFinancialInsights = (transactions, balance, t) => {
     message: `${prediction > 0 ? '+' : ''}€${prediction.toFixed(2)} ${t('basedOnPatterns')}`,
     priority: prediction < 0 ? 'high' : 'low'
   });
-  
+
   // 5. Financial health score
   const score = Math.min(10, Math.max(1, (balance.balance / (balance.total_avere || 1)) * 10 + 2));
   const scoreText = score >= 8 ? t('excellent') : score >= 6 ? t('good') : score >= 4 ? t('acceptable') : t('needsImprovement');
   const scoreEmoji = score >= 8 ? '🌟' : score >= 6 ? '👍' : score >= 4 ? '⚠️' : '🔴';
-  
+
   insights.push({
     type: score >= 7 ? 'success' : score >= 5 ? 'warning' : 'danger',
     icon: scoreEmoji,
@@ -264,7 +264,7 @@ const generateFinancialInsights = (transactions, balance, t) => {
     message: `${score.toFixed(1)}/10 - ${scoreText}`,
     priority: score < 5 ? 'high' : 'low'
   });
-  
+
   return insights.sort((a, b) => {
     const priorityOrder = { high: 3, medium: 2, low: 1 };
     return priorityOrder[b.priority] - priorityOrder[a.priority];
@@ -349,16 +349,16 @@ function App() {
   const getCurrentWeekDates = (date = new Date()) => {
     const today = new Date(date);
     const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    
+
     // Calculate Monday of current week
     const monday = new Date(today);
     const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days
     monday.setDate(today.getDate() + daysToMonday);
-    
+
     // Calculate Sunday of current week
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    
+
     return {
       monday: monday.toLocaleDateString('it-IT'),
       sunday: sunday.toLocaleDateString('it-IT'),
@@ -371,10 +371,10 @@ function App() {
     const lastWeek = new Date(lastDate);
     const nextMonday = new Date(lastWeek);
     nextMonday.setDate(lastWeek.getDate() + 7); // Add 7 days to get next Monday
-    
+
     const nextSunday = new Date(nextMonday);
     nextSunday.setDate(nextMonday.getDate() + 6);
-    
+
     return {
       monday: nextMonday.toLocaleDateString('it-IT'),
       sunday: nextSunday.toLocaleDateString('it-IT'),
@@ -387,7 +387,7 @@ function App() {
     if (selectedClient?.name === 'Bill' && formData.type === 'avere') {
       // Get the last transaction date for Bill to calculate next week
       const billTransactions = transactions.filter(t => t.client_id === selectedClient.id);
-      
+
       let weekDates;
       if (billTransactions.length > 0) {
         // Get the most recent transaction date and calculate next week
@@ -398,7 +398,7 @@ function App() {
         // If no transactions, use current week
         weekDates = getCurrentWeekDates();
       }
-      
+
       setFormData({
         ...formData,
         description: `Incasso carte settimanale dal ${weekDates.monday} al ${weekDates.sunday}`,
@@ -418,7 +418,7 @@ function App() {
     // Check URL for client slug
     const path = window.location.pathname;
     const clientMatch = path.match(/\/cliente\/(.+)/);
-    
+
     if (clientMatch) {
       const slug = clientMatch[1];
       setCurrentClientSlug(slug);
@@ -468,14 +468,14 @@ function App() {
       const headers = {
         'Content-Type': 'application/json'
       };
-      
+
       // Add client token if available
       if (clientToken) {
         headers['Authorization'] = `Bearer ${clientToken}`;
       }
-      
+
       const response = await fetch(`${BACKEND_URL}/api/clients/${slug}`, { headers });
-      
+
       if (response.status === 401) {
         // Need password authentication - reset state
         setSelectedClient(null);
@@ -484,7 +484,7 @@ function App() {
         setShowClientLogin(true);
         return;
       }
-      
+
       if (response.ok) {
         const clientData = await response.json();
         setSelectedClient(clientData);
@@ -536,18 +536,18 @@ function App() {
         // For admin view, get transactions for selected client
         url += `?client_slug=${selectedClient.slug}`;
       }
-      
+
       const headers = {
         'Content-Type': 'application/json'
       };
-      
+
       // Add client token if available
       if (clientToken) {
         headers['Authorization'] = `Bearer ${clientToken}`;
       }
-      
+
       const response = await fetch(url, { headers });
-      
+
       if (response.ok) {
         const data = await response.json();
         // Assicuriamoci che sia sempre un array
@@ -576,18 +576,18 @@ function App() {
         // For admin view, get balance for selected client
         url += `?client_slug=${selectedClient.slug}`;
       }
-      
+
       const headers = {
         'Content-Type': 'application/json'
       };
-      
+
       // Add client token if available
       if (clientToken) {
         headers['Authorization'] = `Bearer ${clientToken}`;
       }
-      
+
       const response = await fetch(url, { headers });
-      
+
       if (response.ok) {
         const data = await response.json();
         setBalance(data);
@@ -613,7 +613,7 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setAdminToken(data.token);
         localStorage.setItem('adminToken', data.token);
@@ -641,7 +641,7 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         alert(`✅ ${data.message}\n\nControlla la tua email ildattero.it@gmail.com per la password.`);
         setShowPasswordRecovery(false);
@@ -674,12 +674,12 @@ function App() {
       setFilteredTransactions([]);
       return;
     }
-    
+
     try {
       let filtered = [...transactions];
 
       if (filters.search) {
-        filtered = filtered.filter(t => 
+        filtered = filtered.filter(t =>
           t.description && t.description.toLowerCase().includes(filters.search.toLowerCase())
         );
       }
@@ -693,13 +693,13 @@ function App() {
       }
 
       if (filters.dateFrom) {
-        filtered = filtered.filter(t => 
+        filtered = filtered.filter(t =>
           t.date && new Date(t.date) >= new Date(filters.dateFrom)
         );
       }
 
       if (filters.dateTo) {
-        filtered = filtered.filter(t => 
+        filtered = filtered.filter(t =>
           t.date && new Date(t.date) <= new Date(filters.dateTo + 'T23:59:59')
         );
       }
@@ -715,7 +715,7 @@ function App() {
 
   const handleClientSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!clientFormData.name) {
       alert('Per favore inserisci il nome del cliente');
       return;
@@ -770,7 +770,7 @@ function App() {
 
   const handleEditClientSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!editClientFormData.name) {
       alert('Per favore inserisci il nome del cliente');
       return;
@@ -807,7 +807,7 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!isAdmin) {
       alert('Solo l\'amministratore può inserire transazioni');
       return;
@@ -833,9 +833,9 @@ function App() {
         currency: formData.currency,
         date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString()
       };
-      
+
       console.log('Sending transaction data:', transactionData);
-      
+
       const response = await fetch(`${BACKEND_URL}/api/transactions`, {
         method: 'POST',
         headers: {
@@ -890,7 +890,7 @@ function App() {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!editFormData.amount) {
       alert('Per favore inserisci l\'importo');
       return;
@@ -1017,10 +1017,10 @@ function App() {
   const formatCurrencyWithOriginal = (transaction) => {
     const amount = transaction.amount; // Always in EUR (for calculations)
     const currency = transaction.currency || 'EUR';
-    
+
     // Try both naming conventions: original_amount and originalAmount
     const originalAmount = transaction.original_amount || transaction.originalAmount;
-    
+
     if (originalAmount && currency !== 'EUR') {
       // Show ORIGINAL currency as primary
       const currencySymbols = {
@@ -1028,7 +1028,7 @@ function App() {
         'GBP': '£',
         'EUR': '€'
       };
-      
+
       const symbol = currencySymbols[currency] || currency;
       return `${symbol}${originalAmount.toFixed(2)}`;
     } else {
@@ -1041,11 +1041,11 @@ function App() {
   const getCurrencyTooltip = (transaction) => {
     const amount = transaction.amount;
     const currency = transaction.currency || 'EUR';
-    
+
     // Try both naming conventions
     const originalAmount = transaction.original_amount || transaction.originalAmount;
     const exchangeRate = transaction.exchange_rate || transaction.exchangeRate;
-    
+
     if (originalAmount && currency !== 'EUR' && exchangeRate) {
       return `Convertito in €${amount.toFixed(2)} (tasso: 1 ${currency} = €${exchangeRate.toFixed(4)})`;
     }
@@ -1096,7 +1096,7 @@ function App() {
       adminMode: "🔐 Modalità Amministratore",
       readOnlyMode: "👁️ Modalità Solo Lettura",
       viewOnly: "Visualizzazione solo lettura",
-      
+
       // Buttons
       logout: "Logout",
       loginAdmin: "Login Admin",
@@ -1107,7 +1107,7 @@ function App() {
       downloadPDF: "📄 Scarica PDF",
       sharePDF: "📤 Condividi PDF",
       shareViaWhatsApp: "📱 WhatsApp",
-      shareViaEmail: "📧 Email", 
+      shareViaEmail: "📧 Email",
       shareViaLink: "🔗 Link",
       saveAs: "💾 Salva come",
       sharePDFTitle: "Condividi Estratto Conto",
@@ -1118,7 +1118,7 @@ function App() {
       delete: "🗑️ Elimina",
       save: "Salva",
       cancel: "Annulla",
-      
+
       // Forms
       clientName: "Nome Cliente",
       amount: "Importo (€)",
@@ -1127,35 +1127,35 @@ function App() {
       category: "Metodo di Pagamento",
       dateFrom: "Data inizio",
       dateTo: "Data fine",
-      
+
       // Transaction types
       dare: "Dare (Uscita/Debito)",
       avere: "Avere (Entrata/Credito)",
-      
+
       // Categories
       cash: "Cash",
-      carte: "Carte", 
+      carte: "Carte",
       bonifico: "Bonifico",
       paypal: "PayPal",
       altro: "Altro",
       currency: "Valuta",
-      
+
       // Balance
       totalAvere: "Totale Avere (Incassi)",
       totalDare: "Totale Dare (Pagamenti)",
       netBalance: "Saldo Netto",
-      
+
       // PDF
       pdfTitle: "📄 Scarica Estratto Conto PDF",
       pdfSubtitle: "Seleziona il periodo per l'estratto conto (lascia vuoto per tutte le transazioni)",
-      
+
       // Messages
       loginSuccess: "Login amministratore riuscito!",
       wrongPassword: "Password errata. Solo l'amministratore può inserire dati.",
       logoutMessage: "Logout effettuato. Ora sei in modalità solo lettura.",
       pdfSuccess: "✅ PDF scaricato con successo!",
       pdfError: "❌ Errore nel download del PDF. Riprova più tardi.",
-      
+
       // Transactions
       transactionHistory: "Cronologia e Filtri",
       noTransactions: "Nessuna transazione trovata",
@@ -1163,7 +1163,7 @@ function App() {
       totalTransactions: "Totale transazioni",
       clientManagement: "👥 Gestione Clienti",
       resetLink: "🔄 Reset Link",
-      
+
       // AI Insights
       smartInsights: "🧠 Insights Intelligenti",
       priority: "Prioritari",
@@ -1182,7 +1182,7 @@ function App() {
       decrease: "diminuzione",
       vsPreviousMonth: "vs mese scorso",
       ofExpenses: "delle spese",
-      
+
       // Analytics
       analytics: "📊 Analytics",
       monthlyTrend: "📈 Trend Mensile",
@@ -1193,9 +1193,9 @@ function App() {
       title: "Accounting",
       subtitle: "Professional Multi-Client System",
       adminMode: "🔐 Administrator Mode",
-      readOnlyMode: "👁️ Read-Only Mode", 
+      readOnlyMode: "👁️ Read-Only Mode",
       viewOnly: "Read-only view",
-      
+
       // Buttons
       logout: "Logout",
       loginAdmin: "Admin Login",
@@ -1207,7 +1207,7 @@ function App() {
       sharePDF: "📤 Share PDF",
       shareViaWhatsApp: "📱 WhatsApp",
       shareViaEmail: "📧 Email",
-      shareViaLink: "🔗 Link", 
+      shareViaLink: "🔗 Link",
       saveAs: "💾 Save as",
       sharePDFTitle: "Share Account Statement",
       selectShareMethod: "Choose how to share:",
@@ -1217,7 +1217,7 @@ function App() {
       delete: "🗑️ Delete",
       save: "Save",
       cancel: "Cancel",
-      
+
       // Forms
       clientName: "Client Name",
       amount: "Amount (€)",
@@ -1226,35 +1226,35 @@ function App() {
       category: "Payment Method",
       dateFrom: "Start date",
       dateTo: "End date",
-      
+
       // Transaction types
       dare: "Debit (Expense/Debt)",
       avere: "Credit (Income/Asset)",
-      
+
       // Categories  
       cash: "Cash",
       carte: "Cards",
-      bonifico: "Bank Transfer", 
+      bonifico: "Bank Transfer",
       paypal: "PayPal",
       altro: "Other",
       currency: "Currency",
-      
+
       // Balance
       totalAvere: "Total Credit (Assets)",
       totalDare: "Total Debit (Expenses)",
       netBalance: "Net Balance",
-      
+
       // PDF
       pdfTitle: "📄 Download Account Statement PDF",
       pdfSubtitle: "Select period for the statement (leave empty for all transactions)",
-      
+
       // Messages
       loginSuccess: "Administrator login successful!",
       wrongPassword: "Wrong password. Only administrator can enter data.",
       logoutMessage: "Logout completed. You are now in read-only mode.",
       pdfSuccess: "✅ PDF downloaded successfully!",
       pdfError: "❌ Error downloading PDF. Please try again later.",
-      
+
       // Transactions
       transactionHistory: "Transaction Register",
       noTransactions: "No transactions found",
@@ -1262,7 +1262,7 @@ function App() {
       totalTransactions: "Total transactions",
       clientManagement: "👥 Client Management",
       resetLink: "🔄 Reset Link",
-      
+
       // AI Insights
       smartInsights: "🧠 Smart Insights",
       priority: "Priority",
@@ -1281,7 +1281,7 @@ function App() {
       decrease: "decrease",
       vsPreviousMonth: "vs previous month",
       ofExpenses: "of expenses",
-      
+
       // Analytics
       analytics: "📊 Analytics",
       monthlyTrend: "📈 Monthly Trend",
@@ -1294,9 +1294,9 @@ function App() {
   // Smart translation for transaction descriptions and categories
   const translateText = (text) => {
     if (language === 'it' || !text) return text;
-    
+
     let translated = text;
-    
+
     // Common transaction terms - case insensitive
     const termTranslations = {
       'Bonifico': 'Bank Transfer',
@@ -1308,7 +1308,7 @@ function App() {
       'dal': 'from',
       'al': 'to',
       'Avere': 'Credit',
-      'avere': 'Credit', 
+      'avere': 'Credit',
       'Dare': 'Debit',
       'dare': 'Debit',
       'Cash': 'Cash',
@@ -1320,13 +1320,13 @@ function App() {
       'Altro': 'Other',
       'altro': 'Other'
     };
-    
+
     // Replace each term
     Object.entries(termTranslations).forEach(([italian, english]) => {
       // Use global flag and word boundaries
       translated = translated.replace(new RegExp(italian, 'g'), english);
     });
-    
+
     return translated;
   };
 
@@ -1375,21 +1375,21 @@ function App() {
     try {
       let url = `${BACKEND_URL}/api/clients/${clientSlug}/pdf`;
       const params = new URLSearchParams();
-      
+
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        
+
         let filename = `estratto_conto_${clientSlug}`;
         if (dateFrom && dateTo) {
           filename += `_${dateFrom}_${dateTo}`;
@@ -1399,7 +1399,7 @@ function App() {
           filename += `_al_${dateTo}`;
         }
         filename += `_${new Date().toISOString().split('T')[0]}.pdf`;
-        
+
         a.download = filename;
         document.body.appendChild(a);
         a.click();
@@ -1419,10 +1419,10 @@ function App() {
     try {
       let url = `${BACKEND_URL}/api/clients/${currentClientSlug}/pdf`;
       const params = new URLSearchParams();
-      
+
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
@@ -1454,7 +1454,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date_from: '', date_to: '' })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const shareUrl = `${window.location.origin}${data.share_url}`;
@@ -1507,7 +1507,7 @@ function App() {
       clientSlug = selectedClient.slug;
     }
     // Memorizza il client slug per il download
-    setPdfDateFilters(prev => ({...prev, targetClientSlug: clientSlug}));
+    setPdfDateFilters(prev => ({ ...prev, targetClientSlug: clientSlug }));
   };
 
   const handlePDFDownloadConfirm = () => {
@@ -1530,24 +1530,24 @@ function App() {
 
         if (response.ok) {
           const updatedClient = await response.json();
-          
+
           // Clear any cached tokens for the old slug
           const oldSlug = client.slug;
           localStorage.removeItem(`clientToken_${oldSlug}`);
-          
+
           // Update the client in the local state
-          setClients(prevClients => 
-            prevClients.map(c => 
-              c.id === client.id 
+          setClients(prevClients =>
+            prevClients.map(c =>
+              c.id === client.id
                 ? { ...c, slug: updatedClient.slug }
                 : c
             )
           );
-          
+
           // Show new link
           const newLink = `${window.location.origin}/cliente/${updatedClient.slug}`;
           alert(`✅ Link resettato con successo!\n\nNuovo link:\n${newLink}\n\n⚠️ IMPORTANTE: Il vecchio link non è più accessibile.\nEventuali sessioni salvate sono state cancellate.`);
-          
+
         } else {
           throw new Error('Errore nel reset del link');
         }
@@ -1637,7 +1637,7 @@ function App() {
       alert('La password deve essere di almeno 6 caratteri');
       return;
     }
-    
+
     try {
       await handleSetClientPassword(passwordModalClient.id, clientPassword);
       // Chiudi il modal solo dopo che l'operazione è completata con successo
@@ -1662,14 +1662,14 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Store client token
         setClientToken(data.token);
         localStorage.setItem('clientToken', data.token);
         setShowClientLogin(false);
         setClientLoginError('');
-        
+
         // Check if this is first login
         if (data.first_login) {
           // Show password change modal
@@ -1679,21 +1679,21 @@ function App() {
             confirm_password: ''
           });
           setShowPasswordChange(true);
-          
+
           // Don't load client data yet - wait for password change
           return true;
         }
-        
+
         // Reset state before loading new data
         setTransactions([]);
         setFilteredTransactions([]);
         setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
-        
+
         // Now fetch client data with proper authentication - wait for completion
         setTimeout(async () => {
           await fetchClientData(clientSlug);
         }, 100); // Small delay to ensure state is reset
-        
+
         return true;
       } else {
         setClientLoginError(data.message);
@@ -1709,17 +1709,17 @@ function App() {
   // Handle client password change
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     if (passwordChangeData.new_password !== passwordChangeData.confirm_password) {
       setPasswordChangeError('Le password non corrispondono');
       return;
     }
-    
+
     if (passwordChangeData.new_password.length < 6) {
       setPasswordChangeError('La password deve essere di almeno 6 caratteri');
       return;
     }
-    
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/clients/${currentClientSlug}/change-password`, {
         method: 'POST',
@@ -1731,9 +1731,9 @@ function App() {
           new_password: passwordChangeData.new_password
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setShowPasswordChange(false);
         setPasswordChangeError('');
@@ -1742,18 +1742,18 @@ function App() {
           new_password: '',
           confirm_password: ''
         });
-        
+
         alert('🎉 Password cambiata con successo!\n\nDa ora puoi usare la tua nuova password personalizzata per accedere.');
-        
+
         // Now load client data
         setTransactions([]);
         setFilteredTransactions([]);
         setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
-        
+
         setTimeout(async () => {
           await fetchClientData(currentClientSlug);
         }, 100);
-        
+
       } else {
         setPasswordChangeError(data.message || 'Errore nel cambio password');
       }
@@ -1787,7 +1787,7 @@ function App() {
               {t('title')}
             </h1>
             <p className="text-gray-600">{t('subtitle')}</p>
-            
+
             {/* Language Toggle */}
             <div className="mt-4">
               <button
@@ -1797,7 +1797,7 @@ function App() {
                 {language === 'it' ? '🇬🇧 English' : '🇮🇹 Italiano'}
               </button>
             </div>
-            
+
             {/* Admin Status */}
             <div className="mt-4">
               {isAdmin ? (
@@ -1852,7 +1852,7 @@ function App() {
                     Login
                   </button>
                   <button
-                    onClick={() => {setShowLogin(false); setLoginPassword('');}}
+                    onClick={() => { setShowLogin(false); setLoginPassword(''); }}
                     className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                   >
                     Annulla
@@ -1936,7 +1936,7 @@ function App() {
                       <input
                         type="text"
                         value={clientFormData.name}
-                        onChange={(e) => setClientFormData({...clientFormData, name: e.target.value})}
+                        onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="Es: Mario Rossi, Azienda ABC, etc."
                       />
@@ -1974,7 +1974,7 @@ function App() {
                         </label>
                         <select
                           value={formData.type}
-                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="dare">Dare (Uscita/Debito)</option>
@@ -1989,7 +1989,7 @@ function App() {
                           type="number"
                           step="0.01"
                           value={formData.amount}
-                          onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="0.00"
                         />
@@ -2005,7 +2005,7 @@ function App() {
                         </label>
                         <select
                           value={formData.currency}
-                          onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="EUR">🇪🇺 EUR (Euro)</option>
@@ -2024,7 +2024,7 @@ function App() {
                       <input
                         type="text"
                         value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Descrizione della transazione (opzionale)"
                       />
@@ -2035,7 +2035,7 @@ function App() {
                       </label>
                       <select
                         value={formData.category}
-                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {categories.map((category) => (
@@ -2052,7 +2052,7 @@ function App() {
                       <input
                         type="date"
                         value={formData.date}
-                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <div className="text-xs text-gray-500 mt-1">
@@ -2063,7 +2063,7 @@ function App() {
                       <button
                         type="submit"
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                        onClick={() => setFormData({...formData, client_id: selectedClient.id})}
+                        onClick={() => setFormData({ ...formData, client_id: selectedClient.id })}
                       >
                         💰 Salva Transazione
                       </button>
@@ -2085,7 +2085,7 @@ function App() {
                   <h2 className="text-2xl font-bold text-orange-800 mb-4">✏️ Modifica Transazione</h2>
                   <div className="bg-orange-50 p-3 rounded-lg mb-4">
                     <p className="text-orange-700 text-sm">
-                      <strong>Cliente:</strong> {getClientName(editingTransaction.client_id)} | 
+                      <strong>Cliente:</strong> {getClientName(editingTransaction.client_id)} |
                       <strong> Originale:</strong> {editingTransaction.description} - {formatCurrency(editingTransaction.amount)}
                     </p>
                   </div>
@@ -2097,7 +2097,7 @@ function App() {
                         </label>
                         <select
                           value={editFormData.type}
-                          onChange={(e) => setEditFormData({...editFormData, type: e.target.value})}
+                          onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           <option value="dare">Dare (Uscita/Debito)</option>
@@ -2112,7 +2112,7 @@ function App() {
                           type="number"
                           step="0.01"
                           value={editFormData.amount}
-                          onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
+                          onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                           placeholder="0.00"
                         />
@@ -2128,7 +2128,7 @@ function App() {
                         </label>
                         <select
                           value={editFormData.currency}
-                          onChange={(e) => setEditFormData({...editFormData, currency: e.target.value})}
+                          onChange={(e) => setEditFormData({ ...editFormData, currency: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           <option value="EUR">🇪🇺 EUR (Euro)</option>
@@ -2147,7 +2147,7 @@ function App() {
                       <input
                         type="text"
                         value={editFormData.description}
-                        onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                        onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="Descrizione della transazione (opzionale)"
                       />
@@ -2159,7 +2159,7 @@ function App() {
                       <input
                         type="date"
                         value={editFormData.date}
-                        onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                        onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -2169,7 +2169,7 @@ function App() {
                       </label>
                       <select
                         value={editFormData.category}
-                        onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
+                        onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
                         {categories.map((category) => (
@@ -2219,11 +2219,10 @@ function App() {
                 {clients.map((client) => (
                   <div
                     key={client.id}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      selectedClient?.id === client.id 
-                        ? 'border-blue-500 bg-blue-50' 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${selectedClient?.id === client.id
+                        ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-blue-300'
-                    }`}
+                      }`}
                     onClick={() => setSelectedClient(client)}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -2294,7 +2293,7 @@ function App() {
                         🔄 Reset
                       </button>
                     </div>
-                    
+
                     {/* Password Management Buttons */}
                     {isAdmin && (
                       <div className="mt-2 flex gap-1">
@@ -2308,7 +2307,7 @@ function App() {
                         >
                           🔒 {client.has_password ? 'Modifica' : 'Aggiungi'} Password
                         </button>
-                        
+
                         {client.has_password && (
                           <button
                             onClick={(e) => {
@@ -2337,7 +2336,7 @@ function App() {
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 📊 Transazioni - {selectedClient.name}
               </h2>
-              
+
               {/* Balance for selected client */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2371,11 +2370,10 @@ function App() {
                   {transactions && transactions.slice(0, 10).map((transaction) => (
                     <div
                       key={transaction.id}
-                      className={`p-3 rounded-lg border-l-4 ${
-                        transaction.type === 'avere' 
-                          ? 'border-green-500 bg-green-50' 
+                      className={`p-3 rounded-lg border-l-4 ${transaction.type === 'avere'
+                          ? 'border-green-500 bg-green-50'
                           : 'border-red-500 bg-red-50'
-                      }`}
+                        }`}
                     >
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -2395,10 +2393,9 @@ function App() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div 
-                            className={`font-bold ${
-                              transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
-                            }`}
+                          <div
+                            className={`font-bold ${transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                              }`}
                             title={getCurrencyTooltip(transaction)}
                           >
                             {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
@@ -2444,7 +2441,7 @@ function App() {
               <p className="text-gray-600 mb-4">
                 {t('pdfSubtitle')}
               </p>
-              
+
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2453,7 +2450,7 @@ function App() {
                   <input
                     type="date"
                     value={pdfDateFilters.dateFrom}
-                    onChange={(e) => setPdfDateFilters({...pdfDateFilters, dateFrom: e.target.value})}
+                    onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateFrom: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
@@ -2464,12 +2461,12 @@ function App() {
                   <input
                     type="date"
                     value={pdfDateFilters.dateTo}
-                    onChange={(e) => setPdfDateFilters({...pdfDateFilters, dateTo: e.target.value})}
+                    onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateTo: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <button
                   onClick={handlePDFDownloadConfirm}
@@ -2491,106 +2488,106 @@ function App() {
           </div>
         )}
 
-          {/* Password Modal */}
-          {showPasswordModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">🔒 Imposta Password Cliente</h2>
-                <p className="text-gray-600 mb-4">
-                  Cliente: <strong>{passwordModalClient?.name}</strong>
-                </p>
-                <p className="text-gray-600 mb-4">
-                  La password proteggerà l'accesso al link del cliente. Minimo 6 caratteri.
-                </p>
-                <form onSubmit={handlePasswordSubmit}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password Cliente
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={clientPassword}
-                        onChange={(e) => setClientPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
-                        placeholder="Inserisci password (min 6 caratteri)"
-                        minLength="6"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(clientPassword);
-                            // Feedback visivo temporaneo
-                            const btn = document.querySelector('[title="Copia password"]');
-                            const originalText = btn.textContent;
-                            btn.textContent = '✅';
-                            setTimeout(() => {
-                              btn.textContent = originalText;
-                            }, 1000);
-                          } catch (err) {
-                            // Fallback per browser che non supportano clipboard API
-                            const textArea = document.createElement('textarea');
-                            textArea.value = clientPassword;
-                            document.body.appendChild(textArea);
-                            textArea.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(textArea);
-                            
-                            // Feedback visivo
-                            const btn = document.querySelector('[title="Copia password"]');
-                            const originalText = btn.textContent;
-                            btn.textContent = '✅';
-                            setTimeout(() => {
-                              btn.textContent = originalText;
-                            }, 1000);
-                          }
-                        }}
-                        className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-                        title="Copia password"
-                      >
-                        📋
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
+        {/* Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-96">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">🔒 Imposta Password Cliente</h2>
+              <p className="text-gray-600 mb-4">
+                Cliente: <strong>{passwordModalClient?.name}</strong>
+              </p>
+              <p className="text-gray-600 mb-4">
+                La password proteggerà l'accesso al link del cliente. Minimo 6 caratteri.
+              </p>
+              <form onSubmit={handlePasswordSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password Cliente
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={clientPassword}
+                      onChange={(e) => setClientPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                      placeholder="Inserisci password (min 6 caratteri)"
+                      minLength="6"
+                      required
+                    />
                     <button
                       type="button"
-                      onClick={generateRandomPassword}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mb-2"
-                    >
-                      🎲 Genera Password Casuale
-                    </button>
-                    <p className="text-xs text-gray-500 text-center">
-                      Genera una password di 8 caratteri (lettere + numeri)
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <button
-                      type="submit"
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-                    >
-                      🔒 Imposta Password
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowPasswordModal(false);
-                        setPasswordModalClient(null);
-                        setClientPassword('');
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(clientPassword);
+                          // Feedback visivo temporaneo
+                          const btn = document.querySelector('[title="Copia password"]');
+                          const originalText = btn.textContent;
+                          btn.textContent = '✅';
+                          setTimeout(() => {
+                            btn.textContent = originalText;
+                          }, 1000);
+                        } catch (err) {
+                          // Fallback per browser che non supportano clipboard API
+                          const textArea = document.createElement('textarea');
+                          textArea.value = clientPassword;
+                          document.body.appendChild(textArea);
+                          textArea.select();
+                          document.execCommand('copy');
+                          document.body.removeChild(textArea);
+
+                          // Feedback visivo
+                          const btn = document.querySelector('[title="Copia password"]');
+                          const originalText = btn.textContent;
+                          btn.textContent = '✅';
+                          setTimeout(() => {
+                            btn.textContent = originalText;
+                          }, 1000);
+                        }
                       }}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                      title="Copia password"
                     >
-                      Annulla
+                      📋
                     </button>
                   </div>
-                </form>
-              </div>
+                </div>
+
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={generateRandomPassword}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mb-2"
+                  >
+                    🎲 Genera Password Casuale
+                  </button>
+                  <p className="text-xs text-gray-500 text-center">
+                    Genera una password di 8 caratteri (lettere + numeri)
+                  </p>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    🔒 Imposta Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setPasswordModalClient(null);
+                      setClientPassword('');
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Annulla
+                  </button>
+                </div>
+              </form>
             </div>
-          )}
+          </div>
+        )}
       </div>
     );
   }
@@ -2612,7 +2609,7 @@ function App() {
               Questo cliente è protetto da password. Inserisci la password per accedere.
             </p>
           </div>
-          
+
           <form onSubmit={(e) => {
             e.preventDefault();
             handleClientLogin(currentClientSlug, clientLoginPassword);
@@ -2627,13 +2624,13 @@ function App() {
                 required
               />
             </div>
-            
+
             {clientLoginError && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-700 text-sm">{clientLoginError}</p>
               </div>
             )}
-            
+
             <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200"
@@ -2641,7 +2638,7 @@ function App() {
               🔓 Accedi
             </button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-sm mb-2">
               Non conosci la password? Contatta l'amministratore.
@@ -2675,11 +2672,11 @@ function App() {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">🎉 Primo Accesso!</h2>
             <p className="text-gray-600 text-sm">
-              Benvenuto! Questa è la tua password temporanea.<br/>
+              Benvenuto! Questa è la tua password temporanea.<br />
               Per sicurezza, ti consigliamo di cambiarla con una personalizzata.
             </p>
           </div>
-          
+
           <form onSubmit={handlePasswordChange}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2692,7 +2689,7 @@ function App() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nuova Password (min 6 caratteri)
@@ -2700,14 +2697,14 @@ function App() {
               <input
                 type="password"
                 value={passwordChangeData.new_password}
-                onChange={(e) => setPasswordChangeData({...passwordChangeData, new_password: e.target.value})}
+                onChange={(e) => setPasswordChangeData({ ...passwordChangeData, new_password: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Inserisci nuova password..."
                 minLength="6"
                 required
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Conferma Nuova Password
@@ -2715,20 +2712,20 @@ function App() {
               <input
                 type="password"
                 value={passwordChangeData.confirm_password}
-                onChange={(e) => setPasswordChangeData({...passwordChangeData, confirm_password: e.target.value})}
+                onChange={(e) => setPasswordChangeData({ ...passwordChangeData, confirm_password: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Conferma nuova password..."
                 minLength="6"
                 required
               />
             </div>
-            
+
             {passwordChangeError && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-700 text-sm">{passwordChangeError}</p>
               </div>
             )}
-            
+
             <div className="flex gap-3">
               <button
                 type="submit"
@@ -2744,7 +2741,7 @@ function App() {
                   setTransactions([]);
                   setFilteredTransactions([]);
                   setBalance({ balance: 0, total_avere: 0, total_dare: 0 });
-                  
+
                   setTimeout(async () => {
                     await fetchClientData(currentClientSlug);
                   }, 100);
@@ -2754,7 +2751,7 @@ function App() {
                 🔄 Continua
               </button>
             </div>
-            
+
             <div className="mt-4 text-center">
               <p className="text-gray-500 text-xs">
                 Puoi continuare con la password attuale e cambiarla successivamente.
@@ -2787,7 +2784,7 @@ function App() {
             <p className="text-xl text-blue-600 font-medium">📊 {selectedClient.name}</p>
           )}
           <p className="text-gray-600">{t('viewOnly')}</p>
-          
+
           {/* Language Toggle */}
           <div className="mt-4">
             <button
@@ -2832,7 +2829,7 @@ function App() {
           >
             {showFilters ? t('hideFilters') : t('filters')}
           </button>
-          
+
           <button
             onClick={() => setShowPDFModal(true)}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
@@ -2842,6 +2839,9 @@ function App() {
         </div>
 
         {/* PDF Date Selection Modal */}
+        {showFilters && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Cronologia e Filtri</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2850,7 +2850,7 @@ function App() {
                 <input
                   type="text"
                   value={filters.search}
-                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Cerca..."
                 />
@@ -2861,7 +2861,7 @@ function App() {
                 </label>
                 <select
                   value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i metodi</option>
@@ -2878,7 +2878,7 @@ function App() {
                 </label>
                 <select
                   value={filters.type}
-                  onChange={(e) => setFilters({...filters, type: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i tipi</option>
@@ -2895,7 +2895,7 @@ function App() {
                 <input
                   type="date"
                   value={filters.dateFrom}
-                  onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -2906,7 +2906,7 @@ function App() {
                 <input
                   type="date"
                   value={filters.dateTo}
-                  onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -2951,20 +2951,18 @@ function App() {
               {(showFilters ? filteredTransactions : transactions).map((transaction) => (
                 <div
                   key={transaction.id}
-                  className={`p-4 rounded-xl border-l-4 ${
-                    transaction.type === 'avere' ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'
-                  }`}
+                  className={`p-4 rounded-xl border-l-4 ${transaction.type === 'avere' ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'
+                    }`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="text-2xl">{getCategoryIcon(transaction.category)}</span>
                         <span className="font-semibold text-gray-800">{transaction.category}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.type === 'avere' 
-                            ? 'bg-green-100 text-green-800' 
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${transaction.type === 'avere'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {transaction.type === 'avere' ? 'Avere' : 'Dare'}
                         </span>
                       </div>
@@ -2973,16 +2971,15 @@ function App() {
                         <span>📅 {formatDate(transaction.date)}</span>
                         {transaction.currency && transaction.currency !== 'EUR' && (
                           <span className="text-blue-600">
-                            💱 {transaction.currency} {transaction.original_amount?.toFixed(2)} 
+                            💱 {transaction.currency} {transaction.original_amount?.toFixed(2)}
                             {transaction.exchange_rate && ` (${transaction.exchange_rate})`}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-xl font-bold ${
-                        transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <div className={`text-xl font-bold ${transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                        }`}>
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
                     </div>
@@ -3006,12 +3003,11 @@ function App() {
               {notifications.slice(0, 6).map((notification, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-xl border-l-4 ${
-                    notification.type === 'success' ? 'bg-green-50 border-green-500' :
-                    notification.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
-                    notification.type === 'danger' ? 'bg-red-50 border-red-500' :
-                    'bg-blue-50 border-blue-500'
-                  }`}
+                  className={`p-4 rounded-xl border-l-4 ${notification.type === 'success' ? 'bg-green-50 border-green-500' :
+                      notification.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
+                        notification.type === 'danger' ? 'bg-red-50 border-red-500' :
+                          'bg-blue-50 border-blue-500'
+                    }`}
                 >
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl">{notification.icon}</span>
@@ -3040,7 +3036,7 @@ function App() {
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('monthlyTrend')}</h3>
                 <div style={{ height: '300px' }}>
-                  <Line 
+                  <Line
                     data={getMonthlyTrendData(transactions)}
                     options={{
                       responsive: true,
@@ -3057,7 +3053,7 @@ function App() {
                         y: {
                           beginAtZero: true,
                           ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                               return '€ ' + value.toFixed(0);
                             }
                           }
@@ -3067,14 +3063,14 @@ function App() {
                   />
                 </div>
               </div>
-              
+
               {/* Category Pie Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Income Pie Chart */}
                 <div className="bg-green-50 rounded-xl p-4">
                   <h3 className="text-lg font-semibold text-green-700 mb-4">💰 Entrate per Categoria</h3>
                   <div style={{ height: '250px' }}>
-                    <Pie 
+                    <Pie
                       data={getIncomePieData(transactions)}
                       options={{
                         responsive: true,
@@ -3092,7 +3088,7 @@ function App() {
                           },
                           tooltip: {
                             callbacks: {
-                              label: function(context) {
+                              label: function (context) {
                                 const label = context.label || '';
                                 const value = context.raw || 0;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -3106,12 +3102,12 @@ function App() {
                     />
                   </div>
                 </div>
-                
+
                 {/* Expenses Pie Chart */}
                 <div className="bg-red-50 rounded-xl p-4">
                   <h3 className="text-lg font-semibold text-red-700 mb-4">💸 Uscite per Categoria</h3>
                   <div style={{ height: '250px' }}>
-                    <Pie 
+                    <Pie
                       data={getCategoryPieData(transactions)}
                       options={{
                         responsive: true,
@@ -3129,7 +3125,7 @@ function App() {
                           },
                           tooltip: {
                             callbacks: {
-                              label: function(context) {
+                              label: function (context) {
                                 const label = context.label || '';
                                 const value = context.raw || 0;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -3160,7 +3156,7 @@ function App() {
                 <input
                   type="text"
                   value={filters.search}
-                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Cerca..."
                 />
@@ -3171,7 +3167,7 @@ function App() {
                 </label>
                 <select
                   value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i metodi</option>
@@ -3188,7 +3184,7 @@ function App() {
                 </label>
                 <select
                   value={filters.type}
-                  onChange={(e) => setFilters({...filters, type: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Tutti i tipi</option>
@@ -3205,7 +3201,7 @@ function App() {
                 <input
                   type="date"
                   value={filters.dateFrom}
-                  onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -3216,7 +3212,7 @@ function App() {
                 <input
                   type="date"
                   value={filters.dateTo}
-                  onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -3265,11 +3261,10 @@ function App() {
               {(showFilters ? filteredTransactions : transactions).map((transaction) => (
                 <div
                   key={transaction.id}
-                  className={`p-4 rounded-lg border-l-4 ${
-                    transaction.type === 'avere' 
-                      ? 'border-green-500 bg-green-50' 
+                  className={`p-4 rounded-lg border-l-4 ${transaction.type === 'avere'
+                      ? 'border-green-500 bg-green-50'
                       : 'border-red-500 bg-red-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -3291,10 +3286,9 @@ function App() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div 
-                        className={`text-xl font-bold ${
-                          transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
-                        }`}
+                      <div
+                        className={`text-xl font-bold ${transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                          }`}
                         title={getCurrencyTooltip(transaction)}
                       >
                         {transaction.type === 'avere' ? '+' : '-'}{formatCurrencyWithOriginal(transaction)}
@@ -3315,7 +3309,7 @@ function App() {
               <p className="text-gray-600 mb-4">
                 {t('pdfSubtitle')}
               </p>
-              
+
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -3324,7 +3318,7 @@ function App() {
                   <input
                     type="date"
                     value={pdfDateFilters.dateFrom}
-                    onChange={(e) => setPdfDateFilters({...pdfDateFilters, dateFrom: e.target.value})}
+                    onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateFrom: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
@@ -3335,12 +3329,12 @@ function App() {
                   <input
                     type="date"
                     value={pdfDateFilters.dateTo}
-                    onChange={(e) => setPdfDateFilters({...pdfDateFilters, dateTo: e.target.value})}
+                    onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateTo: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <button
                   onClick={handlePDFDownloadConfirm}
@@ -3367,7 +3361,7 @@ function App() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('sharePDFTitle')}</h2>
-              
+
               {generatedLink ? (
                 <div className="mb-6">
                   <p className="text-gray-600 mb-4">Link generato:</p>
@@ -3381,7 +3375,7 @@ function App() {
               ) : (
                 <p className="text-gray-600 mb-6">{t('selectShareMethod')}</p>
               )}
-              
+
               <div className="space-y-4">
                 <button
                   onClick={sharePDFViaWhatsApp}
@@ -3390,7 +3384,7 @@ function App() {
                   <span className="text-2xl">📱</span>
                   <span className="font-semibold">{t('shareViaWhatsApp')}</span>
                 </button>
-                
+
                 <button
                   onClick={sharePDFViaEmail}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl flex items-center space-x-3"
@@ -3398,7 +3392,7 @@ function App() {
                   <span className="text-2xl">📧</span>
                   <span className="font-semibold">{t('shareViaEmail')}</span>
                 </button>
-                
+
                 <button
                   onClick={copyPDFLink}
                   className="w-full bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl flex items-center space-x-3"
@@ -3406,7 +3400,7 @@ function App() {
                   <span className="text-2xl">🔗</span>
                   <span className="font-semibold">{t('copyLink')}</span>
                 </button>
-                
+
                 <button
                   onClick={() => setShowPDFModal(true)}
                   className="w-full bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl flex items-center space-x-3"
@@ -3415,7 +3409,7 @@ function App() {
                   <span className="font-semibold">{t('downloadPDF')}</span>
                 </button>
               </div>
-              
+
               <button
                 onClick={() => {
                   setShowPDFShareModal(false);
@@ -3438,13 +3432,13 @@ function App() {
             className="fixed bottom-20 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50"
             title="Contatta assistenza su WhatsApp"
           >
-            <svg 
-              width="28" 
-              height="28" 
-              viewBox="0 0 24 24" 
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
               fill="currentColor"
             >
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.525 3.488"/>
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.525 3.488" />
             </svg>
           </a>
         )}
