@@ -4269,7 +4269,12 @@ return (
               <input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                onChange={(e) => {
+                  const newFilters = { ...filters, dateFrom: e.target.value };
+                  setFilters(newFilters);
+                  // Apply filters immediately when date changes
+                  console.log('🔄 Date From changed to:', e.target.value);
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
