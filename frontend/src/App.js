@@ -922,7 +922,11 @@ function App() {
         // Assicuriamoci che sia sempre un array
         const transactionsArray = Array.isArray(data) ? data : [];
         setTransactions(transactionsArray);
-        setFilteredTransactions(transactionsArray);
+        // DON'T reset filteredTransactions - let applyFilters handle it
+        // Only set initial filteredTransactions if it's empty
+        if (filteredTransactions.length === 0) {
+          setFilteredTransactions(transactionsArray);
+        }
       } else {
         // In caso di errore, imposta array vuoto
         setTransactions([]);
