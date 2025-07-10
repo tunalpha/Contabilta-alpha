@@ -3204,6 +3204,17 @@ function App() {
               >
                 📱 QR
               </button>
+              <button
+                onClick={toggleSound}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  soundEnabled 
+                    ? 'bg-green-500 hover:bg-green-600 text-white' 
+                    : 'bg-gray-400 hover:bg-gray-500 text-white'
+                }`}
+                title={`Suoni: ${soundEnabled ? 'Attivi' : 'Disattivi'}`}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
             </div>
           </div>
         </div>
