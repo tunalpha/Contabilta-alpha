@@ -2249,7 +2249,7 @@ function App() {
           )}
 
           {/* Clients List */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8" style={{backgroundColor: '#ffffff !important'}}>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('clientManagement')}</h2>
             {clients.length === 0 ? (
               <div className="text-center py-8">
