@@ -3146,6 +3146,13 @@ function App() {
                   ↺ Reset
                 </button>
               )}
+              <button
+                onClick={generateQRCode}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                title="Genera QR Code per accesso rapido"
+              >
+                📱 QR
+              </button>
             </div>
           </div>
         </div>
