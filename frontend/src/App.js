@@ -1262,6 +1262,7 @@ function App() {
 
       // Transactions
       transactionHistory: "Transaction Register",
+      transactionChronology: "Transaction History",
       noTransactions: "No transactions found",
       noTransactionsFiltered: "No transactions found with selected filters",
       totalTransactions: "Total transactions",
