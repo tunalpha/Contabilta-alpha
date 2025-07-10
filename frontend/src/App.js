@@ -1774,7 +1774,7 @@ function App() {
   // ADMIN DASHBOARD VIEW
   if (currentView === 'admin') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{backgroundColor: '#f3f4f6 !important'}}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-8">
