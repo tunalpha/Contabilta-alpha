@@ -3141,9 +3141,9 @@ function App() {
               {transactions.length > 1 && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-fade-in-delay hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-800">📈 Evoluzione del Tuo Saldo</h3>
+                    <h3 className="text-xl font-bold text-gray-800">{t('balanceEvolution')}</h3>
                     <span className="text-sm text-gray-500">
-                      {transactions.length} transazioni
+                      {transactions.length} {t('transactionsCount')}
                     </span>
                   </div>
                   <div className="h-64">
@@ -3151,7 +3151,7 @@ function App() {
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600">
-                      Grafico dell'andamento del tuo saldo nel tempo
+                      {t('balanceEvolutionDesc')}
                     </p>
                   </div>
                 </div>
