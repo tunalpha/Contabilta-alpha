@@ -2800,16 +2800,18 @@ function App() {
                       >
                         📄 PDF
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleResetClientLink(client);
-                        }}
-                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
-                        title="Reset link di accesso"
-                      >
-                        🔄 Reset
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleResetClientLink(client);
+                          }}
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs py-1 px-2 rounded transition-colors duration-200"
+                          title="Reset link di accesso"
+                        >
+                          🔄 Reset
+                        </button>
+                      )}
                     </div>
 
                     {/* Password Management Buttons */}
