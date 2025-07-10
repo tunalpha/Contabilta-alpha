@@ -1053,9 +1053,14 @@ function App() {
       }
 
       if (filters.dateFrom) {
-        filtered = filtered.filter(t =>
-          t.date && new Date(t.date) >= new Date(filters.dateFrom)
-        );
+        console.log('🔍 BEFORE dateFrom filter - transactions:', filtered.map(t => ({id: t.id, date: t.date, description: t.description})));
+        filtered = filtered.filter(t => {
+          if (!t.date) return false;
+          const transactionDate = new Date(t.date);
+          const filterDate = new Date(filters.dateFrom);
+          console.log('📅 Comparing:', t.date, 'vs', filters.dateFrom, '|', transactionDate, '>=', filterDate, '=', transactionDate >= filterDate);
+          return transactionDate >= filterDate;
+        });
         console.log('📅 After dateFrom filter:', filtered.length, 'dateFrom:', filters.dateFrom);
       }
 
