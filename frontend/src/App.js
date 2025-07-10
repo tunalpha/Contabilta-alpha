@@ -4033,4 +4033,524 @@ function App() {
   );
 }
 
+// CLIENT VIEW - FULLY IMPLEMENTED
+return (
+  <div className={`min-h-screen ${themeClasses.bg} ${isDarkMode ? 'bg-gray-900' : ''}`}>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="mb-4">
+          <div className="mx-auto h-24 w-24 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg border-4 border-white">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">📊</div>
+              <div className="text-xs font-bold text-white tracking-wider">ALPHA</div>
+            </div>
+          </div>
+        </div>
+        <h1 className={`text-4xl font-bold ${themeClasses.text} mb-2`}>
+          {t('title')}
+        </h1>
+        <p className="text-gray-600">{t('subtitle')}</p>
+        
+        {/* Client Name */}
+        {selectedClient && (
+          <p className="text-xl text-blue-600 font-medium">📊 {selectedClient.name}</p>
+        )}
+        <p className="text-gray-600">{t('viewOnly')}</p>
+
+        {/* Language Toggle */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => {
+              const newLang = language === 'it' ? 'en' : 'it';
+              setLanguage(newLang);
+              playSound('info');
+              addToast(`🌍 Lingua: ${newLang === 'it' ? 'Italiano' : 'English'}`, 'info');
+            }}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+          >
+            {language === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English'}
+          </button>
+          
+          {/* 🌙 DARK/LIGHT MODE TOGGLE */}
+          <button
+            onClick={toggleDarkMode}
+            className={`ml-3 px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+              isDarkMode 
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-gray-900' 
+                : 'bg-gray-800 hover:bg-gray-900 text-white'
+            }`}
+            title={`Modalità: ${isDarkMode ? 'Scura' : 'Chiara'}`}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+          
+          {/* 🎨 THEME SELECTOR - CENTERED BELOW */}
+          <div className="flex justify-center gap-2 mt-3">
+            {Object.entries(themes).map(([key, theme]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setCurrentTheme(key);
+                  playSound('success');
+                  addToast(`🎨 Tema cambiato: ${theme.name}`, 'success');
+                }}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  currentTheme === key 
+                    ? theme.accent + ' text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+                title={theme.name}
+                disabled={isDarkMode}
+              >
+                {theme.icon}
+              </button>
+            ))}
+          </div>
+          
+          {/* 🖼️ LOGO UPLOAD - FEATURE UTILI */}
+          <div className="flex justify-center gap-2 mt-3">
+            <label className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200">
+              📷 Logo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+            </label>
+            {customLogo && (
+              <button
+                onClick={resetLogo}
+                className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+                title="Ripristina logo originale"
+              >
+                ↺ Reset
+              </button>
+            )}
+            <button
+              onClick={generateQRCode}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              title="Genera QR Code per accesso rapido"
+            >
+              📱 QR
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Balance Card */}
+      <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 mb-8 animate-fade-in hover-lift`}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(balance.total_avere)}
+            </div>
+            <div className="text-sm text-gray-500">{t('totalAvere')}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(balance.total_dare)}
+            </div>
+            <div className="text-sm text-gray-500">{t('totalDare')}</div>
+          </div>
+          <div className="text-center">
+            <div className={`text-3xl font-bold ${balance.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(balance.balance)}
+            </div>
+            <div className="text-sm text-gray-500">{t('netBalance')}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-4 justify-center mb-8">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+        >
+          {showFilters ? t('hideFilters') : t('filters')}
+        </button>
+
+        <button
+          onClick={() => setShowPDFModal(true)}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+        >
+          {t('downloadPDF')}
+        </button>
+      </div>
+
+      {/* 🔍 FILTERS SECTION */}
+      {showFilters && (
+        <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 mb-8 animate-fade-in`}>
+          <h2 className={`text-2xl font-bold ${themeClasses.text} mb-4`}>🔍 Lista Movimenti</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cerca nella descrizione
+              </label>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Cerca..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo
+              </label>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Tutti</option>
+                <option value="avere">Avere (Entrate)</option>
+                <option value="dare">Dare (Uscite)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data da
+              </label>
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data fino
+              </label>
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Valuta
+              </label>
+              <select
+                value={filters.currency}
+                onChange={(e) => setFilters({ ...filters, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Tutte</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                onClick={() => {
+                  // Apply filters and close panel
+                  applyFilters();
+                  setShowFilters(false);
+                  // Use correct count after filters are applied
+                  setTimeout(() => {
+                    addToast(`✅ Filtri applicati! ${filteredTransactions.length} transazioni trovate`, 'success');
+                  }, 100);
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                ✅ Applica e Chiudi
+              </button>
+              <button
+                onClick={() => {
+                  setFilters({
+                    search: '',
+                    type: '',
+                    dateFrom: '',
+                    dateTo: '',
+                    currency: ''
+                  });
+                  addToast('🔄 Filtri rimossi', 'info');
+                }}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                🔄 Reset Filtri
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Balance Evolution Chart */}
+      <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 mb-8 animate-fade-in`}>
+        <h2 className={`text-2xl font-bold ${themeClasses.text} mb-4`}>
+          {t('balanceEvolution')}
+        </h2>
+        <p className="text-gray-600 mb-6">{t('balanceEvolutionDesc')}</p>
+        <BalanceEvolutionChart transactions={filteredTransactions} />
+      </div>
+
+      {/* Transaction List */}
+      <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 mb-8 animate-fade-in`}>
+        <h2 className={`text-2xl font-bold ${themeClasses.text} mb-4`}>
+          📋 {t('transactionHistory')} ({filteredTransactions.length} {t('transactionsCount')})
+        </h2>
+        
+        {filteredTransactions.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">
+            {transactions.length === 0 ? t('noTransactions') : t('noTransactionsFiltered')}
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {filteredTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className={`p-4 rounded-lg border-l-4 ${
+                  transaction.type === 'avere' 
+                    ? 'bg-green-50 border-green-500' 
+                    : 'bg-red-50 border-red-500'
+                } hover:shadow-md transition-shadow duration-200`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-2xl font-bold ${
+                        transaction.type === 'avere' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'avere' ? '+' : '-'}
+                        {formatCurrencyWithOriginal(transaction.amount, transaction.currency, transaction.original_amount)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        transaction.type === 'avere' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {transaction.type === 'avere' ? 'Avere' : 'Dare'}
+                      </span>
+                    </div>
+                    <p className="text-gray-800 font-medium">{transaction.description}</p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(transaction.date)} • {transaction.category}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Smart Insights */}
+      <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 mb-8 animate-fade-in`}>
+        <h2 className={`text-2xl font-bold ${themeClasses.text} mb-4`}>
+          {t('smartInsights')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {generateInsights(filteredTransactions, balance).map((insight, index) => (
+            <div
+              key={index}
+              className={`p-4 rounded-lg border-l-4 ${
+                insight.priority === 'high' 
+                  ? 'bg-red-50 border-red-500' 
+                  : insight.priority === 'medium'
+                  ? 'bg-yellow-50 border-yellow-500'
+                  : 'bg-blue-50 border-blue-500'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{insight.icon}</span>
+                <div>
+                  <h3 className="font-bold text-gray-800">{insight.title}</h3>
+                  <p className="text-sm text-gray-600">{insight.description}</p>
+                  {insight.priority === 'high' && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                      {t('highPriority')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Monthly Trend Chart */}
+        <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 animate-fade-in`}>
+          <h3 className={`text-xl font-bold ${themeClasses.text} mb-4`}>📈 Trend Mensile</h3>
+          <div className="h-64">
+            <Line
+              data={getMonthlyTrendData(filteredTransactions)}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Entrate vs Uscite - Ultimi 6 Mesi'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return formatCurrency(value);
+                      }
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Category Breakdown Chart */}
+        <div className={`${themeClasses.card} rounded-2xl shadow-lg p-6 animate-fade-in`}>
+          <h3 className={`text-xl font-bold ${themeClasses.text} mb-4`}>🎯 Spese per Categoria</h3>
+          <div className="h-64">
+            <Pie
+              data={getCategoryBreakdownData(filteredTransactions)}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'right',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Distribuzione Spese'
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Modal */}
+      {showPDFModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('pdfTitle')}</h2>
+            <p className="text-gray-600 mb-6">{t('pdfSubtitle')}</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data da
+                </label>
+                <input
+                  type="date"
+                  value={pdfDateFilters.dateFrom}
+                  onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateFrom: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data fino
+                </label>
+                <input
+                  type="date"
+                  value={pdfDateFilters.dateTo}
+                  onChange={(e) => setPdfDateFilters({ ...pdfDateFilters, dateTo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handlePDFDownloadConfirm}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                📄 Scarica PDF
+              </button>
+              <button
+                onClick={() => setShowPDFModal(false)}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">📱 QR Code</h2>
+            <p className="text-gray-600 mb-6">Scansiona per accedere rapidamente</p>
+            
+            <div className="flex justify-center mb-4">
+              <div id="qrcode" className="p-4 bg-white rounded-lg shadow-inner"></div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+              >
+                Chiudi
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-4">
+              Perfetto per condividere l'accesso via mobile
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Assistance */}
+      {selectedClient && (
+        <a
+          href={`https://wa.me/393772411743?text=Ciao!%20Ho%20bisogno%20di%20assistenza%20per%20la%20mia%20contabilità.%0ACliente:%20${encodeURIComponent(selectedClient.name)}%0AProblema:%20`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-20 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-colors duration-200 z-50"
+          title="Contatta assistenza su WhatsApp"
+        >
+          <svg
+            className="w-6 h-6"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.525 3.488" />
+          </svg>
+        </a>
+      )}
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white font-medium animate-fade-in ${
+            toast.type === 'success' ? 'bg-green-500' :
+            toast.type === 'error' ? 'bg-red-500' :
+            'bg-blue-500'
+          }`}
+        >
+          {toast.message}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+}
+
 export default App;
