@@ -3291,7 +3291,7 @@ function App() {
               ))}
             </div>
             
-            {/* 🖼️ LOGO UPLOAD - NEW FEATURE */}
+            {/* 🖼️ LOGO UPLOAD - FEATURE UTILI */}
             <div className="flex justify-center gap-2 mt-3">
               <label className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200">
                 📷 Logo
@@ -3317,28 +3317,6 @@ function App() {
                 title="Genera QR Code per accesso rapido"
               >
                 📱 QR
-              </button>
-              <button
-                onClick={toggleSound}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                  soundEnabled 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-gray-400 hover:bg-gray-500 text-white'
-                }`}
-                title={`Suoni: ${soundEnabled ? 'Attivi' : 'Disattivi'}`}
-              >
-                {soundEnabled ? '🔊' : '🔇'}
-              </button>
-              <button
-                onClick={toggleBackgroundMusic}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                  backgroundMusicEnabled 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'bg-gray-400 hover:bg-gray-500 text-white'
-                }`}
-                title={`Musica ambientale: ${backgroundMusicEnabled ? 'Attiva' : 'Disattiva'}`}
-              >
-                {backgroundMusicEnabled ? '🎵' : '🎶'}
               </button>
             </div>
           </div>
