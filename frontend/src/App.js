@@ -393,6 +393,40 @@ function App() {
     );
   };
 
+  // QR Code state
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrCodeDataURL, setQrCodeDataURL] = useState('');
+
+  // Generate QR code for current client URL
+  const generateQRCode = async () => {
+    try {
+      const currentURL = window.location.href;
+      const qrDataURL = await QRCode.toDataURL(currentURL, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeDataURL(qrDataURL);
+      setShowQRModal(true);
+      addToast('📱 QR Code generato!', 'success');
+    } catch (error) {
+      console.error('Errore generazione QR:', error);
+      addToast('❌ Errore nella generazione QR', 'error');
+    }
+  };
+
+  // Download QR code as image
+  const downloadQRCode = () => {
+    const link = document.createElement('a');
+    link.download = `qr-code-${selectedClient?.name || 'cliente'}.png`;
+    link.href = qrCodeDataURL;
+    link.click();
+    addToast('💾 QR Code scaricato!', 'success');
+  };
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
