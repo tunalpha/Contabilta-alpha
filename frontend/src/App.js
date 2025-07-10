@@ -4031,7 +4031,6 @@ function App() {
       </div>
     </div>
   );
-}
 
 // CLIENT VIEW - FULLY IMPLEMENTED
 return (
