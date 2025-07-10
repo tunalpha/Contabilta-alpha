@@ -3261,6 +3261,99 @@ function App() {
           </button>
         </div>
 
+        {/* 🔍 FILTERS SECTION - MISSING! ADDING NOW */}
+        {showFilters && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">🔍 Lista Movimenti</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cerca nella descrizione
+                </label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Cerca..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Tutti</option>
+                  <option value="avere">Solo Incassi</option>
+                  <option value="dare">Solo Pagamenti</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data da
+                </label>
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data a
+                </label>
+                <input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Valuta
+                </label>
+                <select
+                  value={filters.currency}
+                  onChange={(e) => setFilters({ ...filters, currency: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Tutte</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setFilters({
+                      search: '',
+                      type: '',
+                      dateFrom: '',
+                      dateTo: '',
+                      currency: ''
+                    });
+                  }}
+                  className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Reset Filtri
+                </button>
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <div className="text-sm text-gray-600">
+                Trovate {filteredTransactions.length} transazioni
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Transactions List - MOVED ABOVE SMART INSIGHTS */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-fade-in hover-lift">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
