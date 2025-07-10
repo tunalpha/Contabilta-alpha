@@ -1064,27 +1064,46 @@ function App() {
         console.log('📋 After type filter:', filtered.length);
       }
 
+      // IMPROVED DATE FILTERING
       if (filters.dateFrom) {
-        console.log('🔍 BEFORE dateFrom filter - transactions:', filtered.map(t => ({id: t.id, date: t.date, description: t.description})));
+        const fromDate = new Date(filters.dateFrom);
+        fromDate.setHours(0, 0, 0, 0); // Start of day
         filtered = filtered.filter(t => {
           if (!t.date) return false;
           const transactionDate = new Date(t.date);
-          const filterDate = new Date(filters.dateFrom);
-          console.log('📅 Comparing:', t.date, 'vs', filters.dateFrom, '|', transactionDate, '>=', filterDate, '=', transactionDate >= filterDate);
-          return transactionDate >= filterDate;
+          transactionDate.setHours(0, 0, 0, 0); // Start of day for comparison
+          const result = transactionDate >= fromDate;
+          console.log('📅 Date filter check:', t.date, '>=', filters.dateFrom, '=', result);
+          return result;
         });
         console.log('📅 After dateFrom filter:', filtered.length, 'dateFrom:', filters.dateFrom);
       }
 
       if (filters.dateTo) {
-        filtered = filtered.filter(t =>
-          t.date && new Date(t.date) <= new Date(filters.dateTo + 'T23:59:59')
-        );
+        const toDate = new Date(filters.dateTo);
+        toDate.setHours(23, 59, 59, 999); // End of day
+        filtered = filtered.filter(t => {
+          if (!t.date) return false;
+          const transactionDate = new Date(t.date);
+          const result = transactionDate <= toDate;
+          console.log('📅 Date filter check:', t.date, '<=', filters.dateTo, '=', result);
+          return result;
+        });
         console.log('📅 After dateTo filter:', filtered.length, 'dateTo:', filters.dateTo);
+      }
+
+      // Filter by currency
+      if (filters.currency) {
+        filtered = filtered.filter(t => t.currency === filters.currency);
+        console.log('💰 After currency filter:', filtered.length);
       }
 
       console.log('✅ FINAL FILTERED:', filtered.length);
       setFilteredTransactions(filtered);
+      
+      // Update balance based on filtered transactions
+      const newBalance = calculateBalance(filtered);
+      setBalance(newBalance);
     } catch (error) {
       console.error('Error in applyFilters:', error);
       setFilteredTransactions([]);
