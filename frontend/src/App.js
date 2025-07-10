@@ -2009,6 +2009,12 @@ function App() {
             )
           );
 
+          // If currently viewing this client, redirect to new URL
+          if (currentView === 'client' && currentClientSlug === oldSlug) {
+            window.location.href = `/cliente/${updatedClient.slug}`;
+            return;
+          }
+
           // Show new link
           const newLink = `${window.location.origin}/cliente/${updatedClient.slug}`;
           alert(`✅ Link resettato con successo!\n\nNuovo link:\n${newLink}\n\n⚠️ IMPORTANTE: Il vecchio link non è più accessibile.\nEventuali sessioni salvate sono state cancellate.`);
