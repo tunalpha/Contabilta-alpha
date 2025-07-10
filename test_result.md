@@ -204,9 +204,11 @@ test_plan:
     - "Client name modification functionality"
     - "Client name modification UI"
     - "Client password protection UI"
+    - "Client view date filtering functionality"
   stuck_tasks:
     - "Client name modification functionality"
     - "Client name modification UI"
+    - "Client view date filtering functionality"
   test_all: false
   test_priority: "high_first"
 
