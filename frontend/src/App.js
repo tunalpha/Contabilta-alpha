@@ -1047,7 +1047,7 @@ function App() {
     alert('Logout effettuato. Ora sei in modalità solo lettura.');
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     // Assicuriamoci che transactions sia un array valido - enhanced defensive programming
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
       setFilteredTransactions([]);
@@ -1116,7 +1116,7 @@ function App() {
       console.error('Error in applyFilters:', error);
       setFilteredTransactions([]);
     }
-  };
+  }, [transactions, filters]); // Dependencies ensure fresh values
 
   // Balance Evolution Chart Component  
   const BalanceEvolutionChart = ({ transactions }) => {
