@@ -3162,6 +3162,7 @@ function App() {
                   key={key}
                   onClick={() => {
                     setCurrentTheme(key);
+                    playSound('success');
                     addToast(`🎨 Tema cambiato: ${theme.name}`, 'success');
                   }}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
