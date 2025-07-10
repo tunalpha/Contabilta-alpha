@@ -3082,6 +3082,26 @@ function App() {
           </div>
         )}
 
+              {/* 📈 BALANCE EVOLUTION CHART - NEW FEATURE */}
+              {transactions.length > 1 && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-800">📈 Evoluzione del Tuo Saldo</h3>
+                    <span className="text-sm text-gray-500">
+                      {transactions.length} transazioni
+                    </span>
+                  </div>
+                  <div className="h-64">
+                    <BalanceEvolutionChart transactions={transactions} />
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
+                      Grafico dell'andamento del tuo saldo nel tempo
+                    </p>
+                  </div>
+                </div>
+              )}
+
         {/* Analytics Section - MOVED TO BOTTOM */}
         {transactions.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
