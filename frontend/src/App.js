@@ -1960,6 +1960,47 @@ function App() {
                 </div>
               )}
 
+              {/* Edit Client Form */}
+              {showEditClientForm && editingClient && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-2 border-orange-200">
+                  <h2 className="text-2xl font-bold text-orange-800 mb-4">✏️ Modifica Cliente</h2>
+                  <form onSubmit={handleEditClientSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Cliente
+                      </label>
+                      <input
+                        type="text"
+                        value={editClientFormData.name}
+                        onChange={(e) => setEditClientFormData({ name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Inserisci il nome del cliente"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        Salva Modifiche
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEditClientForm(false);
+                          setEditingClient(null);
+                          setEditClientFormData({ name: '' });
+                        }}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {/* Transaction Form */}
               {showForm && selectedClient && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
