@@ -3484,7 +3484,16 @@ function App() {
                   <option value="GBP">GBP</option>
                 </select>
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end gap-2">
+                <button
+                  onClick={() => {
+                    // Force re-filter (even though it's real-time)
+                    addToast(`🔍 Filtri applicati! Trovate ${filteredTransactions.length} transazioni`, 'success');
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  ✅ Applica Filtri
+                </button>
                 <button
                   onClick={() => {
                     setFilters({
@@ -3494,10 +3503,11 @@ function App() {
                       dateTo: '',
                       currency: ''
                     });
+                    addToast('🔄 Filtri rimossi', 'info');
                   }}
-                  className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  Reset Filtri
+                  🔄 Reset Filtri
                 </button>
               </div>
             </div>
