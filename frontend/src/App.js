@@ -1100,10 +1100,6 @@ function App() {
 
       console.log('✅ FINAL FILTERED:', filtered.length);
       setFilteredTransactions(filtered);
-      
-      // Update balance based on filtered transactions
-      const newBalance = calculateBalance(filtered);
-      setBalance(newBalance);
     } catch (error) {
       console.error('Error in applyFilters:', error);
       setFilteredTransactions([]);
