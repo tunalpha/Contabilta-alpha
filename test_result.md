@@ -430,6 +430,19 @@ agent_communication:
     message: "Completed comprehensive backend testing after the frontend syntax error fix. All backend APIs are functioning correctly. Tested Transaction CRUD API with filtering (client_slug, type, category, date range, search), Balance calculation API (dare/avere), Multi-currency functionality for USD transactions, Admin authentication, and Clients API. Verified that Sovanza client has USD transactions with proper currency conversion (exchange_rate=0.852). All tests passed successfully, confirming that the backend is working perfectly after the frontend fix."
 
 frontend:
+  - task: "Client name modification UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Aggiunto pulsante di modifica nome cliente nella vista admin. Ora l'admin può cliccare sul pulsante ✏️ accanto a ogni cliente per modificarne il nome. Il pulsante apre il modal di modifica che utilizza l'endpoint backend esistente PUT /api/clients/{client_id}."
+
+frontend:
   - task: "AI Insights Dashboard Implementation"
     implemented: true
     working: true
