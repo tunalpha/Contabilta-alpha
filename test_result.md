@@ -172,6 +172,7 @@ metadata:
 test_plan:
   current_focus:
     - "Client name modification functionality"
+    - "Client name modification UI"
     - "Client password protection UI"
   stuck_tasks:
     - "Client name modification functionality"
