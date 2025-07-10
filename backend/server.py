@@ -680,12 +680,17 @@ async def get_client_by_slug(client_slug: str, client_verified: dict = Depends(v
 async def update_client(client_id: str, client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
     """Update a client (ADMIN ONLY)"""
     try:
+        print(f"DEBUG: Starting update for client_id: {client_id}")
+        
         # Generate new slug from new name
         slug = create_slug(client_request.name)
+        print(f"DEBUG: Generated slug: {slug}")
         
         # Check if slug already exists (excluding current client)
+        print("DEBUG: Checking for existing client with same slug")
         existing_client = await db.clients.find_one({"slug": slug, "id": {"$ne": client_id}})
         if existing_client:
+            print("DEBUG: Found existing client with same slug, generating unique slug")
             # Add number to make it unique
             counter = 1
             while existing_client:
@@ -693,22 +698,31 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
                 existing_client = await db.clients.find_one({"slug": new_slug, "id": {"$ne": client_id}})
                 counter += 1
             slug = new_slug
+            print(f"DEBUG: Final unique slug: {slug}")
         
         # Update client
+        print("DEBUG: Updating client in database")
         result = await db.clients.update_one(
             {"id": client_id},
             {"$set": {"name": client_request.name, "slug": slug}}
         )
+        print(f"DEBUG: Update result modified_count: {result.modified_count}")
         
         if result.modified_count == 1:
             # Get updated client with statistics
+            print("DEBUG: Getting updated client")
             updated_client = await db.clients.find_one({"id": client_id})
             if updated_client:
+                print("DEBUG: Calling client_helper")
                 client_data = client_helper(updated_client)
+                print(f"DEBUG: client_data: {client_data}")
                 
                 # Get transaction count and balance
+                print("DEBUG: Getting transaction count")
                 transaction_count = await db.transactions.count_documents({"client_id": client_id})
+                print(f"DEBUG: transaction_count: {transaction_count}")
                 
+                print("DEBUG: Calculating balance")
                 total_avere = 0
                 total_dare = 0
                 async for transaction in db.transactions.find({"client_id": client_id}):
@@ -716,6 +730,9 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
                         total_avere += transaction["amount"]
                     else:
                         total_dare += transaction["amount"]
+                
+                print(f"DEBUG: total_avere: {total_avere}, total_dare: {total_dare}")
+                print("DEBUG: Creating ClientResponse")
                 
                 return ClientResponse(
                     **client_data,
@@ -730,6 +747,9 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
     except HTTPException:
         raise
     except Exception as e:
+        print(f"DEBUG: Exception occurred: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/clients/{client_id}")
