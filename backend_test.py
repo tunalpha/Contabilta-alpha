@@ -2100,6 +2100,18 @@ def run_all_tests():
     else:
         print("✅ Admin authentication test passed")
     
+    # Test client modification functionality (NEW TESTS)
+    if not test_client_modification():
+        print("❌ Client modification test failed")
+    else:
+        print("✅ Client modification test passed")
+    
+    # Test client modification edge cases (NEW TESTS)
+    if not test_client_modification_edge_cases():
+        print("❌ Client modification edge cases test failed")
+    else:
+        print("✅ Client modification edge cases test passed")
+    
     # Test clients API
     if not test_clients_api():
         print("❌ Clients API test failed")
