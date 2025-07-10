@@ -476,6 +476,118 @@ function App() {
     addToast(`🔊 Suoni: ${newSoundState ? 'Attivati' : 'Disattivati'}`, 'info');
   };
 
+  // Background music system
+  const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(localStorage.getItem('backgroundMusicEnabled') === 'true');
+  const [audioContext, setAudioContext] = useState(null);
+  const [musicNodes, setMusicNodes] = useState(null);
+
+  // Generate ambient background music
+  const createBackgroundMusic = () => {
+    if (!backgroundMusicEnabled) return;
+
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      setAudioContext(ctx);
+
+      // Create multiple layers for ambient music
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.1, ctx.currentTime); // Very low volume
+      masterGain.connect(ctx.destination);
+
+      // Layer 1: Deep bass pad
+      const bassOsc = ctx.createOscillator();
+      const bassGain = ctx.createGain();
+      bassOsc.frequency.setValueAtTime(55, ctx.currentTime); // Low A
+      bassOsc.type = 'sine';
+      bassGain.gain.setValueAtTime(0.3, ctx.currentTime);
+      bassOsc.connect(bassGain);
+      bassGain.connect(masterGain);
+
+      // Layer 2: Mid-range harmony
+      const midOsc = ctx.createOscillator();
+      const midGain = ctx.createGain();
+      midOsc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+      midOsc.type = 'triangle';
+      midGain.gain.setValueAtTime(0.2, ctx.currentTime);
+      midOsc.connect(midGain);
+      midGain.connect(masterGain);
+
+      // Layer 3: High ambient sparkle
+      const highOsc = ctx.createOscillator();
+      const highGain = ctx.createGain();
+      highOsc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      highOsc.type = 'sine';
+      highGain.gain.setValueAtTime(0.1, ctx.currentTime);
+      highOsc.connect(highGain);
+      highGain.connect(masterGain);
+
+      // Add subtle modulation for organic feel
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(0.1, ctx.currentTime); // Very slow modulation
+      lfo.type = 'sine';
+      lfoGain.gain.setValueAtTime(10, ctx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(bassOsc.frequency);
+      lfoGain.connect(midOsc.frequency);
+
+      // Start all oscillators
+      bassOsc.start();
+      midOsc.start();
+      highOsc.start();
+      lfo.start();
+
+      setMusicNodes({ bassOsc, midOsc, highOsc, lfo, masterGain });
+
+    } catch (error) {
+      console.log('Background music not supported');
+    }
+  };
+
+  // Stop background music
+  const stopBackgroundMusic = () => {
+    if (musicNodes && audioContext) {
+      musicNodes.bassOsc.stop();
+      musicNodes.midOsc.stop();
+      musicNodes.highOsc.stop();
+      musicNodes.lfo.stop();
+      audioContext.close();
+      setMusicNodes(null);
+      setAudioContext(null);
+    }
+  };
+
+  // Toggle background music
+  const toggleBackgroundMusic = () => {
+    const newState = !backgroundMusicEnabled;
+    setBackgroundMusicEnabled(newState);
+    localStorage.setItem('backgroundMusicEnabled', newState);
+    
+    if (newState) {
+      createBackgroundMusic();
+      addToast('🎵 Musica ambientale attivata', 'success');
+    } else {
+      stopBackgroundMusic();
+      addToast('🎵 Musica ambientale disattivata', 'info');
+    }
+  };
+
+  // Start music when enabled
+  useEffect(() => {
+    if (backgroundMusicEnabled) {
+      // Delay to ensure user interaction (required for autoplay)
+      const timer = setTimeout(() => {
+        createBackgroundMusic();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    return () => {
+      if (musicNodes) {
+        stopBackgroundMusic();
+      }
+    };
+  }, [backgroundMusicEnabled]);
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
