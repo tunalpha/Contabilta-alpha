@@ -2833,7 +2833,7 @@ function App() {
               </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2" style={{color: '#1f2937 !important'}}>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">
             {t('title')}
           </h1>
           {selectedClient && (
