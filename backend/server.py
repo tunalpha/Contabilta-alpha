@@ -87,8 +87,8 @@ app.add_middleware(
 
 # MongoDB connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-client = AsyncIOMotorClient(MONGO_URL)
-db = client.contabilita_alpha_multi
+mongo_client = AsyncIOMotorClient(MONGO_URL)
+db = mongo_client['contabilita_alpha_multi']
 
 # Admin password (in production, use environment variable)
 ADMIN_PASSWORD = "alpha2024!"  # Password principale
