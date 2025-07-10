@@ -3638,18 +3638,59 @@ function App() {
           </div>
         )}
 
-        {/* WhatsApp Floating Button - Only in client view */}
+        {/* 📱 QR CODE MODAL */}
+        {showQRModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-96 text-center animate-fade-in">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">📱 QR Code Accesso Rapido</h2>
+              <p className="text-gray-600 mb-6">
+                Scansiona per accesso diretto a questa pagina
+              </p>
+              
+              {qrCodeDataURL && (
+                <div className="mb-6">
+                  <img 
+                    src={qrCodeDataURL} 
+                    alt="QR Code" 
+                    className="mx-auto border-2 border-gray-200 rounded-lg"
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                <button
+                  onClick={downloadQRCode}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  💾 Scarica QR Code
+                </button>
+                
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Chiudi
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-4">
+                Perfetto per condividere l'accesso via mobile
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* WhatsApp Assistance */}
         {currentView === 'client' && selectedClient && (
           <a
-            href={`https://wa.me/393772411743?text=Ciao!%20Ho%20bisogno%20di%20assistenza%20per%20la%20mia%20contabilità.%0ACliente:%20${selectedClient.name}%0AProblema:%20`}
+            href={`https://wa.me/393772411743?text=Ciao!%20Ho%20bisogno%20di%20assistenza%20per%20la%20mia%20contabilità.%0ACliente:%20${encodeURIComponent(selectedClient.name)}%0AProblema:%20`}
             target="_blank"
             rel="noopener noreferrer"
-            className="fixed bottom-20 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 z-50"
+            className="fixed bottom-20 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-colors duration-200 z-50"
             title="Contatta assistenza su WhatsApp"
           >
             <svg
-              width="28"
-              height="28"
+              className="w-6 h-6"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
