@@ -2953,13 +2953,31 @@ function App() {
           <p className="text-gray-600">{t('viewOnly')}</p>
 
           {/* Language Toggle */}
-          <div className="mt-4">
+          <div className="mt-4 flex gap-3 items-center">
             <button
               onClick={() => setLanguage(language === 'it' ? 'en' : 'it')}
               className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
             >
               {language === 'it' ? '🇮🇹 Italiano' : '🇬🇧 English'}
             </button>
+            
+            {/* 🎨 THEME SELECTOR - NEW FEATURE */}
+            <div className="flex gap-2">
+              {Object.entries(themes).map(([key, theme]) => (
+                <button
+                  key={key}
+                  onClick={() => setCurrentTheme(key)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                    currentTheme === key 
+                      ? theme.accent + ' text-white'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                  title={theme.name}
+                >
+                  {theme.icon}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
