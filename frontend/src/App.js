@@ -3062,7 +3062,10 @@ function App() {
               {Object.entries(themes).map(([key, theme]) => (
                 <button
                   key={key}
-                  onClick={() => setCurrentTheme(key)}
+                  onClick={() => {
+                    setCurrentTheme(key);
+                    addToast(`🎨 Tema cambiato: ${theme.name}`, 'success');
+                  }}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
                     currentTheme === key 
                       ? theme.accent + ' text-white'
