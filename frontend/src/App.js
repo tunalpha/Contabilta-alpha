@@ -2962,8 +2962,7 @@ function App() {
               {(showFilters ? filteredTransactions : transactions).map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                  onClick={() => setSelectedTransaction(selectedTransaction?.id === transaction.id ? null : transaction)}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
