@@ -425,6 +425,50 @@ function App() {
     addToast('💾 QR Code scaricato!', 'success');
   };
 
+  // Sound feedback system
+  const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem('soundEnabled') !== 'false');
+
+  // Play sound function
+  const playSound = (type) => {
+    if (!soundEnabled) return;
+    
+    const sounds = {
+      success: { frequency: 800, duration: 200, volume: 0.3 },
+      error: { frequency: 300, duration: 400, volume: 0.3 },
+      info: { frequency: 600, duration: 150, volume: 0.2 },
+      click: { frequency: 1000, duration: 100, volume: 0.1 }
+    };
+
+    const sound = sounds[type] || sounds.click;
+    
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(sound.frequency, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(sound.volume, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + sound.duration / 1000);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + sound.duration / 1000);
+    } catch (error) {
+      console.log('Audio not supported');
+    }
+  };
+
+  // Toggle sound preference
+  const toggleSound = () => {
+    const newSoundState = !soundEnabled;
+    setSoundEnabled(newSoundState);
+    localStorage.setItem('soundEnabled', newSoundState);
+    playSound(newSoundState ? 'success' : 'info');
+    addToast(`🔊 Suoni: ${newSoundState ? 'Attivati' : 'Disattivati'}`, 'info');
+  };
+
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalClient, setPasswordModalClient] = useState(null);
