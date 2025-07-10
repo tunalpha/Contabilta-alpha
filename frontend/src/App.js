@@ -813,47 +813,8 @@ function App() {
     }
   }, [currentView, currentClientSlug, selectedClient, adminToken]);
 
-  // Filter transactions based on current filters
   useEffect(() => {
-    let filtered = transactions;
-
-    // Search filter
-    if (filters.search) {
-      filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    // Type filter (avere/dare)
-    if (filters.type) {
-      filtered = filtered.filter(t => t.type === filters.type);
-    }
-
-    // Currency filter
-    if (filters.currency) {
-      filtered = filtered.filter(t => t.currency === filters.currency);
-    }
-
-    // Date range filter
-    if (filters.dateFrom) {
-      filtered = filtered.filter(t => {
-        const transactionDate = new Date(t.date);
-        const fromDate = new Date(filters.dateFrom);
-        return transactionDate >= fromDate;
-      });
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter(t => {
-        const transactionDate = new Date(t.date);
-        const toDate = new Date(filters.dateTo);
-        // Add 1 day to include the end date
-        toDate.setDate(toDate.getDate() + 1);
-        return transactionDate < toDate;
-      });
-    }
-
-    setFilteredTransactions(filtered);
+    applyFilters();
   }, [transactions, filters]);
 
   const fetchClientData = async (slug) => {
