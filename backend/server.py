@@ -28,9 +28,8 @@ import aiohttp
 import asyncio
 import secrets
 from datetime import datetime, timedelta
-import dns.resolver  # Required for MongoDB DNS seedlist discovery in serverless
+import dns.resolver
 
-# Custom Flowable for Alpha Logo
 class AlphaLogoFlowable(Flowable):
     def __init__(self, size=60):
         self.size = size
@@ -57,12 +56,10 @@ class AlphaLogoFlowable(Flowable):
     def wrap(self, availWidth, availHeight):
         return self.size, self.size
 
-# Temporary PDF links storage (in production use Redis/database)
 pdf_links = {}
 
 app = FastAPI(title="Contabilità - Multi Cliente")
 
-# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -71,19 +68,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection configuration with pooling
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'contabilita_alpha_multi')
 
-# Global MongoDB client (will be initialized on startup)
 mongo_client = None
 db = None
 
 async def get_mongo_client():
-    """Create or reuse MongoDB client with proper serverless configuration"""
     global mongo_client, db
     if mongo_client is None:
-        for attempt in range(3):  # Retry up to 3 times
+        for attempt in range(3):
             try:
                 mongo_client = AsyncIOMotorClient(
                     MONGO_URL,
@@ -108,26 +102,21 @@ async def get_mongo_client():
                 await asyncio.sleep(1)
     return mongo_client, db
 
-
 @app.on_event("startup")
 async def startup_event():
-    """Initialize MongoDB connection on startup"""
     global mongo_client, db
     mongo_client, db = await get_mongo_client()
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Close MongoDB connection on shutdown"""
     global mongo_client
     if mongo_client is not None:
         mongo_client.close()
         mongo_client = None
 
-# Admin password
 ADMIN_PASSWORD = "alpha2024!"
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
-# Email configuration
 EMAIL_CONFIG = {
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
@@ -136,7 +125,6 @@ EMAIL_CONFIG = {
     "recovery_email": "ildattero.it@gmail.com"
 }
 
-# Pydantic models
 class ClientCreateRequest(BaseModel):
     name: str
 
@@ -211,7 +199,6 @@ class ClientLoginResponse(BaseModel):
     first_login: bool = False
     client_name: Optional[str] = None
 
-# Admin Password Reset Models
 class AdminPasswordResetRequest(BaseModel):
     email: str
 
@@ -219,7 +206,6 @@ class AdminPasswordResetConfirm(BaseModel):
     reset_token: str
     new_password: str
 
-# Authentication dependency
 async def verify_admin_token(authorization: Optional[str] = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Token di autorizzazione richiesto")
@@ -229,9 +215,7 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
     
     return True
 
-# Client authentication dependency
 async def verify_client_access(client_slug: str, authorization: Optional[str] = Header(None)):
-    """Verify client access - either no password set or valid client token"""
     try:
         _, db = await get_mongo_client()
         client = await db.clients.find_one({"slug": client_slug, "active": True})
@@ -254,7 +238,6 @@ async def verify_client_access(client_slug: str, authorization: Optional[str] = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Currency conversion functions
 async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> float:
     if from_currency == to_currency:
         return 1.0
@@ -288,7 +271,6 @@ async def convert_currency(amount: float, from_currency: str, to_currency: str =
     converted_amount = amount * rate
     return converted_amount, rate
 
-# Helper functions
 def create_slug(name: str) -> str:
     slug = re.sub(r'[^a-zA-Z0-9\s]', '', name.lower())
     slug = re.sub(r'\s+', '-', slug.strip())
@@ -414,38 +396,36 @@ async def root():
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
     try:
-        loop = asyncio.get_running_loop()
-        async with aiohttp.ClientSession(loop=loop) as session:
-            mongo_client, db = await get_mongo_client()
-            admin_config = await db.admin_config.find_one()
+        mongo_client, db = await get_mongo_client()
+        admin_config = await db.admin_config.find_one()
+        
+        if admin_config and "password_hash" in admin_config:
+            stored_password_hash = admin_config["password_hash"]
+            input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
             
-            if admin_config and "password_hash" in admin_config:
-                stored_password_hash = admin_config["password_hash"]
-                input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
-                
-                if input_password_hash == stored_password_hash:
-                    return LoginResponse(
-                        success=True,
-                        token=ADMIN_TOKEN,
-                        message="Login amministratore riuscito"
-                    )
-                else:
-                    return LoginResponse(
-                        success=False,
-                        message="Password errata"
-                    )
+            if input_password_hash == stored_password_hash:
+                return LoginResponse(
+                    success=True,
+                    token=ADMIN_TOKEN,
+                    message="Login amministratore riuscito"
+                )
             else:
-                if login_data.password == ADMIN_PASSWORD:
-                    return LoginResponse(
-                        success=True,
-                        token=ADMIN_TOKEN,
-                        message="Login amministratore riuscito"
-                    )
-                else:
-                    return LoginResponse(
-                        success=False,
-                        message="Password errata"
-                    )
+                return LoginResponse(
+                    success=False,
+                    message="Password errata"
+                )
+        else:
+            if login_data.password == ADMIN_PASSWORD:
+                return LoginResponse(
+                    success=True,
+                    token=ADMIN_TOKEN,
+                    message="Login amministratore riuscito"
+                )
+            else:
+                return LoginResponse(
+                    success=False,
+                    message="Password errata"
+                )
     except Exception as e:
         print(f"Error during admin login: {str(e)}")
         return LoginResponse(
@@ -602,19 +582,18 @@ async def change_client_password(client_slug: str, change_request: ClientPasswor
 async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
     try:
         _, db = await get_mongo_client()
+        clients_cursor = db.clients.find().sort("created_date", -1)
+        all_clients = await clients_cursor.to_list(length=None)
         clients = []
-        async for client in db.clients.find().sort("created_date", -1):
+        
+        for client in all_clients:
             client_data = client_helper(client)
             
             transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
             
-            total_avere = 0
-            total_dare = 0
-            async for transaction in db.transactions.find({"client_id": client["id"]}):
-                if transaction["type"] == "avere":
-                    total_avere += transaction["amount"]
-                else:
-                    total_dare += transaction["amount"]
+            transactions = await db.transactions.find({"client_id": client["id"]}).to_list(length=None)
+            total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
+            total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
             
             client_response = ClientResponse(
                 **client_data,
@@ -630,20 +609,19 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
 @app.get("/api/clients/public", response_model=List[ClientResponse])
 async def get_clients_public():
     try:
-        mongo_client, db = await get_mongo_client()
+        _, db = await get_mongo_client()
+        clients_cursor = db.clients.find().sort("created_date", -1)
+        all_clients = await clients_cursor.to_list(length=None)
         clients = []
-        async for client in db.clients.find().sort("created_date", -1):
+        
+        for client in all_clients:
             client_data = client_helper(client)
             
             transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
             
-            total_avere = 0
-            total_dare = 0
-            async for transaction in db.transactions.find({"client_id": client["id"]}):
-                if transaction["type"] == "avere":
-                    total_avere += transaction["amount"]
-                else:
-                    total_dare += transaction["amount"]
+            transactions = await db.transactions.find({"client_id": client["id"]}).to_list(length=None)
+            total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
+            total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
             
             client_response = ClientResponse(
                 **client_data,
@@ -726,13 +704,9 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
                 
                 transaction_count = await db.transactions.count_documents({"client_id": client_id})
                 
-                total_avere = 0
-                total_dare = 0
-                async for transaction in db.transactions.find({"client_id": client_id}):
-                    if transaction["type"] == "avere":
-                        total_avere += transaction["amount"]
-                    else:
-                        total_dare += transaction["amount"]
+                transactions = await db.transactions.find({"client_id": client_id}).to_list(length=None)
+                total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
+                total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
                 
                 return ClientResponse(
                     **client_data,
@@ -799,11 +773,9 @@ async def get_transactions(
                 date_filter["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
             query_filter["date"] = date_filter
         
-        transactions = []
-        async for transaction in db.transactions.find(query_filter).sort("date", -1):
-            transactions.append(transaction_helper(transaction))
-        
-        return transactions
+        transactions_cursor = db.transactions.find(query_filter).sort("date", -1)
+        transactions = await transactions_cursor.to_list(length=None)
+        return [transaction_helper(t) for t in transactions]
     except HTTPException:
         raise
     except Exception as e:
@@ -916,15 +888,9 @@ async def get_balance(
             client = await verify_client_access(client_slug, authorization)
             query_filter["client_id"] = client["id"]
         
-        total_avere = 0
-        total_dare = 0
-        
-        async for transaction in db.transactions.find(query_filter):
-            if transaction["type"] == "avere":
-                total_avere += transaction["amount"]
-            else:
-                total_dare += transaction["amount"]
-        
+        transactions = await db.transactions.find(query_filter).to_list(length=None)
+        total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
+        total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
         balance = total_avere - total_dare
         
         return {
@@ -956,7 +922,8 @@ async def get_statistics(
             "monthly_summary": []
         }
         
-        async for transaction in db.transactions.find(query_filter):
+        transactions = await db.transactions.find(query_filter).to_list(length=None)
+        for transaction in transactions:
             category = transaction["category"]
             if category not in stats["by_category"]:
                 stats["by_category"][category] = {"avere": 0, "dare": 0}
@@ -1023,9 +990,8 @@ async def get_shared_pdf(link_id: str):
             else:
                 query_filter["date"] = {"$lte": datetime.fromisoformat(date_to + "T23:59:59")}
         
-        transactions = []
-        async for transaction in db.transactions.find(query_filter).sort("date", -1):
-            transactions.append(transaction_helper(transaction))
+        transactions = await db.transactions.find(query_filter).to_list(length=None)
+        transactions = [transaction_helper(t) for t in transactions]
         
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
@@ -1111,18 +1077,11 @@ async def generate_client_pdf(
                 date_filter["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
             query_filter["date"] = date_filter
         
-        transactions = []
-        async for transaction in db.transactions.find(query_filter).sort("date", -1):
-            transactions.append(transaction_helper(transaction))
+        transactions = await db.transactions.find(query_filter).to_list(length=None)
+        transactions = [transaction_helper(t) for t in transactions]
         
-        total_avere = 0
-        total_dare = 0
-        for transaction in transactions:
-            if transaction["type"] == "avere":
-                total_avere += transaction["amount"]
-            else:
-                total_dare += transaction["amount"]
-        
+        total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
+        total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
         balance = total_avere - total_dare
         
         buffer = io.BytesIO()
@@ -1440,8 +1399,8 @@ async def request_admin_password_reset():
         return {
             "success": True,
             "message": "Email di reset inviata all'amministratore.",
-            "reset_link": reset_link,  # Remove in production
-            "token": reset_token  # Remove in production
+            "reset_link": reset_link,
+            "token": reset_token
         }
         
     except HTTPException:
