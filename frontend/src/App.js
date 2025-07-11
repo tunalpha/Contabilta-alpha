@@ -982,14 +982,14 @@ function App() {
   };
 
   const handleLogin = async () => {
-    console.log('🔑 handleLogin called!', { loginPassword, BACKEND_URL });
+    console.log('🔑 handleLogin called!', { password, BACKEND_URL });
     try {
       const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password: loginPassword }),
+        body: JSON.stringify({ password: password }),
       });
 
       const data = await response.json();
