@@ -11,6 +11,10 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
