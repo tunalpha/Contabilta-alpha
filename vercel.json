@@ -7,7 +7,7 @@
       "config": {
         "installCommand": "cd frontend && yarn install",
         "buildCommand": "cd frontend && yarn build",
-        "outputDirectory": "build"
+        "outputDirectory": "frontend/build"
       }
     },
     {
