@@ -1,22 +1,18 @@
 {
   "version": 2,
-  "name": "contabilita-alpha",
   "builds": [
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build",
-        "installCommand": "yarn install",
-        "buildCommand": "yarn build"
+        "installCommand": "cd frontend && yarn install",
+        "buildCommand": "cd frontend && yarn build",
+        "outputDirectory": "build"
       }
     },
     {
       "src": "backend/server.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -25,13 +21,20 @@
       "dest": "backend/server.py"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "frontend/build/static/$1"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "frontend/build/manifest.json"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "frontend/build/favicon.ico"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/build/index.html"
     }
-  ],
-  "functions": {
-    "backend/server.py": {
-      "maxDuration": 10
-    }
-  }
+  ]
 }
