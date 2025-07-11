@@ -5,8 +5,8 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "cd frontend && yarn install",
-        "buildCommand": "cd frontend && yarn build",
+        "installCommand": "yarn install --cwd frontend",
+        "buildCommand": "yarn --cwd frontend build",
         "outputDirectory": "frontend/build"
       }
     },
@@ -19,18 +19,6 @@
     {
       "src": "/api/(.*)",
       "dest": "backend/server.py"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "frontend/build/static/$1"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "frontend/build/manifest.json"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "frontend/build/favicon.ico"
     },
     {
       "src": "/(.*)",
