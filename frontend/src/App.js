@@ -2346,7 +2346,7 @@ function App() {
                   
                   <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                     <p className="text-blue-800 text-sm">
-                      <strong>📧 Email:</strong> ildattero.it@gmail.com<br>
+                      <strong>📧 Email:</strong> ildattero.it@gmail.com<br />
                       <strong>⏱️ Scadenza:</strong> Il link scade dopo 1 ora
                     </p>
                   </div>
