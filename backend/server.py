@@ -1443,9 +1443,12 @@ class AdminPasswordResetConfirm(BaseModel):
     new_password: str
 
 @app.post("/api/admin/request-password-reset")
-async def request_admin_password_reset(request: AdminPasswordResetRequest):
-    """Send password reset email to admin"""
+async def request_admin_password_reset():
+    """Send password reset email to fixed admin email"""
     try:
+        # Email admin fissa per sicurezza
+        admin_email = "ildattero.it@gmail.com"
+        
         # Generate reset token
         reset_token = str(uuid.uuid4())
         expires_at = datetime.now().replace(hour=datetime.now().hour + 1)  # 1 hour expiry
@@ -1453,7 +1456,7 @@ async def request_admin_password_reset(request: AdminPasswordResetRequest):
         # Store reset token in database
         await db.admin_password_resets.insert_one({
             "id": str(uuid.uuid4()),
-            "email": request.email,
+            "email": admin_email,
             "reset_token": reset_token,
             "expires_at": expires_at,
             "used": False,
@@ -1468,7 +1471,7 @@ async def request_admin_password_reset(request: AdminPasswordResetRequest):
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
                 <h2 style="color: #333;">🔐 Reset Password Admin - Contabilità Alpha</h2>
-                <p>Hai richiesto il reset della password amministratore.</p>
+                <p>È stato richiesto il reset della password amministratore.</p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{reset_link}" style="background-color: #3B82F6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
                         🔓 Resetta Password
@@ -1482,7 +1485,7 @@ async def request_admin_password_reset(request: AdminPasswordResetRequest):
                 </ul>
                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
                 <p style="color: #6c757d; font-size: 12px;">
-                    Link: {reset_link}<br>
+                    Richiesta inviata il: {datetime.now().strftime('%d/%m/%Y alle %H:%M')}<br>
                     Token: {reset_token}
                 </p>
             </div>
@@ -1494,7 +1497,7 @@ async def request_admin_password_reset(request: AdminPasswordResetRequest):
         message = MIMEMultipart("alternative")
         message["Subject"] = "🔐 Reset Password Admin - Contabilità Alpha"
         message["From"] = "admin@contabilita-alpha.com"
-        message["To"] = request.email
+        message["To"] = admin_email
         
         html_part = MIMEText(email_body, "html")
         message.attach(html_part)
@@ -1510,16 +1513,19 @@ async def request_admin_password_reset(request: AdminPasswordResetRequest):
                 password=os.getenv("SMTP_PASSWORD", "your-app-password"),
             )
         except Exception as email_error:
-            # If email fails, still return success for security (don't reveal if email exists)
+            # If email fails, return error (since we're sending to fixed admin email)
             print(f"Email send failed: {email_error}")
+            raise HTTPException(status_code=500, detail="Errore nell'invio email")
         
         return {
             "success": True,
-            "message": "Se l'email è associata a un account admin, riceverai le istruzioni per il reset.",
+            "message": "Email di reset inviata all'amministratore.",
             "reset_link": reset_link,  # For testing only - remove in production
             "token": reset_token  # For testing only - remove in production
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Errore nel reset password: {str(e)}")
 
