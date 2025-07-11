@@ -12,9 +12,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -28,6 +25,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 import io
 import aiohttp
+import asyncio
+import secrets
+from datetime import datetime, timedelta
+import dns.resolver  # Required for MongoDB DNS seedlist discovery in serverless
 
 # Custom Flowable for Alpha Logo
 class AlphaLogoFlowable(Flowable):
@@ -36,44 +37,25 @@ class AlphaLogoFlowable(Flowable):
         Flowable.__init__(self)
 
     def draw(self):
-        # Get canvas
         canvas = self.canv
-        
-        # Save state
         canvas.saveState()
-        
-        # Draw outer circle with gradient-like effect (blue)
-        canvas.setFillColor(colors.HexColor('#3B82F6'))  # Blue
+        canvas.setFillColor(colors.HexColor('#3B82F6'))
         canvas.circle(self.size/2, self.size/2, self.size/2, fill=1, stroke=0)
-        
-        # Draw inner highlight (lighter blue)
-        canvas.setFillColor(colors.HexColor('#60A5FA'))  # Lighter blue
+        canvas.setFillColor(colors.HexColor('#60A5FA'))
         canvas.circle(self.size/2, self.size/2, self.size/2 - 2, fill=1, stroke=0)
-        
-        # Draw main circle
-        canvas.setFillColor(colors.HexColor('#2563EB'))  # Main blue
+        canvas.setFillColor(colors.HexColor('#2563EB'))
         canvas.circle(self.size/2, self.size/2, self.size/2 - 4, fill=1, stroke=0)
-        
-        # Add chart symbol (text instead of emoji)
         canvas.setFillColor(colors.white)
         canvas.setFont("Helvetica-Bold", 16)
-        # Center coordinates
         x_center = self.size / 2
         y_center = self.size / 2
         canvas.drawString(x_center - 8, y_center + 2, "📊")
-        
-        # Add ALPHA text
         canvas.setFont("Helvetica-Bold", 8)
         canvas.drawString(x_center - 12, y_center - 12, "ALPHA")
-        
-        # Restore state
         canvas.restoreState()
 
     def wrap(self, availWidth, availHeight):
         return self.size, self.size
-import asyncio
-import secrets
-from datetime import datetime, timedelta
 
 # Temporary PDF links storage (in production use Redis/database)
 pdf_links = {}
@@ -89,13 +71,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection
+# MongoDB connection configuration with pooling
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-mongo_client = AsyncIOMotorClient(MONGO_URL)
-db = mongo_client[os.environ.get('DB_NAME', 'contabilita_alpha_multi')]
+DB_NAME = os.environ.get('DB_NAME', 'contabilita_alpha_multi')
 
-# Admin password (in production, use environment variable)
-ADMIN_PASSWORD = "alpha2024!"  # Password principale
+# Global MongoDB client (will be initialized on startup)
+mongo_client = None
+db = None
+
+async def get_mongo_client():
+    """Create or reuse MongoDB client with proper serverless configuration"""
+    global mongo_client, db
+    if mongo_client is None:
+        try:
+            # Configure MongoDB client for serverless with connection pooling
+            mongo_client = AsyncIOMotorClient(
+                MONGO_URL,
+                maxPoolSize=10,  # Limit connection pool size
+                minPoolSize=1,   # Maintain at least one connection
+                serverSelectionTimeoutMS=5000,  # 5 seconds timeout
+                connectTimeoutMS=10000,  # 10 seconds connection timeout
+                socketTimeoutMS=10000,   # 10 seconds socket timeout
+                retryWrites=True,  # Enable retryable writes
+                retryReads=True,   # Enable retryable reads
+                w='majority',      # Write concern
+            )
+            # Test connection
+            await mongo_client.server_info()
+            db = mongo_client[DB_NAME]
+        except Exception as e:
+            print(f"Failed to connect to MongoDB: {str(e)}")
+            raise HTTPException(status_code=500, detail="Database connection failed")
+    return mongo_client, db
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize MongoDB connection on startup"""
+    global mongo_client, db
+    mongo_client, db = await get_mongo_client()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close MongoDB connection on shutdown"""
+    global mongo_client
+    if mongo_client is not None:
+        mongo_client.close()
+        mongo_client = None
+
+# Admin password
+ADMIN_PASSWORD = "alpha2024!"
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
 # Email configuration
@@ -114,10 +138,10 @@ class ClientCreateRequest(BaseModel):
 class Client(BaseModel):
     id: Optional[str] = None
     name: str
-    slug: str  # URL-friendly name (e.g., "mario-rossi")
+    slug: str
     created_date: datetime
     active: bool = True
-    password: Optional[str] = None  # Password protection for client access
+    password: Optional[str] = None
 
 class ClientResponse(BaseModel):
     id: str
@@ -127,19 +151,19 @@ class ClientResponse(BaseModel):
     active: bool
     total_transactions: int = 0
     balance: float = 0.0
-    has_password: bool = False  # Don't expose actual password
+    has_password: bool = False
 
 class Transaction(BaseModel):
     id: Optional[str] = None
-    client_id: str  # Reference to client
+    client_id: str
     amount: float
     description: Optional[str] = "Transazione senza descrizione"
-    type: str  # 'avere' (credito/entrata) or 'dare' (debito/uscita)
-    category: str  # 'Cash', 'Bonifico', 'PayPal', 'Altro'
+    type: str
+    category: str
     date: datetime
-    currency: str = "EUR"  # New field for currency
-    original_amount: Optional[float] = None  # Original amount before conversion
-    exchange_rate: Optional[float] = None  # Exchange rate used for conversion
+    currency: str = "EUR"
+    original_amount: Optional[float] = None
+    exchange_rate: Optional[float] = None
 
 class TransactionResponse(BaseModel):
     id: str
@@ -182,6 +206,14 @@ class ClientLoginResponse(BaseModel):
     first_login: bool = False
     client_name: Optional[str] = None
 
+# Admin Password Reset Models
+class AdminPasswordResetRequest(BaseModel):
+    email: str
+
+class AdminPasswordResetConfirm(BaseModel):
+    reset_token: str
+    new_password: str
+
 # Authentication dependency
 async def verify_admin_token(authorization: Optional[str] = Header(None)):
     if not authorization:
@@ -196,23 +228,18 @@ async def verify_admin_token(authorization: Optional[str] = Header(None)):
 async def verify_client_access(client_slug: str, authorization: Optional[str] = Header(None)):
     """Verify client access - either no password set or valid client token"""
     try:
-        # Find client by slug
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"slug": client_slug, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # If no password set, allow access
         if not client.get("password"):
             return client
         
-        # If password is set, require valid authorization
         if not authorization:
             raise HTTPException(status_code=401, detail="Password richiesta per accedere")
         
-        # For now, we'll implement a simple session-based approach
-        # In a real app, you'd use proper JWT or session management
         if authorization.startswith("Bearer client_") or authorization.startswith("Bearer "):
-            # Accept both formats: "Bearer client_xxx" and "Bearer xxx"
             return client
         else:
             raise HTTPException(status_code=403, detail="Token cliente non valido")
@@ -222,55 +249,12 @@ async def verify_client_access(client_slug: str, authorization: Optional[str] = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/clients/{client_slug}/change-password")
-async def change_client_password(client_slug: str, change_request: ClientPasswordChangeRequest):
-    """Change client password (CLIENT ONLY - for first login)"""
-    try:
-        # Find client by slug
-        client = await db.clients.find_one({"slug": client_slug, "active": True})
-        if not client:
-            raise HTTPException(status_code=404, detail="Client not found")
-        
-        # Check if client has password protection
-        if not client.get("password"):
-            raise HTTPException(status_code=400, detail="Client has no password set")
-        
-        # Verify current password
-        current_hashed = hashlib.sha256(change_request.current_password.encode()).hexdigest()
-        if current_hashed != client["password"]:
-            raise HTTPException(status_code=400, detail="Password corrente errata")
-        
-        # Validate new password
-        if len(change_request.new_password) < 6:
-            raise HTTPException(status_code=400, detail="La nuova password deve essere di almeno 6 caratteri")
-        
-        # Hash new password
-        new_hashed = hashlib.sha256(change_request.new_password.encode()).hexdigest()
-        
-        # Update client with new password and remove first_login flag
-        result = await db.clients.update_one(
-            {"id": client["id"]},
-            {"$set": {"password": new_hashed}, "$unset": {"first_login": ""}}
-        )
-        
-        if result.modified_count == 1:
-            return {"success": True, "message": "Password cambiata con successo"}
-        else:
-            raise HTTPException(status_code=500, detail="Errore nel cambio password")
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 # Currency conversion functions
 async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> float:
-    """Get exchange rate from one currency to another using free API"""
     if from_currency == to_currency:
         return 1.0
     
     try:
-        # Using ExchangeRate-API (free tier: 1500 requests/month)
         async with aiohttp.ClientSession() as session:
             url = f"https://api.exchangerate-api.com/v4/latest/{from_currency}"
             async with session.get(url) as response:
@@ -278,15 +262,13 @@ async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> flo
                     data = await response.json()
                     return data["rates"].get(to_currency, 1.0)
                 else:
-                    # Fallback rates if API fails
                     fallback_rates = {
-                        "USD": 0.92,  # Approximate USD to EUR rate
-                        "GBP": 1.17,  # Approximate GBP to EUR rate
+                        "USD": 0.92,
+                        "GBP": 1.17,
                     }
                     return fallback_rates.get(from_currency, 1.0)
     except Exception as e:
         print(f"Error fetching exchange rate: {e}")
-        # Fallback rates
         fallback_rates = {
             "USD": 0.92,
             "GBP": 1.17,
@@ -294,7 +276,6 @@ async def get_exchange_rate(from_currency: str, to_currency: str = "EUR") -> flo
         return fallback_rates.get(from_currency, 1.0)
 
 async def convert_currency(amount: float, from_currency: str, to_currency: str = "EUR") -> tuple[float, float]:
-    """Convert amount from one currency to another. Returns (converted_amount, exchange_rate)"""
     if from_currency == to_currency:
         return amount, 1.0
     
@@ -304,7 +285,6 @@ async def convert_currency(amount: float, from_currency: str, to_currency: str =
 
 # Helper functions
 def create_slug(name: str) -> str:
-    """Create URL-friendly slug from client name"""
     slug = re.sub(r'[^a-zA-Z0-9\s]', '', name.lower())
     slug = re.sub(r'\s+', '-', slug.strip())
     return slug
@@ -333,17 +313,13 @@ def transaction_helper(transaction) -> dict:
         "exchange_rate": transaction.get("exchange_rate")
     }
 
-# Email sending function
 async def send_password_email():
-    """Send password recovery email"""
     try:
-        # Create message
         message = MIMEMultipart("alternative")
         message["Subject"] = "🔑 Recupero Password - Contabilità"
         message["From"] = EMAIL_CONFIG["sender_email"]
         message["To"] = EMAIL_CONFIG["recovery_email"]
 
-        # Create HTML content
         html = f"""
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -389,7 +365,6 @@ async def send_password_email():
         </html>
         """
 
-        # Create plain text version
         text = f"""
         🧮 Contabilità - Recupero Password
 
@@ -408,13 +383,11 @@ async def send_password_email():
         Email automatica inviata il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}
         """
 
-        # Attach parts
         part1 = MIMEText(text, "plain")
         part2 = MIMEText(html, "html")
         message.attach(part1)
         message.attach(part2)
 
-        # Send email
         await aiosmtplib.send(
             message,
             hostname=EMAIL_CONFIG["smtp_server"],
@@ -435,13 +408,11 @@ async def root():
 
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
-    """Login amministratore"""
     try:
-        # Check if there's a custom password in database (from reset)
+        _, db = await get_mongo_client()
         admin_config = await db.admin_config.find_one()
         
         if admin_config and "password_hash" in admin_config:
-            # Custom password exists - ONLY use that, NO fallback to hardcoded
             stored_password_hash = admin_config["password_hash"]
             input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
             
@@ -452,13 +423,11 @@ async def admin_login(login_data: LoginRequest):
                     message="Login amministratore riuscito"
                 )
             else:
-                # Custom password exists but input is wrong - reject
                 return LoginResponse(
                     success=False,
                     message="Password errata"
                 )
         else:
-            # No custom password set - use hardcoded password
             if login_data.password == ADMIN_PASSWORD:
                 return LoginResponse(
                     success=True,
@@ -480,7 +449,6 @@ async def admin_login(login_data: LoginRequest):
 
 @app.post("/api/recover-password", response_model=PasswordRecoveryResponse)
 async def recover_password():
-    """Send password recovery email"""
     try:
         email_sent = await send_password_email()
         
@@ -500,21 +468,16 @@ async def recover_password():
             message="Errore durante il recupero password"
         )
 
-# CLIENT PASSWORD MANAGEMENT ENDPOINTS
-
 @app.post("/api/clients/{client_id}/password", response_model=dict)
 async def set_client_password(client_id: str, password_request: ClientPasswordRequest, admin_verified: bool = Depends(verify_admin_token)):
-    """Set or update password for a client (ADMIN ONLY)"""
     try:
-        # Check if client exists
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"id": client_id, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Hash the password
         hashed_password = hashlib.sha256(password_request.password.encode()).hexdigest()
         
-        # Update client with password
         result = await db.clients.update_one(
             {"id": client_id},
             {"$set": {"password": hashed_password, "first_login": True}}
@@ -532,14 +495,12 @@ async def set_client_password(client_id: str, password_request: ClientPasswordRe
 
 @app.post("/api/clients/{client_slug}/login", response_model=ClientLoginResponse)
 async def client_login(client_slug: str, login_request: ClientLoginRequest):
-    """Login for client access (PUBLIC)"""
     try:
-        # Find client by slug
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"slug": client_slug, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Check if client has password protection
         if not client.get("password"):
             return ClientLoginResponse(
                 success=True,
@@ -549,13 +510,9 @@ async def client_login(client_slug: str, login_request: ClientLoginRequest):
                 client_name=client["name"]
             )
         
-        # Verify password
         hashed_password = hashlib.sha256(login_request.password.encode()).hexdigest()
         if hashed_password == client["password"]:
-            # Generate client token
             client_token = hashlib.sha256(f"{client['id']}_{client['slug']}_{datetime.now().isoformat()}".encode()).hexdigest()
-            
-            # Check if this is first login
             is_first_login = client.get("first_login", False)
             
             return ClientLoginResponse(
@@ -579,14 +536,12 @@ async def client_login(client_slug: str, login_request: ClientLoginRequest):
 
 @app.delete("/api/clients/{client_id}/password")
 async def remove_client_password(client_id: str, admin_verified: bool = Depends(verify_admin_token)):
-    """Remove password protection from a client (ADMIN ONLY)"""
     try:
-        # Check if client exists
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"id": client_id, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Remove password
         result = await db.clients.update_one(
             {"id": client_id},
             {"$unset": {"password": ""}}
@@ -602,17 +557,49 @@ async def remove_client_password(client_id: str, admin_verified: bool = Depends(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# CLIENT MANAGEMENT ENDPOINTS
+@app.post("/api/clients/{client_slug}/change-password")
+async def change_client_password(client_slug: str, change_request: ClientPasswordChangeRequest):
+    try:
+        _, db = await get_mongo_client()
+        client = await db.clients.find_one({"slug": client_slug, "active": True})
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        
+        if not client.get("password"):
+            raise HTTPException(status_code=400, detail="Client has no password set")
+        
+        current_hashed = hashlib.sha256(change_request.current_password.encode()).hexdigest()
+        if current_hashed != client["password"]:
+            raise HTTPException(status_code=400, detail="Password corrente errata")
+        
+        if len(change_request.new_password) < 6:
+            raise HTTPException(status_code=400, detail="La nuova password deve essere di almeno 6 caratteri")
+        
+        new_hashed = hashlib.sha256(change_request.new_password.encode()).hexdigest()
+        
+        result = await db.clients.update_one(
+            {"id": client["id"]},
+            {"$set": {"password": new_hashed}, "$unset": {"first_login": ""}}
+        )
+        
+        if result.modified_count == 1:
+            return {"success": True, "message": "Password cambiata con successo"}
+        else:
+            raise HTTPException(status_code=500, detail="Errore nel cambio password")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/clients", response_model=List[ClientResponse])
 async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
-    """Get all clients with statistics (ADMIN ONLY)"""
     try:
+        _, db = await get_mongo_client()
         clients = []
         async for client in db.clients.find().sort("created_date", -1):
             client_data = client_helper(client)
             
-            # Get transaction count and balance for this client
             transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
             
             total_avere = 0
@@ -636,13 +623,12 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
 
 @app.get("/api/clients/public", response_model=List[ClientResponse])
 async def get_clients_public():
-    """Get all clients with basic info (PUBLIC - No authentication required)"""
     try:
+        _, db = await get_mongo_client()
         clients = []
         async for client in db.clients.find().sort("created_date", -1):
             client_data = client_helper(client)
             
-            # Get transaction count and balance for this client
             transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
             
             total_avere = 0
@@ -666,15 +652,12 @@ async def get_clients_public():
 
 @app.post("/api/clients", response_model=ClientResponse)
 async def create_client(client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
-    """Create a new client (ADMIN ONLY)"""
     try:
-        # Generate slug from name
+        _, db = await get_mongo_client()
         slug = create_slug(client_request.name)
         
-        # Check if slug already exists
         existing_client = await db.clients.find_one({"slug": slug})
         if existing_client:
-            # Add number to make it unique
             counter = 1
             while existing_client:
                 new_slug = f"{slug}-{counter}"
@@ -702,7 +685,6 @@ async def create_client(client_request: ClientCreateRequest, admin_verified: boo
 
 @app.get("/api/clients/{client_slug}")
 async def get_client_by_slug(client_slug: str, client_verified: dict = Depends(verify_client_access)):
-    """Get client by slug (PUBLIC - but password protected if set)"""
     try:
         return client_helper(client_verified)
     except HTTPException:
@@ -712,15 +694,12 @@ async def get_client_by_slug(client_slug: str, client_verified: dict = Depends(v
 
 @app.put("/api/clients/{client_id}", response_model=ClientResponse)
 async def update_client(client_id: str, client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
-    """Update a client (ADMIN ONLY)"""
     try:
-        # Generate new slug from new name
+        _, db = await get_mongo_client()
         slug = create_slug(client_request.name)
         
-        # Check if slug already exists (excluding current client)
         existing_client = await db.clients.find_one({"slug": slug, "id": {"$ne": client_id}})
         if existing_client:
-            # Add number to make it unique
             counter = 1
             while existing_client:
                 new_slug = f"{slug}-{counter}"
@@ -728,19 +707,16 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
                 counter += 1
             slug = new_slug
         
-        # Update client
         result = await db.clients.update_one(
             {"id": client_id},
             {"$set": {"name": client_request.name, "slug": slug}}
         )
         
         if result.modified_count == 1:
-            # Get updated client with statistics
             updated_client = await db.clients.find_one({"id": client_id})
             if updated_client:
                 client_data = client_helper(updated_client)
                 
-                # Get transaction count and balance
                 transaction_count = await db.transactions.count_documents({"client_id": client_id})
                 
                 total_avere = 0
@@ -767,12 +743,10 @@ async def update_client(client_id: str, client_request: ClientCreateRequest, adm
 
 @app.delete("/api/clients/{client_id}")
 async def delete_client(client_id: str, admin_verified: bool = Depends(verify_admin_token)):
-    """Delete a client and all their transactions (ADMIN ONLY)"""
     try:
-        # Delete all transactions for this client
+        _, db = await get_mongo_client()
         await db.transactions.delete_many({"client_id": client_id})
         
-        # Delete the client
         result = await db.clients.delete_one({"id": client_id})
         if result.deleted_count == 1:
             return {"message": "Client and all transactions deleted successfully"}
@@ -782,8 +756,6 @@ async def delete_client(client_id: str, admin_verified: bool = Depends(verify_ad
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# TRANSACTION ENDPOINTS (Modified for multi-client)
 
 @app.get("/api/transactions", response_model=List[TransactionResponse])
 async def get_transactions(
@@ -795,30 +767,23 @@ async def get_transactions(
     date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
     authorization: Optional[str] = Header(None)
 ):
-    """Get transactions (PUBLIC for specific client with auth, ADMIN for all)"""
     try:
-        # Build query filter
+        _, db = await get_mongo_client()
         query_filter = {}
         
-        # If client_slug is provided, verify client access
         if client_slug:
-            # Verify client access (password protection)
             client = await verify_client_access(client_slug, authorization)
             query_filter["client_id"] = client["id"]
         
-        # Search in description
         if search:
             query_filter["description"] = {"$regex": search, "$options": "i"}
         
-        # Filter by category
         if category:
             query_filter["category"] = category
         
-        # Filter by type
         if type:
             query_filter["type"] = type
         
-        # Filter by date range
         if date_from or date_to:
             date_filter = {}
             if date_from:
@@ -839,20 +804,17 @@ async def get_transactions(
 
 @app.post("/api/transactions", response_model=TransactionResponse)
 async def create_transaction(transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
-    """Create a new transaction (ADMIN ONLY)"""
     try:
-        # Verify client exists
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"id": transaction.client_id, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Handle currency conversion if needed
         amount_eur = transaction.amount
         original_amount = None
         exchange_rate = None
         
         if transaction.currency != "EUR":
-            # Convert to EUR
             converted_amount, rate = await convert_currency(
                 transaction.amount, 
                 transaction.currency, 
@@ -862,10 +824,9 @@ async def create_transaction(transaction: Transaction, admin_verified: bool = De
             original_amount = transaction.amount
             exchange_rate = rate
         
-        # Create transaction document
         transaction_dict = transaction.dict()
         transaction_dict["id"] = str(uuid.uuid4())
-        transaction_dict["amount"] = amount_eur  # Always store in EUR
+        transaction_dict["amount"] = amount_eur
         transaction_dict["original_amount"] = original_amount
         transaction_dict["exchange_rate"] = exchange_rate
         
@@ -881,15 +842,13 @@ async def create_transaction(transaction: Transaction, admin_verified: bool = De
 
 @app.put("/api/transactions/{transaction_id}", response_model=TransactionResponse)
 async def update_transaction(transaction_id: str, transaction: Transaction, admin_verified: bool = Depends(verify_admin_token)):
-    """Update a transaction (ADMIN ONLY)"""
     try:
-        # Handle currency conversion if needed
+        _, db = await get_mongo_client()
         amount_eur = transaction.amount
         original_amount = None
         exchange_rate = None
         
         if transaction.currency != "EUR":
-            # Convert to EUR
             converted_amount, rate = await convert_currency(
                 transaction.amount, 
                 transaction.currency, 
@@ -899,12 +858,9 @@ async def update_transaction(transaction_id: str, transaction: Transaction, admi
             original_amount = transaction.amount
             exchange_rate = rate
         
-        # Create updated transaction document
         transaction_dict = transaction.dict()
-        transaction_dict.pop('id', None)  # Don't update the ID
-        
-        # Override with converted values
-        transaction_dict["amount"] = amount_eur  # Always store in EUR
+        transaction_dict.pop('id', None)
+        transaction_dict["amount"] = amount_eur
         transaction_dict["original_amount"] = original_amount
         transaction_dict["exchange_rate"] = exchange_rate
         
@@ -914,7 +870,6 @@ async def update_transaction(transaction_id: str, transaction: Transaction, admi
         )
         
         if result.modified_count == 1:
-            # Fetch the updated transaction
             updated_transaction = await db.transactions.find_one({"id": transaction_id})
             if updated_transaction:
                 return TransactionResponse(**transaction_helper(updated_transaction))
@@ -929,8 +884,8 @@ async def update_transaction(transaction_id: str, transaction: Transaction, admi
 
 @app.delete("/api/transactions/{transaction_id}")
 async def delete_transaction(transaction_id: str, admin_verified: bool = Depends(verify_admin_token)):
-    """Delete a transaction (ADMIN ONLY)"""
     try:
+        _, db = await get_mongo_client()
         result = await db.transactions.delete_one({"id": transaction_id})
         if result.deleted_count == 1:
             return {"message": "Transaction deleted successfully"}
@@ -946,17 +901,16 @@ async def get_balance(
     client_slug: Optional[str] = Query(None, description="Client slug filter"),
     authorization: Optional[str] = Header(None)
 ):
-    """Get balance (PUBLIC for specific client with auth, ADMIN for all)"""
     try:
+        _, db = await get_mongo_client()
         query_filter = {}
         
-        # If client_slug is provided, verify client access
         if client_slug:
             client = await verify_client_access(client_slug, authorization)
             query_filter["client_id"] = client["id"]
         
-        total_avere = 0  # Crediti/Entrate
-        total_dare = 0   # Debiti/Uscite
+        total_avere = 0
+        total_dare = 0
         
         async for transaction in db.transactions.find(query_filter):
             if transaction["type"] == "avere":
@@ -981,11 +935,10 @@ async def get_statistics(
     client_slug: Optional[str] = Query(None, description="Client slug filter"),
     authorization: Optional[str] = Header(None)
 ):
-    """Get statistics (PUBLIC for specific client with auth, ADMIN for all)"""
     try:
+        _, db = await get_mongo_client()
         query_filter = {}
         
-        # If client_slug is provided, verify client access
         if client_slug:
             client = await verify_client_access(client_slug, authorization)
             query_filter["client_id"] = client["id"]
@@ -997,14 +950,11 @@ async def get_statistics(
         }
         
         async for transaction in db.transactions.find(query_filter):
-            # Stats by category
             category = transaction["category"]
             if category not in stats["by_category"]:
                 stats["by_category"][category] = {"avere": 0, "dare": 0}
             
             stats["by_category"][category][transaction["type"]] += transaction["amount"]
-            
-            # Stats by type
             stats["by_type"][transaction["type"]] += transaction["amount"]
         
         return stats
@@ -1015,12 +965,8 @@ async def get_statistics(
 
 @app.post("/api/clients/{client_slug}/pdf/share")
 async def create_pdf_share_link(client_slug: str, date_from: str = "", date_to: str = ""):
-    """Create a temporary shareable link for PDF"""
     try:
-        # Generate unique link ID
         link_id = secrets.token_urlsafe(16)
-        
-        # Store link data with expiration (24 hours)
         expiration = datetime.now() + timedelta(hours=24)
         pdf_links[link_id] = {
             "client_slug": client_slug,
@@ -1030,7 +976,6 @@ async def create_pdf_share_link(client_slug: str, date_from: str = "", date_to: 
             "created_at": datetime.now()
         }
         
-        # Return shareable URL
         return {
             "link_id": link_id,
             "share_url": f"/pdf/share/{link_id}",
@@ -1042,58 +987,38 @@ async def create_pdf_share_link(client_slug: str, date_from: str = "", date_to: 
 
 @app.get("/pdf/share/{link_id}")
 async def get_shared_pdf(link_id: str):
-    """Access PDF via temporary link"""
     try:
-        # Check if link exists and is valid
         if link_id not in pdf_links:
             raise HTTPException(status_code=404, detail="Link not found")
         
         link_data = pdf_links[link_id]
         
-        # Check if link has expired
         if datetime.now() > link_data["expires_at"]:
-            # Clean up expired link
             del pdf_links[link_id]
             raise HTTPException(status_code=410, detail="Link expired")
         
-        # Generate PDF directly
+        _, db = await get_mongo_client()
         client_slug = link_data["client_slug"]
         date_from = link_data["date_from"] or None
         date_to = link_data["date_to"] or None
         
-        # Find client
         client = await db.clients.find_one({"slug": client_slug})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Build query filter
-        query_filter = {"client_id": client["name"]}
+        query_filter = {"client_id": client["id"]}
         
         if date_from:
-            query_filter["date"] = {"$gte": date_from}
+            query_filter["date"] = {"$gte": datetime.fromisoformat(date_from)}
         if date_to:
             if "date" in query_filter:
-                query_filter["date"]["$lte"] = date_to
+                query_filter["date"]["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
             else:
-                query_filter["date"] = {"$lte": date_to}
+                query_filter["date"] = {"$lte": datetime.fromisoformat(date_to + "T23:59:59")}
         
-        # Get transactions
         transactions = []
         async for transaction in db.transactions.find(query_filter).sort("date", -1):
             transactions.append(transaction_helper(transaction))
-        
-        # Generate PDF
-        from reportlab.lib.pagesizes import letter, A4
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import inch
-        from reportlab.lib import colors
-        from reportlab.graphics.shapes import Drawing, Circle, String
-        from reportlab.graphics import renderPDF
-        from reportlab.platypus import Flowable
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-        import io
         
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
@@ -1101,7 +1026,6 @@ async def get_shared_pdf(link_id: str):
         styles = getSampleStyleSheet()
         story = []
         
-        # Custom styles
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
@@ -1111,23 +1035,20 @@ async def get_shared_pdf(link_id: str):
             textColor=colors.navy
         )
         
-        # Header
         story.append(Spacer(1, 20))
         story.append(Paragraph("📊 ALPHA - Contabilità", title_style))
         story.append(Paragraph("Estratto Conto", styles['Heading2']))
         story.append(Spacer(1, 20))
         
-        # Client info
         story.append(Paragraph(f"<b>Cliente:</b> {client['name']}", styles['Normal']))
         story.append(Paragraph(f"<b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
         story.append(Spacer(1, 20))
         
-        # Transactions table
         if transactions:
             table_data = [['Data', 'Descrizione', 'Tipo', 'Importo']]
             for transaction in transactions:
                 table_data.append([
-                    transaction['date'][:10],
+                    transaction['date'].strftime('%d/%m/%Y'),
                     transaction['description'][:40],
                     transaction['type'].upper(),
                     f"€ {transaction['amount']:.2f}"
@@ -1148,7 +1069,6 @@ async def get_shared_pdf(link_id: str):
         else:
             story.append(Paragraph("Nessuna transazione trovata per il periodo selezionato", styles['Normal']))
         
-        # Build PDF
         doc.build(story)
         buffer.seek(0)
         
@@ -1170,15 +1090,12 @@ async def generate_client_pdf(
     date_to: Optional[str] = Query(None, description="Data fine (YYYY-MM-DD)"),
     authorization: Optional[str] = Header(None)
 ):
-    """Generate PDF report for a specific client (PUBLIC but password protected if set)"""
     try:
-        # Verify client access (password protection)
         client = await verify_client_access(client_slug, authorization)
+        _, db = await get_mongo_client()
         
-        # Build query filter for transactions
         query_filter = {"client_id": client["id"]}
         
-        # Add date filtering if provided
         if date_from or date_to:
             date_filter = {}
             if date_from:
@@ -1187,12 +1104,10 @@ async def generate_client_pdf(
                 date_filter["$lte"] = datetime.fromisoformat(date_to + "T23:59:59")
             query_filter["date"] = date_filter
         
-        # Get transactions for this client (with optional date filtering)
         transactions = []
         async for transaction in db.transactions.find(query_filter).sort("date", -1):
             transactions.append(transaction_helper(transaction))
         
-        # Calculate balance for filtered transactions
         total_avere = 0
         total_dare = 0
         for transaction in transactions:
@@ -1203,13 +1118,11 @@ async def generate_client_pdf(
         
         balance = total_avere - total_dare
         
-        # Create PDF
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4)
         story = []
         styles = getSampleStyleSheet()
         
-        # Custom styles
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
@@ -1237,21 +1150,15 @@ async def generate_client_pdf(
             textColor=colors.darkblue
         )
         
-        # Header with Custom Logo
         story.append(Spacer(1, 20))
-        
-        # Add custom logo
         logo = AlphaLogoFlowable(size=80)
         logo.hAlign = 'CENTER'
         story.append(logo)
         story.append(Spacer(1, 10))
-        
-        # Title without emoji (logo is above)
         story.append(Paragraph("Contabilità", title_style))
         story.append(Paragraph("Estratto Conto", subtitle_style))
         story.append(Spacer(1, 20))
         
-        # Client info and period
         client_info = f"<b>Cliente:</b> {client['name']}<br/>"
         client_info += f"<b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y alle %H:%M')}<br/>"
         
@@ -1268,7 +1175,6 @@ async def generate_client_pdf(
         story.append(Paragraph(client_info, styles['Normal']))
         story.append(Spacer(1, 20))
         
-        # Balance summary
         balance_data = [
             ['Categoria', 'Importo'],
             ['Totale Avere (Crediti)', f"€ {total_avere:,.2f}"],
@@ -1293,16 +1199,13 @@ async def generate_client_pdf(
         story.append(balance_table)
         story.append(Spacer(1, 30))
         
-        # Transactions header
         story.append(Paragraph("📋 Dettaglio Transazioni", styles['Heading2']))
         story.append(Spacer(1, 10))
         
         if transactions:
-            # Transaction table
             transaction_data = [['Data', 'Descrizione', 'Tipo', 'Categoria', 'Importo']]
             
             for transaction in transactions:
-                # Handle both datetime objects and strings
                 if isinstance(transaction['date'], str):
                     date_obj = datetime.fromisoformat(transaction['date'].replace('Z', '+00:00'))
                 else:
@@ -1315,7 +1218,6 @@ async def generate_client_pdf(
                 else:
                     amount_str = f"-{amount_str}"
                 
-                # Truncate description if too long
                 description = transaction['description']
                 if len(description) > 40:
                     description = description[:37] + '...'
@@ -1342,7 +1244,6 @@ async def generate_client_pdf(
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             
-            # Color code the amounts and rows
             for i, transaction in enumerate(transactions, 1):
                 if transaction['type'] == 'avere':
                     transaction_table.setStyle(TableStyle([
@@ -1363,9 +1264,7 @@ async def generate_client_pdf(
             no_transactions_msg += "."
             story.append(Paragraph(no_transactions_msg, styles['Normal']))
         
-        # Footer with logo
         story.append(Spacer(1, 30))
-        
         footer_style = ParagraphStyle(
             'FooterStyle',
             parent=styles['Normal'],
@@ -1379,10 +1278,8 @@ async def generate_client_pdf(
         story.append(Paragraph("📊 ALPHA - Contabilità Professionale", footer_style))
         story.append(Paragraph("Sistema multi-cliente con AI insights", footer_style))
         
-        # Build PDF
         doc.build(story)
         
-        # Return PDF as response
         buffer.seek(0)
         date_suffix = ""
         if date_from and date_to:
@@ -1407,24 +1304,20 @@ async def generate_client_pdf(
 
 @app.patch("/api/clients/{client_id}/reset-link")
 async def reset_client_link(client_id: str, token: str = Depends(verify_admin_token)):
-    """Reset client link by generating new slug (ADMIN ONLY)"""
     try:
-        # Check if client exists
+        _, db = await get_mongo_client()
         client = await db.clients.find_one({"id": client_id, "active": True})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         
-        # Generate new secure slug
         import secrets
         import string
         alphabet = string.ascii_lowercase + string.digits
         new_slug = ''.join(secrets.choice(alphabet) for _ in range(12))
         
-        # Ensure uniqueness
         while await db.clients.find_one({"slug": new_slug, "active": True}):
             new_slug = ''.join(secrets.choice(alphabet) for _ in range(12))
         
-        # Update client with new slug
         result = await db.clients.update_one(
             {"id": client_id},
             {"$set": {"slug": new_slug}}
@@ -1433,7 +1326,6 @@ async def reset_client_link(client_id: str, token: str = Depends(verify_admin_to
         if result.modified_count == 0:
             raise HTTPException(status_code=400, detail="Failed to reset client link")
         
-        # Return updated client
         updated_client = await db.clients.find_one({"id": client_id})
         return client_helper(updated_client)
         
@@ -1444,7 +1336,6 @@ async def reset_client_link(client_id: str, token: str = Depends(verify_admin_to
 
 @app.get("/api/exchange-rates")
 async def get_exchange_rates():
-    """Get current exchange rates for supported currencies"""
     try:
         rates = {}
         supported_currencies = ["USD", "GBP"]
@@ -1453,7 +1344,7 @@ async def get_exchange_rates():
             rate = await get_exchange_rate(currency, "EUR")
             rates[currency] = rate
         
-        rates["EUR"] = 1.0  # Base currency
+        rates["EUR"] = 1.0
         
         return {
             "base_currency": "EUR",
@@ -1468,26 +1359,14 @@ async def get_exchange_rates():
             "error": "Using fallback rates"
         }
 
-# Admin Password Reset Models
-class AdminPasswordResetRequest(BaseModel):
-    email: str
-
-class AdminPasswordResetConfirm(BaseModel):
-    reset_token: str
-    new_password: str
-
 @app.post("/api/admin/request-password-reset")
 async def request_admin_password_reset():
-    """Send password reset email to fixed admin email"""
     try:
-        # Email admin fissa per sicurezza
         admin_email = "ildattero.it@gmail.com"
-        
-        # Generate reset token
         reset_token = str(uuid.uuid4())
-        expires_at = datetime.now().replace(hour=datetime.now().hour + 1)  # 1 hour expiry
+        expires_at = datetime.now() + timedelta(hours=1)
         
-        # Store reset token in database
+        _, db = await get_mongo_client()
         await db.admin_password_resets.insert_one({
             "id": str(uuid.uuid4()),
             "email": admin_email,
@@ -1497,7 +1376,6 @@ async def request_admin_password_reset():
             "created_at": datetime.now()
         })
         
-        # Send email with reset link
         reset_link = f"https://expense-master-88.preview.emergentagent.com/admin-reset?token={reset_token}"
         
         email_body = f"""
@@ -1527,24 +1405,17 @@ async def request_admin_password_reset():
         </html>
         """
         
-        # Configure email
         message = MIMEMultipart("alternative")
         message["Subject"] = "🔐 Reset Password Admin - Contabilità Alpha"
-        message["From"] = admin_email  # Use authenticated email as sender
+        message["From"] = admin_email
         message["To"] = admin_email
         
         html_part = MIMEText(email_body, "html")
         message.attach(html_part)
         
-        # Send email using SMTP
         try:
-            # Configurazione email reale
             smtp_user = os.getenv("SMTP_USERNAME")
             smtp_pass = os.getenv("SMTP_PASSWORD")
-            
-            print(f"📧 Sending real email to: {admin_email}")
-            print(f"🔑 SMTP User: {smtp_user}")
-            print(f"🔑 SMTP Pass: {smtp_pass[:4]}****{smtp_pass[-4:] if smtp_pass else 'None'}")
             
             await aiosmtplib.send(
                 message,
@@ -1552,21 +1423,18 @@ async def request_admin_password_reset():
                 port=587,
                 start_tls=True,
                 username=smtp_user,
-                password=smtp_pass.replace(" ", ""),  # Remove any spaces
+                password=smtp_pass.replace(" ", "") if smtp_pass else "",
             )
             
-            print(f"✅ Email sent successfully to {admin_email}")
-            
         except Exception as email_error:
-            # If email fails, return error
             print(f"❌ Email send failed: {email_error}")
             raise HTTPException(status_code=500, detail=f"Errore nell'invio email: {str(email_error)}")
         
         return {
             "success": True,
             "message": "Email di reset inviata all'amministratore.",
-            "reset_link": reset_link,  # For testing only - remove in production
-            "token": reset_token  # For testing only - remove in production
+            "reset_link": reset_link,  # Remove in production
+            "token": reset_token  # Remove in production
         }
         
     except HTTPException:
@@ -1576,9 +1444,8 @@ async def request_admin_password_reset():
 
 @app.post("/api/admin/confirm-password-reset")
 async def confirm_admin_password_reset(request: AdminPasswordResetConfirm):
-    """Confirm password reset with token and set new password"""
     try:
-        # Find reset token
+        _, db = await get_mongo_client()
         reset_record = await db.admin_password_resets.find_one({
             "reset_token": request.reset_token,
             "used": False
@@ -1587,22 +1454,17 @@ async def confirm_admin_password_reset(request: AdminPasswordResetConfirm):
         if not reset_record:
             raise HTTPException(status_code=400, detail="Token non valido o già utilizzato")
         
-        # Check if token is expired
         if datetime.now() > reset_record["expires_at"]:
             raise HTTPException(status_code=400, detail="Token scaduto")
         
-        # Hash new password
         new_password_hash = hashlib.sha256(request.new_password.encode()).hexdigest()
         
-        # Update admin password (assuming there's only one admin)
-        # For now, we'll store it in a simple way - in production you'd want a proper users table
         admin_config = await db.admin_config.find_one() or {}
         admin_config["password_hash"] = new_password_hash
         admin_config["updated_at"] = datetime.now()
         
         await db.admin_config.replace_one({}, admin_config, upsert=True)
         
-        # Mark token as used
         await db.admin_password_resets.update_one(
             {"reset_token": request.reset_token},
             {"$set": {"used": True, "used_at": datetime.now()}}
@@ -1620,8 +1482,8 @@ async def confirm_admin_password_reset(request: AdminPasswordResetConfirm):
 
 @app.get("/api/admin/verify-reset-token/{token}")
 async def verify_reset_token(token: str):
-    """Verify if a reset token is valid"""
     try:
+        _, db = await get_mongo_client()
         reset_record = await db.admin_password_resets.find_one({
             "reset_token": token,
             "used": False
