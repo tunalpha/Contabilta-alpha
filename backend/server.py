@@ -1505,15 +1505,20 @@ async def request_admin_password_reset():
         # Send email using SMTP
         try:
             # Configurazione email reale
+            smtp_user = os.getenv("SMTP_USERNAME")
+            smtp_pass = os.getenv("SMTP_PASSWORD")
+            
             print(f"📧 Sending real email to: {admin_email}")
+            print(f"🔑 SMTP User: {smtp_user}")
+            print(f"🔑 SMTP Pass: {smtp_pass[:4]}****{smtp_pass[-4:] if smtp_pass else 'None'}")
             
             await aiosmtplib.send(
                 message,
                 hostname="smtp.gmail.com",
                 port=587,
                 start_tls=True,
-                username=os.getenv("SMTP_USERNAME"),
-                password=os.getenv("SMTP_PASSWORD"),
+                username=smtp_user,
+                password=smtp_pass.replace(" ", ""),  # Remove any spaces
             )
             
             print(f"✅ Email sent successfully to {admin_email}")
