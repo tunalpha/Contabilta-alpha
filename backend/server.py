@@ -436,16 +436,41 @@ async def root():
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
     """Login amministratore"""
-    if login_data.password == ADMIN_PASSWORD:
-        return LoginResponse(
-            success=True,
-            token=ADMIN_TOKEN,
-            message="Login amministratore riuscito"
-        )
-    else:
+    try:
+        # First check if there's a custom password in database (from reset)
+        admin_config = await db.admin_config.find_one()
+        
+        if admin_config and "password_hash" in admin_config:
+            # Use password from database (set via reset)
+            stored_password_hash = admin_config["password_hash"]
+            input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+            
+            if input_password_hash == stored_password_hash:
+                return LoginResponse(
+                    success=True,
+                    token=ADMIN_TOKEN,
+                    message="Login amministratore riuscito"
+                )
+        
+        # Fallback to hardcoded password if no custom password set
+        if login_data.password == ADMIN_PASSWORD:
+            return LoginResponse(
+                success=True,
+                token=ADMIN_TOKEN,
+                message="Login amministratore riuscito"
+            )
+        
+        # Password incorrect
         return LoginResponse(
             success=False,
             message="Password errata"
+        )
+        
+    except Exception as e:
+        print(f"Error during admin login: {e}")
+        return LoginResponse(
+            success=False,
+            message="Errore durante il login"
         )
 
 @app.post("/api/recover-password", response_model=PasswordRecoveryResponse)
