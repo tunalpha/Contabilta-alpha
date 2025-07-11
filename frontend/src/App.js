@@ -770,6 +770,12 @@ function App() {
     // Force cache refresh
     console.log('🔄 CACHE REFRESH TIMESTAMP:', new Date().toISOString());
     
+    // Check URL for admin reset page
+    if (path === '/admin-reset') {
+      setCurrentView('admin-reset');
+      return;
+    }
+
     // Check URL for client slug - handle both formats: /cliente/slug and /slug
     const path = window.location.pathname;
     let slug = null;
