@@ -65,7 +65,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://contabilta-alpha-79iedrtqt-tunalphas-projects.vercel.app"],
+    allow_origins=["https://contabilta-alpha-qt0a10q4y-tunalphas-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
