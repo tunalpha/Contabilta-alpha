@@ -2282,6 +2282,122 @@ function App() {
 
   // ADMIN DASHBOARD VIEW
   if (currentView === 'admin') {
+    // Se non è admin autenticato, mostra schermata di login
+    if (!isAdmin) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="mx-auto h-20 w-20 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg border-4 border-white mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">📊</div>
+                  <div className="text-xs font-bold text-white tracking-wider">ADMIN</div>
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Contabilità Admin</h1>
+              <p className="text-gray-600">Accesso riservato agli amministratori</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🔐 Password Amministratore
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Inserisci la password admin"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200"
+              >
+                🚪 Accedi come Admin
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowPasswordRecovery(true)}
+                className="text-blue-600 hover:text-blue-800 text-sm underline"
+              >
+                🔑 Password dimenticata?
+              </button>
+            </div>
+
+            {/* Password Recovery Modal */}
+            {showPasswordRecovery && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">🔑 Recupero Password Admin</h2>
+                  <p className="text-gray-600 mb-4">
+                    Inserisci la tua email per ricevere le istruzioni per resettare la password.
+                  </p>
+                  
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const email = e.target.email.value;
+                    
+                    try {
+                      const response = await fetch(`${BACKEND_URL}/api/admin/request-password-reset`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                      });
+                      
+                      if (response.ok) {
+                        alert('✅ Email inviata! Controlla la tua casella di posta.');
+                        setShowPasswordRecovery(false);
+                      } else {
+                        alert('❌ Errore nell\'invio dell\'email');
+                      }
+                    } catch (error) {
+                      alert('❌ Errore di connessione');
+                    }
+                  }}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        📧 Email Admin
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="admin@tuodominio.com"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        📤 Invia Reset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordRecovery(false)}
+                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+                      >
+                        ❌ Annulla
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Se è admin autenticato, mostra la dashboard completa
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">
