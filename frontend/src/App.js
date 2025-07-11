@@ -2299,7 +2299,10 @@ function App() {
               <p className="text-gray-600">Accesso riservato agli amministratori</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   🔐 Password Amministratore
