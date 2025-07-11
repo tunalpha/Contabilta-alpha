@@ -83,26 +83,31 @@ async def get_mongo_client():
     """Create or reuse MongoDB client with proper serverless configuration"""
     global mongo_client, db
     if mongo_client is None:
-        try:
-            # Configure MongoDB client for serverless with connection pooling
-            mongo_client = AsyncIOMotorClient(
-                MONGO_URL,
-                maxPoolSize=10,  # Limit connection pool size
-                minPoolSize=1,   # Maintain at least one connection
-                serverSelectionTimeoutMS=5000,  # 5 seconds timeout
-                connectTimeoutMS=10000,  # 10 seconds connection timeout
-                socketTimeoutMS=10000,   # 10 seconds socket timeout
-                retryWrites=True,  # Enable retryable writes
-                retryReads=True,   # Enable retryable reads
-                w='majority',      # Write concern
-            )
-            # Test connection
-            await mongo_client.server_info()
-            db = mongo_client[DB_NAME]
-        except Exception as e:
-            print(f"Failed to connect to MongoDB: {str(e)}")
-            raise HTTPException(status_code=500, detail="Database connection failed")
+        for attempt in range(3):  # Retry up to 3 times
+            try:
+                mongo_client = AsyncIOMotorClient(
+                    MONGO_URL,
+                    maxPoolSize=10,
+                    minPoolSize=1,
+                    serverSelectionTimeoutMS=5000,
+                    connectTimeoutMS=10000,
+                    socketTimeoutMS=10000,
+                    retryWrites=True,
+                    retryReads=True,
+                    w='majority',
+                    tls=True,
+                    tlsAllowInvalidCertificates=False,
+                )
+                await mongo_client.admin.command('ping')
+                db = mongo_client[DB_NAME]
+                return mongo_client, db
+            except Exception as e:
+                print(f"Connection attempt {attempt + 1} failed: {str(e)}")
+                if attempt == 2:
+                    raise HTTPException(status_code=500, detail=f"Failed to connect to MongoDB after retries: {str(e)}")
+                await asyncio.sleep(1)
     return mongo_client, db
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -409,42 +414,43 @@ async def root():
 @app.post("/api/login", response_model=LoginResponse)
 async def admin_login(login_data: LoginRequest):
     try:
-        _, db = await get_mongo_client()
-        admin_config = await db.admin_config.find_one()
-        
-        if admin_config and "password_hash" in admin_config:
-            stored_password_hash = admin_config["password_hash"]
-            input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+        loop = asyncio.get_running_loop()
+        async with aiohttp.ClientSession(loop=loop) as session:
+            mongo_client, db = await get_mongo_client()
+            admin_config = await db.admin_config.find_one()
             
-            if input_password_hash == stored_password_hash:
-                return LoginResponse(
-                    success=True,
-                    token=ADMIN_TOKEN,
-                    message="Login amministratore riuscito"
-                )
+            if admin_config and "password_hash" in admin_config:
+                stored_password_hash = admin_config["password_hash"]
+                input_password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+                
+                if input_password_hash == stored_password_hash:
+                    return LoginResponse(
+                        success=True,
+                        token=ADMIN_TOKEN,
+                        message="Login amministratore riuscito"
+                    )
+                else:
+                    return LoginResponse(
+                        success=False,
+                        message="Password errata"
+                    )
             else:
-                return LoginResponse(
-                    success=False,
-                    message="Password errata"
-                )
-        else:
-            if login_data.password == ADMIN_PASSWORD:
-                return LoginResponse(
-                    success=True,
-                    token=ADMIN_TOKEN,
-                    message="Login amministratore riuscito"
-                )
-            else:
-                return LoginResponse(
-                    success=False,
-                    message="Password errata"
-                )
-        
+                if login_data.password == ADMIN_PASSWORD:
+                    return LoginResponse(
+                        success=True,
+                        token=ADMIN_TOKEN,
+                        message="Login amministratore riuscito"
+                    )
+                else:
+                    return LoginResponse(
+                        success=False,
+                        message="Password errata"
+                    )
     except Exception as e:
-        print(f"Error during admin login: {e}")
+        print(f"Error during admin login: {str(e)}")
         return LoginResponse(
             success=False,
-            message="Errore durante il login"
+            message=f"Errore durante il login: {str(e)}"
         )
 
 @app.post("/api/recover-password", response_model=PasswordRecoveryResponse)
@@ -624,7 +630,7 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
 @app.get("/api/clients/public", response_model=List[ClientResponse])
 async def get_clients_public():
     try:
-        _, db = await get_mongo_client()
+        mongo_client, db = await get_mongo_client()
         clients = []
         async for client in db.clients.find().sort("created_date", -1):
             client_data = client_helper(client)
@@ -648,7 +654,8 @@ async def get_clients_public():
         
         return clients
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error in get_clients_public: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch clients: {str(e)}")
 
 @app.post("/api/clients", response_model=ClientResponse)
 async def create_client(client_request: ClientCreateRequest, admin_verified: bool = Depends(verify_admin_token)):
