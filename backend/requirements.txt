@@ -1,10 +1,34 @@
+# Web framework
 fastapi==0.110.1
 uvicorn==0.25.0
+
+# Environment variable loading
 python-dotenv>=1.0.1
+
+# --- MongoDB / Database ---
+# Asynchronous MongoDB driver (FIXES THE CRASH)
+motor
+# Required for 'mongodb+srv://' connection strings
+dnspython
+# Core MongoDB driver (motor depends on this)
 pymongo==4.5.0
+
+# --- Authentication & Security ---
+# For password hashing (likely needed for login)
+passlib[bcrypt]
+# For JWT token handling (likely needed for login)
+python-jose[cryptography]
+
+# --- Other Utilities ---
+# For Pydantic models
 pydantic>=2.6.4
+# For email validation in models
 email-validator>=2.2.0
+# For handling form data
 python-multipart>=0.0.9
+# For sending emails asynchronously
 aiosmtplib>=2.0.1
+# For generating PDFs
 reportlab>=4.0.0
+# For making async HTTP requests
 aiohttp>=3.8.0
