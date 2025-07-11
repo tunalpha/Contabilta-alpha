@@ -1496,7 +1496,7 @@ async def request_admin_password_reset():
         # Configure email
         message = MIMEMultipart("alternative")
         message["Subject"] = "🔐 Reset Password Admin - Contabilità Alpha"
-        message["From"] = "admin@contabilita-alpha.com"
+        message["From"] = admin_email  # Use authenticated email as sender
         message["To"] = admin_email
         
         html_part = MIMEText(email_body, "html")
