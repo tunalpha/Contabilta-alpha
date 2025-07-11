@@ -4,6 +4,7 @@
   "description": "Sistema di contabilità multi-cliente con AI insights",
   "main": "index.js",
   "scripts": {
+  "build": "cd frontend && yarn build",
   "dev": "cd frontend && yarn start",
   "install-deps": "cd frontend && yarn install && pip install -r backend/requirements.txt"
 },
