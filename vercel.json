@@ -1,27 +1,14 @@
 {
-  "version": 2,
   "builds": [
     {
-      "src": "backend/server.py",
+      "src": "/backend/server.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "cd frontend && yarn build",
-        "outputDirectory": "build"
-      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/server.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/build/index.html"
+      "dest": "/backend/server.py"
     }
   ]
 }
