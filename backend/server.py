@@ -68,8 +68,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-DB_NAME = os.environ.get('DB_NAME', 'contabilita_alpha_multi')
+MONGO_URL = "mongodb+srv://ildatteroit:uIMlqfpnghUHytke@cluster.mzgatfa.mongodb.net/?retryWrites=true&w=majority"
+DB_NAME = "contabilita_alpha_multi"
 
 mongo_client = None
 db = None
@@ -113,6 +113,26 @@ async def shutdown_event():
     if mongo_client is not None:
         mongo_client.close()
         mongo_client = None
+
+class ClientResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    created_date: datetime
+    active: bool
+    total_transactions: int = 0
+    balance: float = 0.0
+    has_password: bool = False
+
+def client_helper(client) -> dict:
+    return {
+        "id": client.get("id", ""),
+        "name": client.get("name", "Unknown"),
+        "slug": client.get("slug", ""),
+        "created_date": client.get("created_date", datetime.now()),
+        "active": client.get("active", True),
+        "has_password": bool(client.get("password"))
+    }
 
 ADMIN_PASSWORD = "alpha2024!"
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
@@ -617,11 +637,11 @@ async def get_clients_public():
         for client in all_clients:
             client_data = client_helper(client)
             
-            transaction_count = await db.transactions.count_documents({"client_id": client["id"]})
+            transaction_count = await db.transactions.count_documents({"client_id": client.get("id", "")})
             
-            transactions = await db.transactions.find({"client_id": client["id"]}).to_list(length=None)
-            total_avere = sum(t["amount"] for t in transactions if t["type"] == "avere")
-            total_dare = sum(t["amount"] for t in transactions if t["type"] == "dare")
+            transactions = await db.transactions.find({"client_id": client.get("id", "")}).to_list(length=None)
+            total_avere = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "avere")
+            total_dare = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "dare")
             
             client_response = ClientResponse(
                 **client_data,
