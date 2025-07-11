@@ -5,8 +5,7 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "cd frontend && yarn build",
-        "outputDirectory": "build"
+        "buildCommand": "cd frontend && yarn install && yarn build"
       }
     },
     {
