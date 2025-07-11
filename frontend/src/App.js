@@ -641,6 +641,7 @@ function App() {
   });
   const [showLogin, setShowLogin] = useState(false);
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const [password, setPassword] = useState(''); // Admin password
   const [clientLoginPassword, setClientLoginPassword] = useState('');
   const [showClientLogin, setShowClientLogin] = useState(false);
   const [clientLoginError, setClientLoginError] = useState('');
