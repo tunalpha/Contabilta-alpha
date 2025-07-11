@@ -2,13 +2,16 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "frontend/build" }
-    },
-    {
       "src": "backend/server.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "cd frontend && yarn build",
+        "outputDirectory": "build"
+      }
     }
   ],
   "routes": [
