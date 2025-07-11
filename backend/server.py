@@ -61,14 +61,14 @@ pdf_links = {}
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Contabilità - Multi Cliente")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://contabilta-alpha-79iedrtqt-tunalphas-projects.vercel.app"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
 )
 
 MONGO_URL = "mongodb+srv://ildatteroit:uIMlqfpnghUHytke@cluster.mzgatfa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster"
