@@ -1504,14 +1504,23 @@ async def request_admin_password_reset():
         
         # Send email using SMTP
         try:
-            await aiosmtplib.send(
-                message,
-                hostname="smtp.gmail.com",
-                port=587,
-                start_tls=True,
-                username=os.getenv("SMTP_USERNAME", "your-email@gmail.com"),
-                password=os.getenv("SMTP_PASSWORD", "your-app-password"),
-            )
+            # TODO: Configurare credenziali email reali
+            # Per ora simula l'invio email
+            print(f"🔐 PASSWORD RESET EMAIL (SIMULATED)")
+            print(f"📧 To: {admin_email}")
+            print(f"🔗 Reset Link: {reset_link}")
+            print(f"🎫 Token: {reset_token}")
+            
+            # In futuro, decommentare questo per invio email reale:
+            # await aiosmtplib.send(
+            #     message,
+            #     hostname="smtp.gmail.com",
+            #     port=587,
+            #     start_tls=True,
+            #     username=os.getenv("SMTP_USERNAME", ""),
+            #     password=os.getenv("SMTP_PASSWORD", ""),
+            # )
+            
         except Exception as email_error:
             # If email fails, return error (since we're sending to fixed admin email)
             print(f"Email send failed: {email_error}")
