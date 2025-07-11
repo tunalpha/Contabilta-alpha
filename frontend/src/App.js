@@ -2288,6 +2288,120 @@ function App() {
     return client ? client.name : 'Cliente sconosciuto';
   };
 
+  // ADMIN RESET PASSWORD VIEW
+  if (currentView === 'admin-reset') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('token');
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+          <div className="text-center mb-6">
+            <div className="mx-auto h-20 w-20 flex items-center justify-center bg-gradient-to-br from-red-500 to-orange-600 rounded-full shadow-lg border-4 border-white mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">🔐</div>
+                <div className="text-xs font-bold text-white tracking-wider">RESET</div>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Reset Password Admin</h1>
+            <p className="text-gray-600">Imposta una nuova password</p>
+          </div>
+
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const newPassword = e.target.newPassword.value;
+            const confirmPassword = e.target.confirmPassword.value;
+            
+            if (newPassword !== confirmPassword) {
+              alert('❌ Le password non corrispondono');
+              return;
+            }
+            
+            if (newPassword.length < 6) {
+              alert('❌ La password deve essere di almeno 6 caratteri');
+              return;
+            }
+            
+            try {
+              const response = await fetch(`${BACKEND_URL}/api/admin/confirm-password-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  reset_token: resetToken, 
+                  new_password: newPassword 
+                })
+              });
+              
+              if (response.ok) {
+                alert('✅ Password aggiornata con successo!');
+                // Redirect to admin login
+                window.location.href = '/';
+              } else {
+                const error = await response.json();
+                alert('❌ ' + (error.detail || 'Errore nel reset'));
+              }
+            } catch (error) {
+              alert('❌ Errore di connessione');
+            }
+          }} className="space-y-4">
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔑 Nuova Password
+              </label>
+              <input
+                type="password"
+                name="newPassword"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Inserisci nuova password"
+                required
+                minLength="6"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔐 Conferma Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Conferma nuova password"
+                required
+                minLength="6"
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200"
+            >
+              🔓 Aggiorna Password
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="text-gray-600 hover:text-gray-800 text-sm underline"
+            >
+              ← Torna al Login
+            </button>
+          </div>
+          
+          {resetToken && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600">
+                Token: {resetToken}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ADMIN DASHBOARD VIEW
   if (currentView === 'admin') {
     // Se non è admin autenticato, mostra schermata di login
