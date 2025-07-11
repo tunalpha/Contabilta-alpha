@@ -16,7 +16,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 from dotenv import load_dotenv
-from contextlib import asynccontextmanager
 
 # Load environment variables
 load_dotenv()
@@ -36,35 +35,42 @@ import aiohttp
 import asyncio
 import secrets
 
-# --- NEW: Lifespan function for managing database connection ---
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# REMOVED: `from contextlib import asynccontextmanager` is no longer needed.
+
+# --- CORRECTED SETUP: Using @app.on_event instead of lifespan ---
+
+app = FastAPI(title="Contabilità - Multi Cliente") # IMPORTANT: No lifespan argument here
+
+@app.on_event("startup")
+async def startup_db_client():
     """
-    Handles startup and shutdown events. Connects to the database on startup
-    and closes the connection on shutdown.
+    Handles the startup event. Connects to the database.
+    This will now be correctly executed by Vercel.
     """
-    # On startup
-    print("INFO:     Starting up application...")
+    print("INFO:     Executing startup event...")
     mongo_url = os.environ.get("MONGO_URL")
     if not mongo_url:
         raise RuntimeError("MONGO_URL environment variable is not set!")
     
+    # Attach the client and db connection to the app's state
     app.state.mongodb_client = AsyncIOMotorClient(mongo_url)
     app.state.db = app.state.mongodb_client[os.environ.get('DB_NAME', 'contabilita_alpha_multi')]
-    print("INFO:     MongoDB connection established.")
-    
-    yield  # The application runs here
+    print("INFO:     MongoDB connection established via startup event.")
 
-    # On shutdown
-    print("INFO:     Shutting down application...")
-    app.state.mongodb_client.close()
-    print("INFO:     MongoDB connection closed.")
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    """
+    Handles the shutdown event. Closes the database connection.
+    """
+    print("INFO:     Executing shutdown event...")
+    if hasattr(app.state, 'mongodb_client'):
+        app.state.mongodb_client.close()
+        print("INFO:     MongoDB connection closed via shutdown event.")
 
+# REMOVED: The entire old `lifespan` function is deleted.
 
-# --- MODIFIED: Pass the lifespan function to the FastAPI app ---
-app = FastAPI(title="Contabilità - Multi Cliente", lifespan=lifespan)
-
-
+# (The rest of your file, starting from the AlphaLogoFlowable class, remains EXACTLY the same)
+# ...
 # Custom Flowable for Alpha Logo
 class AlphaLogoFlowable(Flowable):
     def __init__(self, size=60):
