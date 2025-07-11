@@ -999,7 +999,8 @@ function App() {
         localStorage.setItem('adminToken', data.token);
         setIsAdmin(true);
         setShowLogin(false);
-        setLoginPassword('');
+        setPassword(''); // Clear admin password
+        setLoginPassword(''); // Clear old password field
         alert('Login amministratore riuscito!');
         fetchClients();
       } else {
