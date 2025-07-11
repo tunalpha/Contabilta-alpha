@@ -58,6 +58,9 @@ class AlphaLogoFlowable(Flowable):
 
 pdf_links = {}
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Contabilità - Multi Cliente")
 
 app.add_middleware(
@@ -68,7 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MONGO_URL = "mongodb+srv://ildatteroit:uIMlqfpnghUHytke@cluster.mzgatfa.mongodb.net/?retryWrites=true&w=majority"
+MONGO_URL = "mongodb+srv://ildatteroit:uIMlqfpnghUHytke@cluster.mzgatfa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster"
 DB_NAME = "contabilita_alpha_multi"
 
 mongo_client = None
@@ -79,11 +82,12 @@ async def get_mongo_client():
     if mongo_client is None:
         for attempt in range(3):
             try:
+                logger.info(f"Attempting MongoDB connection (attempt {attempt + 1})")
                 mongo_client = AsyncIOMotorClient(
                     MONGO_URL,
                     maxPoolSize=10,
                     minPoolSize=1,
-                    serverSelectionTimeoutMS=5000,
+                    serverSelectionTimeoutMS=10000,  # Increased timeout
                     connectTimeoutMS=10000,
                     socketTimeoutMS=10000,
                     retryWrites=True,
@@ -92,11 +96,13 @@ async def get_mongo_client():
                     tls=True,
                     tlsAllowInvalidCertificates=False,
                 )
+                # Test connection
                 await mongo_client.admin.command('ping')
                 db = mongo_client[DB_NAME]
+                logger.info("MongoDB connection successful")
                 return mongo_client, db
             except Exception as e:
-                print(f"Connection attempt {attempt + 1} failed: {str(e)}")
+                logger.error(f"Connection attempt {attempt + 1} failed: {str(e)}")
                 if attempt == 2:
                     raise HTTPException(status_code=500, detail=f"Failed to connect to MongoDB after retries: {str(e)}")
                 await asyncio.sleep(1)
@@ -111,6 +117,7 @@ async def startup_event():
 async def shutdown_event():
     global mongo_client
     if mongo_client is not None:
+        logger.info("Closing MongoDB connection")
         mongo_client.close()
         mongo_client = None
 
@@ -125,15 +132,18 @@ class ClientResponse(BaseModel):
     has_password: bool = False
 
 def client_helper(client) -> dict:
-    return {
-        "id": client.get("id", ""),
-        "name": client.get("name", "Unknown"),
-        "slug": client.get("slug", ""),
-        "created_date": client.get("created_date", datetime.now()),
-        "active": client.get("active", True),
-        "has_password": bool(client.get("password"))
-    }
-
+    try:
+        return {
+            "id": client.get("id", ""),
+            "name": client.get("name", "Unknown"),
+            "slug": client.get("slug", ""),
+            "created_date": client.get("created_date", datetime.now()),
+            "active": client.get("active", True),
+            "has_password": bool(client.get("password"))
+        }
+    except Exception as e:
+        logger.error(f"Error in client_helper: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process client data: {str(e)}")
 ADMIN_PASSWORD = "alpha2024!"
 ADMIN_TOKEN = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
@@ -629,30 +639,35 @@ async def get_clients(admin_verified: bool = Depends(verify_admin_token)):
 @app.get("/api/clients/public", response_model=List[ClientResponse])
 async def get_clients_public():
     try:
+        logger.info("Fetching clients from MongoDB")
         _, db = await get_mongo_client()
         clients_cursor = db.clients.find().sort("created_date", -1)
         all_clients = await clients_cursor.to_list(length=None)
         clients = []
         
         for client in all_clients:
-            client_data = client_helper(client)
-            
-            transaction_count = await db.transactions.count_documents({"client_id": client.get("id", "")})
-            
-            transactions = await db.transactions.find({"client_id": client.get("id", "")}).to_list(length=None)
-            total_avere = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "avere")
-            total_dare = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "dare")
-            
-            client_response = ClientResponse(
-                **client_data,
-                total_transactions=transaction_count,
-                balance=total_avere - total_dare
-            )
-            clients.append(client_response)
+            try:
+                client_data = client_helper(client)
+                transaction_count = await db.transactions.count_documents({"client_id": client.get("id", "")})
+                
+                transactions = await db.transactions.find({"client_id": client.get("id", "")}).to_list(length=None)
+                total_avere = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "avere")
+                total_dare = sum(t.get("amount", 0.0) for t in transactions if t.get("type") == "dare")
+                
+                client_response = ClientResponse(
+                    **client_data,
+                    total_transactions=transaction_count,
+                    balance=total_avere - total_dare
+                )
+                clients.append(client_response)
+            except Exception as e:
+                logger.error(f"Error processing client {client.get('id', 'unknown')}: {str(e)}")
+                continue  # Skip problematic clients to avoid crashing the endpoint
         
+        logger.info(f"Returning {len(clients)} clients")
         return clients
     except Exception as e:
-        print(f"Error in get_clients_public: {str(e)}")
+        logger.error(f"Error in get_clients_public: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch clients: {str(e)}")
 
 @app.post("/api/clients", response_model=ClientResponse)
